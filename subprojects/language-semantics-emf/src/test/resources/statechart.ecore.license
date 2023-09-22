@@ -1,0 +1,15 @@
+SPDX-FileCopyrightText: 2011-2017 Itemis AG
+SPDX-FileCopyrightText: 2017 Oszkár Semeráth
+SPDX-FileCopyrightText: 2023 The Refinery Authors <https://refinery.tools/>
+
+SPDX-License-Identifier: EPL-2.0
+
+This file was imported from the Eclipse VIATRA™ project from
+https://github.com/viatra/VIATRA-Generator/blob/ca65c4ac8cdb2fd82c3cbac1e4218613f6f610ea/Domains/hu.bme.mit.inf.dslreasoner.domains.yakindu.sgraph/model/yakindu_simplified.ecore
+for testing purposes.
+
+This metamodel is based on a simplified version of the Yakindu Statechart Tools
+sgraph metamodel from
+https://github.com/Yakindu/statecharts/blob/c77659014cae590990cc95522dd1307d79f2ea5e/plugins/org.yakindu.sct.model.sgraph/model/emf/sgraph.ecore
+
+Eclipse®, VIATRA™ and 'Eclipse VIATRA™' are trademarks of Eclipse Foundation, Inc.

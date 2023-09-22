@@ -12,6 +12,7 @@ package tools.refinery.language;
 import com.google.inject.Binder;
 import com.google.inject.name.Names;
 import org.eclipse.xtext.conversion.IValueConverterService;
+import org.eclipse.xtext.formatting2.FormatterRequest;
 import org.eclipse.xtext.naming.IQualifiedNameConverter;
 import org.eclipse.xtext.parser.IParser;
 import org.eclipse.xtext.resource.*;
@@ -22,6 +23,7 @@ import org.eclipse.xtext.serializer.sequencer.ISemanticSequencer;
 import org.eclipse.xtext.validation.IResourceValidator;
 import org.eclipse.xtext.xbase.annotations.validation.DerivedStateAwareResourceValidator;
 import tools.refinery.language.conversion.ProblemValueConverterService;
+import tools.refinery.language.formatting2.FormatterRequestProvider;
 import tools.refinery.language.naming.ProblemQualifiedNameConverter;
 import tools.refinery.language.parser.antlr.TokenSourceInjectingProblemParser;
 import tools.refinery.language.resource.ProblemDerivedStateComputer;
@@ -92,5 +94,9 @@ public class ProblemRuntimeModule extends AbstractProblemRuntimeModule {
 	@Override
 	public Class<? extends ISemanticSequencer> bindISemanticSequencer() {
 		return PreferShortAssertionsProblemSemanticSequencer.class;
+	}
+
+	public void configureFormatterRequest(Binder binder) {
+		binder.bind(FormatterRequest.class).toProvider(FormatterRequestProvider.class);
 	}
 }

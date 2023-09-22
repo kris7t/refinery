@@ -1,0 +1,37 @@
+problem statechart "https://refinery.tools/emf/2023/Statechart".
+
+abstract class Pseudostate extends Vertex.
+
+abstract class Vertex {
+    Transition[] incomingTransitions opposite target
+    contains Transition[] outgoingTransitions opposite source
+}
+
+class Region {
+    contains Vertex[] vertices
+}
+
+class Transition {
+    Vertex[1] target opposite incomingTransitions
+    container Vertex source opposite outgoingTransitions
+}
+
+class Statechart extends CompositeElement.
+
+class Entry extends Pseudostate.
+
+class Synchronization extends Pseudostate.
+
+class State extends RegularState, CompositeElement.
+
+abstract class RegularState extends Vertex.
+
+abstract class CompositeElement {
+    contains Region[] regions
+}
+
+class Choice extends Pseudostate.
+
+class Exit extends Pseudostate.
+
+class FinalState extends RegularState.

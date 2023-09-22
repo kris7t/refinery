@@ -1,0 +1,10 @@
+SPDX-FileCopyrightText: 2020 Kristóf Marussy and Oszkár Semeráth
+SPDX-FileCopyrightText: 2023 The Refinery Authors <https://refinery.tools/>
+
+SPDX-License-Identifier: EPL-2.0
+
+This file was imported from the Eclipse VIATRA™ project from
+https://github.com/viatra/VIATRA-Generator/blob/ca65c4ac8cdb2fd82c3cbac1e4218613f6f610ea/Domains/hu.bme.mit.inf.dslreasoner.domains.satellite/model/satellite.ecore
+for testing purposes.
+
+Eclipse®, VIATRA™ and 'Eclipse VIATRA™' are trademarks of Eclipse Foundation, Inc.

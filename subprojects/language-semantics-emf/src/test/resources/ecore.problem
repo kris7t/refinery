@@ -1,0 +1,89 @@
+problem ecore "http://www.eclipse.org/emf/2002/Ecore".
+
+class EAttribute extends EStructuralFeature.
+
+class EAnnotation extends EModelElement {
+    contains EStringToStringMapEntry[] details
+    container EModelElement eModelElement opposite eAnnotations
+    contains EObject[] contents
+    EObject[] references
+}
+
+class EClass extends EClassifier {
+    EClass[] eSuperTypes
+    contains EOperation[] eOperations opposite eContainingClass
+    contains EStructuralFeature[] eStructuralFeatures opposite eContainingClass
+    contains EGenericType[] eGenericSuperTypes
+}
+
+abstract class EClassifier extends ENamedElement {
+    container EPackage ePackage opposite eClassifiers
+    contains ETypeParameter[] eTypeParameters
+}
+
+class EDataType extends EClassifier.
+
+class EEnum extends EDataType {
+    contains EEnumLiteral[] eLiterals opposite eEnum
+}
+
+class EEnumLiteral extends ENamedElement {
+    container EEnum eEnum opposite eLiterals
+}
+
+class EFactory extends EModelElement {
+    EPackage[1] ePackage opposite eFactoryInstance
+}
+
+abstract class EModelElement {
+    contains EAnnotation[] eAnnotations opposite eModelElement
+}
+
+abstract class ENamedElement extends EModelElement.
+
+class EObject.
+
+class EOperation extends ETypedElement {
+    container EClass eContainingClass opposite eOperations
+    contains ETypeParameter[] eTypeParameters
+    contains EParameter[] eParameters opposite eOperation
+    EClassifier[] eExceptions
+    contains EGenericType[] eGenericExceptions
+}
+
+class EPackage extends ENamedElement {
+    EFactory[1] eFactoryInstance opposite ePackage
+    contains EClassifier[] eClassifiers opposite ePackage
+    contains EPackage[] eSubpackages opposite eSuperPackage
+    container EPackage eSuperPackage opposite eSubpackages
+}
+
+class EParameter extends ETypedElement {
+    container EOperation eOperation opposite eParameters
+}
+
+class EReference extends EStructuralFeature {
+    EReference eOpposite
+    EAttribute[] eKeys
+}
+
+abstract class EStructuralFeature extends ETypedElement {
+    container EClass eContainingClass opposite eStructuralFeatures
+}
+
+abstract class ETypedElement extends ENamedElement.
+
+class EStringToStringMapEntry.
+
+class EGenericType {
+    contains EGenericType eUpperBound
+    contains EGenericType[] eTypeArguments
+    EClassifier[1] eRawType
+    contains EGenericType eLowerBound
+    ETypeParameter eTypeParameter
+    EClassifier eClassifier
+}
+
+class ETypeParameter extends ENamedElement {
+    contains EGenericType[] eBounds
+}

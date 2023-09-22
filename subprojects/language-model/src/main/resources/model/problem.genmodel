@@ -67,6 +67,7 @@
     <genClasses ecoreClass="problem.ecore#//Problem">
       <genFeatures property="None" children="true" createChild="true" ecoreFeature="ecore:EReference problem.ecore#//Problem/nodes"/>
       <genFeatures property="None" children="true" createChild="true" ecoreFeature="ecore:EReference problem.ecore#//Problem/statements"/>
+      <genFeatures createChild="false" ecoreFeature="ecore:EAttribute problem.ecore#//Problem/uri"/>
     </genClasses>
     <genClasses ecoreClass="problem.ecore#//ClassDeclaration">
       <genFeatures createChild="false" ecoreFeature="ecore:EAttribute problem.ecore#//ClassDeclaration/abstract"/>

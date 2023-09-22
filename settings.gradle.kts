@@ -16,6 +16,7 @@ include(
 		"language-ide",
 		"language-model",
 		"language-semantics",
+		"language-semantics-emf",
 		"language-web",
 		"store",
 		"store-dse",

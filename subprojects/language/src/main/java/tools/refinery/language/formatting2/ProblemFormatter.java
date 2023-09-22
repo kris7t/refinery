@@ -18,12 +18,15 @@ import org.eclipse.xtext.formatting2.regionaccess.ISequentialRegion;
 import org.eclipse.xtext.xbase.lib.Procedures.Procedure1;
 import tools.refinery.language.model.problem.*;
 
-@SuppressWarnings("UnstableApiUsage")
+// Xtext formatting2 is marked as unstable API.
+// While the {@code format} methods appear unused, they are called via reflection by Xtext.
+@SuppressWarnings({"UnstableApiUsage", "unused"})
 public class ProblemFormatter extends AbstractJavaFormatter {
 	protected void format(Problem problem, IFormattableDocument doc) {
 		doc.prepend(problem, this::noSpace);
 		var region = regionFor(problem);
 		doc.append(region.keyword("problem"), this::oneSpace);
+		doc.prepend(region.feature(ProblemPackage.Literals.PROBLEM__URI), this::oneSpace);
 		doc.prepend(region.keyword("."), this::noSpace);
 		appendNewLines(doc, region.keyword("."), this::twoNewLines);
 		for (var statement : problem.getStatements()) {
@@ -67,12 +70,55 @@ public class ProblemFormatter extends AbstractJavaFormatter {
 		doc.surround(region.keyword("extends"), this::oneSpace);
 		formatList(region, ",", doc);
 		doc.prepend(region.keyword("{"), this::oneSpace);
-		doc.append(region.keyword("{"), it -> it.setNewLines(1, 1, 2));
-		doc.prepend(region.keyword("}"), it -> it.setNewLines(1, 1, 2));
+		doc.append(region.keyword("{"), this::singleNewLine);
+		doc.prepend(region.keyword("}"), this::singleNewLine);
+		doc.interior(region.keyword("{"), region.keyword("}"), this::indent);
 		doc.prepend(region.keyword("."), this::noSpace);
 		for (var featureDeclaration : classDeclaration.getFeatureDeclarations()) {
 			doc.format(featureDeclaration);
 		}
+	}
+
+	protected void format(ReferenceDeclaration referenceDeclaration, IFormattableDocument doc) {
+		surroundNewLines(doc, referenceDeclaration, this::singleNewLine);
+		var region = regionFor(referenceDeclaration);
+		doc.append(region.feature(ProblemPackage.Literals.REFERENCE_DECLARATION__KIND), this::oneSpace);
+		var multiplicity = referenceDeclaration.getMultiplicity();
+		if (multiplicity == null) {
+			doc.append(region.feature(ProblemPackage.Literals.REFERENCE_DECLARATION__REFERENCE_TYPE), this::oneSpace);
+		} else {
+			doc.append(region.feature(ProblemPackage.Literals.REFERENCE_DECLARATION__REFERENCE_TYPE), this::noSpace);
+			doc.append(region.keyword("["), this::noSpace);
+			doc.prepend(region.keyword("]"), this::noSpace);
+			doc.append(region.keyword("]"), this::oneSpace);
+			doc.format(multiplicity);
+		}
+		doc.append(region.feature(ProblemPackage.Literals.NAMED_ELEMENT__NAME), this::oneSpace);
+		doc.append(region.keyword("opposite"), this::oneSpace);
+	}
+
+	protected void format(UnboundedMultiplicity unboundedMultiplicity, IFormattableDocument doc) {
+		var region = regionFor(unboundedMultiplicity);
+		doc.append(region.keyword("["), this::noSpace);
+	}
+
+	protected void format(RangeMultiplicity rangeMultiplicity, IFormattableDocument doc) {
+		var region = regionFor(rangeMultiplicity);
+		doc.surround(region.keyword(".."), this::noSpace);
+	}
+
+	protected void format(EnumDeclaration enumDeclaration, IFormattableDocument doc) {
+		surroundNewLines(doc, enumDeclaration, this::twoNewLines);
+		var region = regionFor(enumDeclaration);
+		doc.append(region.keyword("enum"), this::oneSpace);
+		doc.prepend(region.keyword("{"), this::oneSpace);
+		doc.append(region.keyword("{"), this::singleNewLine);
+		doc.prepend(region.keyword("}"), this::singleNewLine);
+		doc.interior(region.keyword("{"), region.keyword("}"), this::indent);
+		for (var separator : region.keywords(",", ";")) {
+			doc.prepend(separator, this::noSpace);
+		}
+		doc.prepend(region.keyword("."), this::noSpace);
 	}
 
 	protected void format(PredicateDefinition predicateDefinition, IFormattableDocument doc) {

@@ -1,0 +1,20 @@
+problem filesystem "https://refinery.tools/emf/2023/Filesystem".
+
+class FileSystem {
+    contains Dir[1] root
+}
+
+abstract class FSObject {
+    container Dir parent opposite contents
+}
+
+class Dir extends FSObject {
+    contains FSObject[] contents opposite parent
+}
+
+class File extends FSObject.
+
+class Model {
+    contains FileSystem[1] filesystems
+    contains FSObject[] otherFSObjects
+}

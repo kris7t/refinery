@@ -6,6 +6,7 @@
         eType="#//Node" transient="true" containment="true"/>
     <eStructuralFeatures xsi:type="ecore:EReference" name="statements" upperBound="-1"
         eType="#//Statement" containment="true"/>
+    <eStructuralFeatures xsi:type="ecore:EAttribute" name="uri" eType="ecore:EDataType http://www.eclipse.org/emf/2002/Ecore#//EString"/>
   </eClassifiers>
   <eClassifiers xsi:type="ecore:EClass" name="ClassDeclaration" eSuperTypes="#//Statement #//Relation">
     <eStructuralFeatures xsi:type="ecore:EAttribute" name="abstract" eType="ecore:EDataType http://www.eclipse.org/emf/2002/Ecore#//EBoolean"/>
@@ -23,7 +24,7 @@
     <eStructuralFeatures xsi:type="ecore:EAttribute" name="kind" eType="#//ReferenceKind"/>
     <eStructuralFeatures xsi:type="ecore:EReference" name="referenceType" eType="#//Relation"/>
     <eStructuralFeatures xsi:type="ecore:EReference" name="invalidMultiplicity" eType="#//Relation"
-        containment="true"/>
+        transient="true" containment="true"/>
   </eClassifiers>
   <eClassifiers xsi:type="ecore:EClass" name="NamedElement" abstract="true">
     <eStructuralFeatures xsi:type="ecore:EAttribute" name="name" eType="ecore:EDataType http://www.eclipse.org/emf/2002/Ecore#//EString"/>

@@ -1,0 +1,46 @@
+problem functionalarchitecture "http://www.inf.mit.bme.hu/viatrasolver/example/fam".
+
+abstract class FunctionalElement {
+    contains FunctionalInterface interface opposite element
+    container Function parent opposite subElements
+}
+
+class FunctionalArchitectureModel {
+    contains FunctionalElement[] rootElements
+}
+
+class Function extends FunctionalElement {
+    contains FunctionalElement[] subElements opposite parent
+    FunctionType[1] type
+}
+
+class FAMTerminator {
+    container FunctionalData data opposite terminator
+}
+
+class InformationLink {
+    container FunctionalOutput from opposite outgoingLinks
+    FunctionalInput[1] to opposite IncomingLinks
+}
+
+class FunctionalInterface {
+    contains FunctionalData[] data opposite interface
+    container FunctionalElement element opposite interface
+}
+
+class FunctionalInput extends FunctionalData {
+    InformationLink[] IncomingLinks opposite to
+}
+
+class FunctionalOutput extends FunctionalData {
+    contains InformationLink[] outgoingLinks opposite from
+}
+
+abstract class FunctionalData {
+    contains FAMTerminator terminator opposite data
+    container FunctionalInterface interface opposite data
+}
+
+enum FunctionType {
+    Root, Intermediate, Leaf
+}
