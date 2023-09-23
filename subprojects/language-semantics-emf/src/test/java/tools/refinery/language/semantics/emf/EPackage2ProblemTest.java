@@ -8,12 +8,14 @@ package tools.refinery.language.semantics.emf;
 import com.google.inject.Inject;
 import org.eclipse.emf.common.util.URI;
 import org.eclipse.emf.ecore.EPackage;
-import org.eclipse.emf.ecore.EcorePackage;
+import org.eclipse.emf.ecore.resource.Resource;
 import org.eclipse.emf.ecore.resource.impl.ResourceSetImpl;
+import org.eclipse.emf.ecore.xcore.XcoreStandaloneSetup;
 import org.eclipse.emf.ecore.xmi.impl.XMIResourceImpl;
+import org.eclipse.xtext.resource.IResourceFactory;
+import org.eclipse.xtext.resource.XtextResourceSet;
 import org.eclipse.xtext.testing.InjectWith;
 import org.eclipse.xtext.testing.extensions.InjectionExtension;
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
@@ -33,11 +35,6 @@ class EPackage2ProblemTest {
 	@Inject
 	private EPackage2Problem ePackage2Problem;
 
-	@BeforeEach
-	void beforeEach() {
-		EPackage.Registry.INSTANCE.put(EcorePackage.eNS_URI, EcorePackage.eINSTANCE);
-	}
-
 	@ParameterizedTest
 	@ValueSource(strings = {
 			"ecore",
@@ -53,15 +50,44 @@ class EPackage2ProblemTest {
 		var resourceSet = new ResourceSetImpl();
 		var ecoreResource = new XMIResourceImpl(URI.createURI(ecoreFile));
 		resourceSet.getResources().add(ecoreResource);
-		var classLoader = getClass().getClassLoader();
-		try (var inputStream = classLoader.getResourceAsStream(ecoreFile)) {
-			if (inputStream == null) {
-				throw new IllegalStateException("Test input not found: " + ecoreFile);
-			}
-			ecoreResource.load(inputStream, Map.of());
-		}
+		loadTestInput(ecoreFile, ecoreResource);
 		var ePackage = (EPackage) ecoreResource.getContents().get(0);
 
+		transformAndCheckEPackage(problemFile, ePackage);
+	}
+
+	@ParameterizedTest
+	@ValueSource(strings = {
+			"railway"
+	})
+	void xcore2ProblemTest(String name) throws IOException {
+		var xcoreFile = name + ".xcore";
+		var problemFile = name + ".problem";
+
+		var xcoreInjector = new XcoreStandaloneSetup().createInjectorAndDoEMFRegistration();
+		var resourceSet = xcoreInjector.getInstance(XtextResourceSet.class);
+		var resourceFactory = xcoreInjector.getInstance(IResourceFactory.class);
+		var xcoreResource = resourceFactory.createResource(URI.createURI(xcoreFile));
+		resourceSet.getResources().add(xcoreResource);
+		loadTestInput(xcoreFile, xcoreResource);
+		var ePackageOption = xcoreResource.getContents().stream().filter(EPackage.class::isInstance).findFirst();
+		assertThat(ePackageOption.isPresent(), is(true));
+		var ePackage = (EPackage) ePackageOption.get();
+
+		transformAndCheckEPackage(problemFile, ePackage);
+	}
+
+	private void loadTestInput(String inputFile, Resource resource) throws IOException {
+		var classLoader = getClass().getClassLoader();
+		try (var inputStream = classLoader.getResourceAsStream(inputFile)) {
+			if (inputStream == null) {
+				throw new IllegalStateException("Test input not found: " + inputFile);
+			}
+			resource.load(inputStream, Map.of());
+		}
+	}
+
+	private void transformAndCheckEPackage(String problemFile, EPackage ePackage) throws IOException {
 		var problem = ePackage2Problem.transformEPackage(ePackage);
 		var problemResource = problem.eResource();
 
@@ -72,6 +98,7 @@ class EPackage2ProblemTest {
 		}
 		serializedProblem = normalizeNewlines(serializedProblem);
 
+		var classLoader = getClass().getClassLoader();
 		String expectedProblem;
 		try (var inputStream = classLoader.getResourceAsStream(problemFile)) {
 			if (inputStream == null) {

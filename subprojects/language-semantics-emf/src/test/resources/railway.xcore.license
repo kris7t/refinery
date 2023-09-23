@@ -1,0 +1,7 @@
+SPDX-FileCopyrightText: 2016-2017 MTA-BME Lendület Research Group on Cyber-Physical Systems
+
+SPDX-License-Identifier: EPL-2.0
+
+This file was imported from the Train Benchmark project
+https://github.com/ftsrg/trainbenchmark/blob/9c76520dec5a26213707b0e1f04b263f16b340ee/trainbenchmark-format-emf-model/src/railway.xcore
+for testing purposes.
