@@ -1,0 +1,56 @@
+problem railway "http://www.semanticweb.org/ontologies/2015/trainbenchmark".
+
+abstract class RailwayElement.
+
+class RailwayContainer {
+    contains Route[] routes
+    contains Region[] regions
+}
+
+class Region extends RailwayElement {
+    contains Sensor[] sensors
+    contains TrackElement[] elements
+}
+
+class Route extends RailwayElement {
+    contains SwitchPosition[] follows opposite route
+    Sensor[2..*] requires
+    Semaphore entry
+    Semaphore exit
+}
+
+class Sensor extends RailwayElement {
+    TrackElement[] monitors opposite monitoredBy
+}
+
+abstract class TrackElement extends RailwayElement {
+    Sensor[] monitoredBy opposite monitors
+    TrackElement[] connectsTo
+}
+
+class Segment extends TrackElement {
+    contains Semaphore[] semaphores
+}
+
+class Switch extends TrackElement {
+    Position[1] currentPosition
+    SwitchPosition[] positions opposite target
+}
+
+class SwitchPosition extends RailwayElement {
+    Position[1] position
+    container Route route opposite follows
+    Switch target opposite positions
+}
+
+class Semaphore extends RailwayElement {
+    Signal signal
+}
+
+enum Position {
+    FAILURE, STRAIGHT, DIVERGING
+}
+
+enum Signal {
+    FAILURE, STOP, GO
+}

@@ -1,0 +1,40 @@
+problem satellite "https://refinery.tools/emf/2023/Satellite".
+
+abstract class ConstellationMission {
+    contains GroundStationNetwork[1] groundStationNetwork
+    contains Spacecraft[2..*] spacecraft
+}
+
+class InterferometryMission extends ConstellationMission.
+
+abstract class CommunicatingElement {
+    contains CommSubsystem[1..2] commSubsystem
+}
+
+class GroundStationNetwork extends CommunicatingElement.
+
+abstract class Spacecraft extends CommunicatingElement {
+    contains Payload payload
+}
+
+abstract class CommSubsystem {
+    CommSubsystem target
+}
+
+abstract class Payload.
+
+class InterferometryPayload extends Payload.
+
+class CubeSat3U extends CubeSat.
+
+class CubeSat6U extends CubeSat.
+
+class SmallSat extends Spacecraft.
+
+abstract class CubeSat extends Spacecraft.
+
+class UHFCommSubsystem extends CommSubsystem.
+
+class XCommSubsystem extends CommSubsystem.
+
+class KaCommSubsystem extends CommSubsystem.

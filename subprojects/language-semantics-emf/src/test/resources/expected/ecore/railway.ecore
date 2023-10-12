@@ -1,0 +1,67 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ecore:EPackage xmi:version="2.0" xmlns:xmi="http://www.omg.org/XMI" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xmlns:ecore="http://www.eclipse.org/emf/2002/Ecore" name="railway" nsURI="http://www.semanticweb.org/ontologies/2015/trainbenchmark"
+    nsPrefix="railway">
+  <eClassifiers xsi:type="ecore:EClass" name="RailwayElement" abstract="true"/>
+  <eClassifiers xsi:type="ecore:EClass" name="RailwayContainer">
+    <eStructuralFeatures xsi:type="ecore:EReference" name="routes" ordered="false"
+        upperBound="-1" eType="//Route" containment="true"/>
+    <eStructuralFeatures xsi:type="ecore:EReference" name="regions" ordered="false"
+        upperBound="-1" eType="//Region" containment="true"/>
+  </eClassifiers>
+  <eClassifiers xsi:type="ecore:EClass" name="Region" eSuperTypes="//RailwayElement">
+    <eStructuralFeatures xsi:type="ecore:EReference" name="sensors" ordered="false"
+        upperBound="-1" eType="//Sensor" containment="true"/>
+    <eStructuralFeatures xsi:type="ecore:EReference" name="elements" ordered="false"
+        upperBound="-1" eType="//TrackElement" containment="true"/>
+  </eClassifiers>
+  <eClassifiers xsi:type="ecore:EClass" name="Route" eSuperTypes="//RailwayElement">
+    <eStructuralFeatures xsi:type="ecore:EReference" name="follows" ordered="false"
+        upperBound="-1" eType="//SwitchPosition" containment="true" eOpposite="//SwitchPosition/route"/>
+    <eStructuralFeatures xsi:type="ecore:EReference" name="requires" ordered="false"
+        lowerBound="2" upperBound="-1" eType="//Sensor"/>
+    <eStructuralFeatures xsi:type="ecore:EReference" name="entry" eType="//Semaphore"/>
+    <eStructuralFeatures xsi:type="ecore:EReference" name="exit" eType="//Semaphore"/>
+  </eClassifiers>
+  <eClassifiers xsi:type="ecore:EClass" name="Sensor" eSuperTypes="//RailwayElement">
+    <eStructuralFeatures xsi:type="ecore:EReference" name="monitors" ordered="false"
+        upperBound="-1" eType="//TrackElement" eOpposite="//TrackElement/monitoredBy"/>
+  </eClassifiers>
+  <eClassifiers xsi:type="ecore:EClass" name="TrackElement" abstract="true" eSuperTypes="//RailwayElement">
+    <eStructuralFeatures xsi:type="ecore:EReference" name="monitoredBy" ordered="false"
+        upperBound="-1" eType="//Sensor" eOpposite="//Sensor/monitors"/>
+    <eStructuralFeatures xsi:type="ecore:EReference" name="connectsTo" ordered="false"
+        upperBound="-1" eType="//TrackElement"/>
+  </eClassifiers>
+  <eClassifiers xsi:type="ecore:EClass" name="Segment" eSuperTypes="//TrackElement">
+    <eStructuralFeatures xsi:type="ecore:EReference" name="semaphores" ordered="false"
+        upperBound="-1" eType="//Semaphore" containment="true"/>
+  </eClassifiers>
+  <eClassifiers xsi:type="ecore:EClass" name="Switch" eSuperTypes="//TrackElement">
+    <eStructuralFeatures xsi:type="ecore:EAttribute" name="currentPosition" lowerBound="1"
+        eType="//Position"/>
+    <eStructuralFeatures xsi:type="ecore:EReference" name="positions" ordered="false"
+        upperBound="-1" eType="//SwitchPosition" eOpposite="//SwitchPosition/target"/>
+  </eClassifiers>
+  <eClassifiers xsi:type="ecore:EClass" name="SwitchPosition" eSuperTypes="//RailwayElement">
+    <eStructuralFeatures xsi:type="ecore:EAttribute" name="position" lowerBound="1"
+        eType="//Position"/>
+    <eStructuralFeatures xsi:type="ecore:EReference" name="route" eType="//Route"
+        eOpposite="//Route/follows"/>
+    <eStructuralFeatures xsi:type="ecore:EReference" name="target" eType="//Switch"
+        eOpposite="//Switch/positions"/>
+  </eClassifiers>
+  <eClassifiers xsi:type="ecore:EClass" name="Semaphore" eSuperTypes="//RailwayElement">
+    <eStructuralFeatures xsi:type="ecore:EAttribute" name="signal" eType="//Signal"/>
+  </eClassifiers>
+  <eClassifiers xsi:type="ecore:EEnum" name="Position">
+    <eLiterals name="FAILURE"/>
+    <eLiterals name="STRAIGHT" value="1"/>
+    <eLiterals name="DIVERGING" value="2"/>
+  </eClassifiers>
+  <eClassifiers xsi:type="ecore:EEnum" name="Signal">
+    <eLiterals name="FAILURE"/>
+    <eLiterals name="STOP" value="1"/>
+    <eLiterals name="GO" value="2"/>
+  </eClassifiers>
+</ecore:EPackage>

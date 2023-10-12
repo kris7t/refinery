@@ -19,11 +19,10 @@ import org.eclipse.xtext.testing.extensions.InjectionExtension;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
+import tools.refinery.language.semantics.emf.tests.SerializerUtils;
 import tools.refinery.language.tests.ProblemInjectorProvider;
 
-import java.io.ByteArrayOutputStream;
 import java.io.IOException;
-import java.nio.charset.StandardCharsets;
 import java.util.Map;
 
 import static org.hamcrest.MatcherAssert.assertThat;
@@ -44,8 +43,8 @@ class EPackage2ProblemTest {
 			"statechart"
 	})
 	void ecore2ProblemTest(String name) throws IOException {
-		var ecoreFile = name + ".ecore";
-		var problemFile = name + ".problem";
+		var ecoreFile = "input/ecore/%s.ecore".formatted(name);
+		var problemFile = "expected/refinery/%s.problem".formatted(name);
 
 		var resourceSet = new ResourceSetImpl();
 		var ecoreResource = new XMIResourceImpl(URI.createURI(ecoreFile));
@@ -61,8 +60,8 @@ class EPackage2ProblemTest {
 			"railway"
 	})
 	void xcore2ProblemTest(String name) throws IOException {
-		var xcoreFile = name + ".xcore";
-		var problemFile = name + ".problem";
+		var xcoreFile = "input/xcore/%s.xcore".formatted(name);
+		var problemFile = "expected/refinery/%s.problem".formatted(name);
 
 		var xcoreInjector = new XcoreStandaloneSetup().createInjectorAndDoEMFRegistration();
 		var resourceSet = xcoreInjector.getInstance(XtextResourceSet.class);
@@ -79,6 +78,7 @@ class EPackage2ProblemTest {
 
 	private void loadTestInput(String inputFile, Resource resource) throws IOException {
 		var classLoader = getClass().getClassLoader();
+		SerializerUtils.readTestInput(classLoader, inputFile, resource);
 		try (var inputStream = classLoader.getResourceAsStream(inputFile)) {
 			if (inputStream == null) {
 				throw new IllegalStateException("Test input not found: " + inputFile);
@@ -90,28 +90,11 @@ class EPackage2ProblemTest {
 	private void transformAndCheckEPackage(String problemFile, EPackage ePackage) throws IOException {
 		var problem = ePackage2Problem.transformEPackage(ePackage);
 		var problemResource = problem.eResource();
-
-		String serializedProblem;
-		try (var outputStream = new ByteArrayOutputStream()) {
-			problemResource.save(outputStream, Map.of());
-			serializedProblem = outputStream.toString(StandardCharsets.UTF_8);
-		}
-		serializedProblem = normalizeNewlines(serializedProblem);
+		var serializedProblem = SerializerUtils.serializeResource(problemResource);
 
 		var classLoader = getClass().getClassLoader();
-		String expectedProblem;
-		try (var inputStream = classLoader.getResourceAsStream(problemFile)) {
-			if (inputStream == null) {
-				throw new IllegalStateException("Expected output not found: " + problemFile);
-			}
-			expectedProblem = new String(inputStream.readAllBytes(), StandardCharsets.UTF_8);
-		}
-		expectedProblem = normalizeNewlines(expectedProblem);
+		var expectedProblem = SerializerUtils.readExpectedOutput(classLoader, problemFile);
 
 		assertThat(serializedProblem, is(expectedProblem));
-	}
-
-	private static String normalizeNewlines(String string) {
-		return string.replace("\r\n", "\n").trim();
 	}
 }
