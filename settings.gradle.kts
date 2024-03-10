@@ -24,6 +24,7 @@ include(
 		"language-semantics",
 		"language-web",
 		"logic",
+		"logic-arithmetic-exact",
 		"store",
 		"store-dse",
 		"store-dse-visualization",

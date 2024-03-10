@@ -12,7 +12,7 @@ public interface AbstractValue<A extends AbstractValue<A, C>, C> {
 	C getConcrete();
 
 	default boolean isConcrete() {
-		return getConcrete() == null;
+		return getConcrete() != null;
 	}
 
 	@Nullable
