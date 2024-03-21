@@ -12,8 +12,8 @@ import org.jetbrains.annotations.Nullable;
 
 public final class IntIntervals {
 	public static final IntInterval EMPTY = EmptyIntInterval.INSTANCE;
-	public static final IntInterval ALL = new WideIntInterval(null, null);
-	public static final IntInterval ZERO = new SingletonIntInterval(Apcomplex.ZERO);
+	public static final IntInterval ALL = between(null, null);
+	public static final IntInterval ZERO = exactly(Apcomplex.ZERO);
 
 	private IntIntervals() {
 		throw new IllegalArgumentException("This is a static utility class and should not be instantiated directly");

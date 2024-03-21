@@ -29,16 +29,15 @@ public record SingletonIntInterval(@NotNull Apint singleValue) implements NonEmp
 
 	@Override
 	public IntInterval join(IntInterval other) {
-		if (other instanceof SingletonIntInterval singletonOther) {
-			var otherValue = singletonOther.singleValue();
-			int result = singleValue.compareTo(otherValue);
+		if (other instanceof SingletonIntInterval(var otherSingleValue)) {
+			int result = singleValue.compareTo(otherSingleValue);
 			if (result < 0) {
-				return IntIntervals.between(singleValue, otherValue);
+				return IntIntervals.between(singleValue, otherSingleValue);
 			}
 			if (result == 0) {
 				return this;
 			}
-			return IntIntervals.between(otherValue, singleValue);
+			return IntIntervals.between(otherSingleValue, singleValue);
 		}
 		return NonEmptyIntInterval.super.join(other);
 	}
@@ -83,41 +82,46 @@ public record SingletonIntInterval(@NotNull Apint singleValue) implements NonEmp
 
 	@Override
 	public IntInterval min(IntInterval other) {
-		if (other instanceof SingletonIntInterval singletonOther) {
-			return IntIntervals.exactly(ApintMath.min(singleValue, singletonOther.singleValue()));
+		if (other instanceof SingletonIntInterval(var otherSingleValue)) {
+			return IntIntervals.exactly(ApintMath.min(singleValue, otherSingleValue));
 		}
 		return NonEmptyIntInterval.super.min(other);
 	}
 
 	@Override
 	public IntInterval max(IntInterval other) {
-		if (other instanceof SingletonIntInterval singletonOther) {
-			return IntIntervals.exactly(ApintMath.max(singleValue, singletonOther.singleValue()));
+		if (other instanceof SingletonIntInterval(var otherSingleValue)) {
+			return IntIntervals.exactly(ApintMath.max(singleValue, otherSingleValue));
 		}
-		return NonEmptyIntInterval.super.min(other);
+		return NonEmptyIntInterval.super.max(other);
 	}
 
 	@Override
 	public IntInterval add(IntInterval other) {
-		if (other instanceof SingletonIntInterval singletonOther) {
-			return IntIntervals.exactly(singleValue.add(singletonOther.singleValue()));
+		if (other instanceof SingletonIntInterval(var otherSingleValue)) {
+			return IntIntervals.exactly(singleValue.add(otherSingleValue));
 		}
 		return NonEmptyIntInterval.super.add(other);
 	}
 
 	@Override
 	public IntInterval sub(IntInterval other) {
-		if (other instanceof SingletonIntInterval singletonOther) {
-			return IntIntervals.exactly(singleValue.subtract(singletonOther.singleValue()));
+		if (other instanceof SingletonIntInterval(var otherSingleValue)) {
+			return IntIntervals.exactly(singleValue.subtract(otherSingleValue));
 		}
 		return NonEmptyIntInterval.super.sub(other);
 	}
 
 	@Override
 	public IntInterval mul(IntInterval other) {
-		if (other instanceof SingletonIntInterval singletonOther) {
-			return IntIntervals.exactly(singleValue.multiply(singletonOther.singleValue()));
+		if (other instanceof SingletonIntInterval(var otherSingleValue)) {
+			return IntIntervals.exactly(singleValue.multiply(otherSingleValue));
 		}
 		return NonEmptyIntInterval.super.mul(other);
+	}
+
+	@Override
+	public String toString() {
+		return singleValue.toString();
 	}
 }

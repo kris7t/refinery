@@ -55,12 +55,12 @@ public final class EmptyIntInterval implements IntInterval {
 
 	@Override
 	public IntInterval min(IntInterval other) {
-		return null;
+		return this;
 	}
 
 	@Override
 	public IntInterval max(IntInterval other) {
-		return null;
+		return this;
 	}
 
 	@Override
@@ -76,5 +76,10 @@ public final class EmptyIntInterval implements IntInterval {
 	@Override
 	public IntInterval mul(IntInterval other) {
 		return this;
+	}
+
+	@Override
+	public String toString() {
+		return "error";
 	}
 }

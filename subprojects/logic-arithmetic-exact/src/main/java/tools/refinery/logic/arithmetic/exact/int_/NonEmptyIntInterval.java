@@ -133,7 +133,7 @@ public sealed interface NonEmptyIntInterval extends IntInterval permits Singleto
 		}
 		if (upperBound != null && upperBound.signum() <= 0) {
 			if (otherLowerBound != null && otherLowerBound.signum() >= 0) {
-				return IntIntervals.between(NullableIntUtils.mul(lowerBound, otherLowerBound),
+				return IntIntervals.between(NullableIntUtils.mul(lowerBound, otherUpperBound),
 						upperBound.multiply(otherLowerBound));
 			}
 			if (otherUpperBound != null && otherUpperBound.signum() <= 0) {

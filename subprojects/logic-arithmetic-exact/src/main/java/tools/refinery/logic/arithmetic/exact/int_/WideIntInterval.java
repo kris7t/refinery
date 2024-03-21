@@ -43,4 +43,24 @@ public record WideIntInterval(@Nullable Apint lowerBound, @Nullable Apint upperB
 		var negatedLowerBound = lowerBound == null ? null : lowerBound.negate();
 		return new WideIntInterval(negatedUpperBound, negatedLowerBound);
 	}
+
+	@Override
+	public String toString() {
+		if (lowerBound == null && upperBound == null) {
+			return "unknown";
+		}
+		var builder = new StringBuilder();
+		appendBound(builder, lowerBound);
+		builder.append("..");
+		appendBound(builder, upperBound);
+		return builder.toString();
+	}
+
+	private static void appendBound(StringBuilder builder, Apint value) {
+		if (value == null) {
+			builder.append("*");
+		} else {
+			builder.append(value);
+		}
+	}
 }
