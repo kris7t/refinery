@@ -20,6 +20,43 @@ import static org.hamcrest.Matchers.is;
 import static tools.refinery.logic.arithmetic.exact.int_.IntIntervals.*;
 
 class IntIntervalTest {
+	@ParameterizedTest(name = "+({0}) == {1}")
+	@MethodSource
+	void plusTest(IntInterval a, IntInterval expected) {
+		var actual = a.plus();
+		assertThat(actual, is(expected));
+	}
+
+	static Stream<Arguments> plusTest() {
+		var values = List.of(
+				EMPTY,
+				ALL,
+				exactly(1),
+				between(1, 2),
+				atMost(1),
+				atLeast(1)
+		);
+		return values.stream().map(value -> Arguments.of(value, value));
+	}
+
+	@ParameterizedTest(name = "-({0}) == {1}")
+	@MethodSource
+	void minusTest(IntInterval a, IntInterval expected) {
+		var actual = a.minus();
+		assertThat(actual, is(expected));
+	}
+
+	static Stream<Arguments> minusTest() {
+		return Stream.of(
+				Arguments.of(EMPTY, EMPTY),
+				Arguments.of(ALL, ALL),
+				Arguments.of(exactly(1), exactly(-1)),
+				Arguments.of(between(1, 2), between(-2, -1)),
+				Arguments.of(atMost(1), atLeast(-1)),
+				Arguments.of(atLeast(1), atMost(-1))
+		);
+	}
+
 	@ParameterizedTest(name = "{0} + {1} == {2}")
 	@MethodSource
 	void addTest(IntInterval a, IntInterval b, IntInterval expected) {
