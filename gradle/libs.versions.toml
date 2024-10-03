@@ -5,7 +5,7 @@
 [versions]
 antlr = "3.2" # To retain Xtext compatibility, this mustn't be increased
 apiguardian = "1.1.2"
-apfloat = "1.13.0"
+apfloat = "1.14.0"
 asm = "9.7.1"
 classgraph = "4.8.179"
 eclipse-commands = "3.12.200"
@@ -61,7 +61,7 @@ xtext-generator-antlr = "2.1.1"
 [libraries]
 antlr = { group = "org.antlr", name = "antlr-runtime", version.ref = "antlr" }
 apiguardian = { group = "org.apiguardian", name = "apiguardian-api", version.ref = "apiguardian" }
-apfloat = { group = "org.apfloat", name = "apfloat", version = "apfloat" }
+apfloat = { group = "org.apfloat", name = "apfloat", version.ref = "apfloat" }
 apfloat-applet = { group = "org.apfloat", name = "apfloat-applet", version.ref = "apfloat" }
 asm = { group = "org.ow2.asm", name = "asm", version.ref = "asm" }
 asm-commons = { group = "org.ow2.asm", name = "asm-commons", version.ref = "asm" }
