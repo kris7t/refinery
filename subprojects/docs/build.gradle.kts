@@ -42,7 +42,9 @@ dependencies {
 				javadocs(project(subproject.path, "javadocElements"))
 				val releasedProjectVersion = if (subproject.group.toString() == interpreterGroup)
 					releasedInterpreterVersion else releasedVersion
-				releasedJavadocs("${subproject.group}:${subproject.name}:$releasedProjectVersion:javadoc@jar")
+				if (subproject.name != "refinery-logic-arithmetic-exact") {
+					releasedJavadocs("${subproject.group}:${subproject.name}:$releasedProjectVersion:javadoc@jar")
+				}
 			}
 		}
 	}
