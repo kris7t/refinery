@@ -5,7 +5,6 @@
  */
 package tools.refinery.logic.arithmetic.exact.int_;
 
-import tools.refinery.logic.substitution.Substitution;
 import tools.refinery.logic.term.Term;
 
 public class IntIntervalMaxTerm extends IntIntervalBinaryTerm {
@@ -19,9 +18,9 @@ public class IntIntervalMaxTerm extends IntIntervalBinaryTerm {
 	}
 
 	@Override
-	public Term<IntInterval> doSubstitute(Substitution substitution, Term<IntInterval> substitutedLeft,
-                                          Term<IntInterval> substitutedRight) {
-		return new IntIntervalMaxTerm(substitutedLeft, substitutedRight);
+	public Term<IntInterval> withSubTerms(Term<IntInterval> newLeft,
+										  Term<IntInterval> newRight) {
+		return new IntIntervalMaxTerm(newLeft, newRight);
 	}
 
 	@Override

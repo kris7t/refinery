@@ -5,7 +5,6 @@
  */
 package tools.refinery.logic.arithmetic.exact.int_;
 
-import tools.refinery.logic.substitution.Substitution;
 import tools.refinery.logic.term.Term;
 
 public class IntIntervalPlusTerm extends IntIntervalUnaryTerm {
@@ -19,8 +18,8 @@ public class IntIntervalPlusTerm extends IntIntervalUnaryTerm {
 	}
 
 	@Override
-	protected Term<IntInterval> doSubstitute(Substitution substitution, Term<IntInterval> substitutedBody) {
-		return new IntIntervalPlusTerm(substitutedBody);
+	public Term<IntInterval> withBody(Term<IntInterval> newBody) {
+		return new IntIntervalPlusTerm(newBody);
 	}
 
 	@Override
