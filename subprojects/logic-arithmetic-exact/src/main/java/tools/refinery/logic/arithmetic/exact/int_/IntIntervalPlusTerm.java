@@ -18,7 +18,7 @@ public class IntIntervalPlusTerm extends IntIntervalUnaryTerm {
 	}
 
 	@Override
-	public Term<IntInterval> withBody(Term<IntInterval> newBody) {
+	protected Term<IntInterval> constructWithBody(Term<IntInterval> newBody) {
 		return new IntIntervalPlusTerm(newBody);
 	}
 

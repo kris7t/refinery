@@ -18,8 +18,8 @@ public class IntIntervalSubTerm extends IntIntervalBinaryTerm {
 	}
 
 	@Override
-	public Term<IntInterval> withSubTerms(Term<IntInterval> newLeft,
-										  Term<IntInterval> newRight) {
+    protected Term<IntInterval> constructWithSubTerms(Term<IntInterval> newLeft,
+                                                      Term<IntInterval> newRight) {
 		return new IntIntervalSubTerm(newLeft, newRight);
 	}
 

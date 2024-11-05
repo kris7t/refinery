@@ -41,7 +41,8 @@ public class QueryInterpreterStoreAdapterImpl implements QueryInterpreterStoreAd
 		this.querySpecifications = querySpecifications;
 		this.vacuousQueries = vacuousQueries;
 		this.cancellationToken = cancellationToken;
-		var mutableAllQueries = new LinkedHashSet<AnyQuery>(querySpecifications.size() + vacuousQueries.size());
+		var mutableAllQueries = LinkedHashSet.<AnyQuery>newLinkedHashSet(
+				querySpecifications.size() + vacuousQueries.size());
 		mutableAllQueries.addAll(querySpecifications.keySet());
 		mutableAllQueries.addAll(vacuousQueries);
 		this.allQueries = Collections.unmodifiableSet(mutableAllQueries);

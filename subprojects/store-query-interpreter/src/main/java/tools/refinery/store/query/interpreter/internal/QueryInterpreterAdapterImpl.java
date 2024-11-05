@@ -47,7 +47,7 @@ public class QueryInterpreterAdapterImpl implements QueryInterpreterAdapter, Mod
 		).prepare(queryEngine);
 		queryEngine.flushChanges();
 		var vacuousQueries = storeAdapter.getVacuousQueries();
-		resultSets = new LinkedHashMap<>(querySpecifications.size() + vacuousQueries.size());
+		resultSets = LinkedHashMap.newLinkedHashMap(querySpecifications.size() + vacuousQueries.size());
 		for (var entry : querySpecifications.entrySet()) {
 			var rawPatternMatcher = queryEngine.getMatcher(entry.getValue());
 			var query = entry.getKey();
@@ -61,15 +61,15 @@ public class QueryInterpreterAdapterImpl implements QueryInterpreterAdapter, Mod
 	}
 
 	private <T> ResultSet<T> createResultSet(Query<T> query, RawPatternMatcher matcher) {
-		if (query instanceof RelationalQuery relationalQuery) {
-			@SuppressWarnings("unchecked")
-			var resultSet = (ResultSet<T>) new InterpretedRelationalMatcher(this, relationalQuery, matcher);
-			return resultSet;
-		} else if (query instanceof FunctionalQuery<T> functionalQuery) {
-			return new InterpretedFunctionalMatcher<>(this, functionalQuery, matcher);
-		} else {
-			throw new IllegalArgumentException("Unknown query: " + query);
-		}
+		return switch (query) {
+			case RelationalQuery relationalQuery -> {
+				@SuppressWarnings("unchecked")
+				var resultSet = (ResultSet<T>) new InterpretedRelationalMatcher(this, relationalQuery, matcher);
+				yield resultSet;
+			}
+			case FunctionalQuery<T> functionalQuery ->
+					new InterpretedFunctionalMatcher<>(this, functionalQuery, matcher);
+		};
 	}
 
 	@Override
