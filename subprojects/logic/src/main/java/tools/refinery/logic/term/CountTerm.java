@@ -10,7 +10,7 @@ import tools.refinery.logic.substitution.Substitution;
 
 import java.util.List;
 
-public class CountTerm extends AbstractCallTerm<Integer> {
+public class CountTerm extends AbstractCountTerm<Integer> {
 	public CountTerm(Constraint target, List<Variable> arguments) {
 		super(Integer.class, target, arguments);
 	}
@@ -26,20 +26,7 @@ public class CountTerm extends AbstractCallTerm<Integer> {
 	}
 
 	@Override
-	public String toString() {
-		var builder = new StringBuilder();
-		builder.append("count");
-		builder.append(' ');
-		builder.append(getTarget().toReferenceString());
-		builder.append('(');
-		var argumentIterator = getArguments().iterator();
-		if (argumentIterator.hasNext()) {
-			builder.append(argumentIterator.next());
-			while (argumentIterator.hasNext()) {
-				builder.append(", ").append(argumentIterator.next());
-			}
-		}
-		builder.append(')');
-		return builder.toString();
+	protected String operatorName() {
+		return "count";
 	}
 }

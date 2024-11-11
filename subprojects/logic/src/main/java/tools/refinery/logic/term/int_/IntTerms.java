@@ -10,7 +10,6 @@ import tools.refinery.logic.term.ConstantTerm;
 import tools.refinery.logic.term.ExtremeValueAggregator;
 import tools.refinery.logic.term.Term;
 import tools.refinery.logic.term.comparable.*;
-import tools.refinery.logic.term.comparable.*;
 
 import java.util.Comparator;
 
