@@ -14,16 +14,16 @@ import {
 
 import PWAStore from './PWAStore';
 import type EditorStore from './editor/EditorStore';
-import ExportSettingsScotre from './graph/export/ExportSettingsStore';
+import ExportSettingsStore from './graph/export/ExportSettingsStore';
 import Compressor from './persistence/Compressor';
 import ThemeStore from './theme/ThemeStore';
 
 const log = getLogger('RootStore');
 
 export default class RootStore {
-  private readonly compressor = new Compressor((text) =>
-    this.setInitialValue(text),
-  );
+  private readonly insideIDE = 'refineryEclipseHostAPI' in window;
+
+  private readonly compressor: Compressor | undefined;
 
   private initialValue: string | undefined;
 
@@ -35,16 +35,20 @@ export default class RootStore {
 
   readonly themeStore: ThemeStore;
 
-  readonly exportSettingsStore: ExportSettingsScotre;
+  readonly exportSettingsStore: ExportSettingsStore;
 
   disposed = false;
 
   private titleReaction: IReactionDisposer | undefined;
 
   constructor() {
+    if (!this.insideIDE) {
+      // No need to update the location hash inside an IDE.
+      this.compressor = new Compressor((text) => this.setInitialValue(text));
+    }
     this.pwaStore = new PWAStore();
     this.themeStore = new ThemeStore();
-    this.exportSettingsStore = new ExportSettingsScotre();
+    this.exportSettingsStore = new ExportSettingsStore();
     makeAutoObservable<
       RootStore,
       'compressor' | 'editorStoreClass' | 'titleReaction'
@@ -56,6 +60,15 @@ export default class RootStore {
       exportSettingsStore: false,
       titleReaction: false,
     });
+    if ('refineryEclipseHostAPI' in window) {
+      const responseString: string | null = window.refineryEclipseHostAPI(
+        JSON.stringify({ request: 'getContents' }),
+      );
+      if (typeof responseString === 'string') {
+        const response: unknown = JSON.parse(responseString);
+        this.initialValue = String(response);
+      }
+    }
     (async () => {
       const { default: EditorStore } = await import('./editor/EditorStore');
       runInAction(() => {
@@ -70,7 +83,7 @@ export default class RootStore {
     })().catch((error) => {
       log.error('Failed to load EditorStore', error);
     });
-    this.compressor.decompressInitial();
+    this.compressor?.decompressInitial();
   }
 
   private setInitialValue(initialValue: string): void {
@@ -80,9 +93,13 @@ export default class RootStore {
       const editorStore = new EditorStore(
         this.initialValue,
         this.pwaStore,
-        (text) => this.compressor.compress(text),
+        (text) => this.compressor?.compress(text),
       );
       this.editorStore = editorStore;
+      if (this.insideIDE) {
+        // No need to update the title inside an IDE.
+        return;
+      }
       this.titleReaction?.();
       this.titleReaction = autorun(() => {
         const { simpleName, unsavedChanges } = editorStore;
@@ -105,7 +122,7 @@ export default class RootStore {
     }
     this.titleReaction?.();
     this.editorStore?.dispose();
-    this.compressor.dispose();
+    this.compressor?.dispose();
     this.disposed = true;
   }
 }

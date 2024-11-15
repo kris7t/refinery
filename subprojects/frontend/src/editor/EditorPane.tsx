@@ -38,7 +38,7 @@ function EditorLoading(): JSX.Element {
 }
 
 export default observer(function EditorPane(): JSX.Element {
-  const { editorStore } = useRootStore();
+  const { editorStore, themeStore } = useRootStore();
   const { width, ref } = useResizeDetector();
 
   return (
@@ -55,7 +55,7 @@ export default observer(function EditorPane(): JSX.Element {
           },
         }}
       >
-        <EditorButtons editorStore={editorStore} />
+        <EditorButtons editorStore={editorStore} themeStore={themeStore} />
       </Toolbar>
       <Box display="flex" flexGrow={1} flexShrink={1} overflow="auto">
         {editorStore === undefined ? (

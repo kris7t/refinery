@@ -27,6 +27,7 @@ import MuiTooltip from '@mui/material/Tooltip';
 import { observer } from 'mobx-react-lite';
 
 import Tooltip from '../Tooltip';
+import type ThemeStore from '../theme/ThemeStore';
 
 import ConnectButton from './ConnectButton';
 import type EditorStore from './EditorStore';
@@ -48,20 +49,24 @@ function getLintIcon(severity: Diagnostic['severity'] | undefined) {
 
 export default observer(function EditorButtons({
   editorStore,
+  themeStore,
 }: {
   editorStore: EditorStore | undefined;
+  themeStore: ThemeStore | undefined;
 }): JSX.Element {
   return (
     <Stack direction="row" flexGrow={1}>
-      <Tooltip title="Open">
-        <IconButton
-          disabled={editorStore === undefined}
-          onClick={() => editorStore?.openFile()}
-          color="inherit"
-        >
-          <FileOpenIcon fontSize="small" />
-        </IconButton>
-      </Tooltip>
+      {!themeStore?.insideIDE && (
+        <Tooltip title="Open">
+          <IconButton
+            disabled={editorStore === undefined}
+            onClick={() => editorStore?.openFile()}
+            color="inherit"
+          >
+            <FileOpenIcon fontSize="small" />
+          </IconButton>
+        </Tooltip>
+      )}
       <Tooltip title="Save">
         <IconButton
           disabled={!editorStore?.unsavedChanges}
@@ -71,7 +76,7 @@ export default observer(function EditorButtons({
           <SaveIcon fontSize="small" />
         </IconButton>
       </Tooltip>
-      {'showSaveFilePicker' in window && (
+      {('showSaveFilePicker' in window || themeStore?.insideIDE) && (
         <Tooltip title={`Save as\u2026`}>
           <IconButton
             disabled={editorStore === undefined}

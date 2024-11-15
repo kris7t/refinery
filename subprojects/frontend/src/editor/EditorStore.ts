@@ -42,6 +42,7 @@ import EditorErrors from './EditorErrors';
 import GeneratedModelStore from './GeneratedModelStore';
 import LintPanelStore from './LintPanelStore';
 import SearchPanelStore from './SearchPanelStore';
+import connectToEclipse, { type EclipseConnector } from './connectToEclipse';
 import createEditorState, {
   createHistoryExtension,
   historyCompartment,
@@ -63,12 +64,7 @@ const FILE_PICKER_OPTIONS: FilePickerOptions = {
     {
       description: 'Refinery files',
       accept: {
-        [REFINERY_CONTENT_TYPE]: [
-          '.problem',
-          '.PROBLEM',
-          '.refinery',
-          '.REFINERY',
-        ],
+        [REFINERY_CONTENT_TYPE]: ['.problem', '.refinery'],
       },
     },
   ],
@@ -80,6 +76,8 @@ export default class EditorStore {
   state: EditorState;
 
   private client: XtextClient | undefined;
+
+  private eclipseConnector: EclipseConnector | undefined;
 
   view: EditorView | undefined;
 
@@ -158,6 +156,7 @@ export default class EditorStore {
       goToDefinition: false,
       formatText: false,
     });
+    this.eclipseConnector = connectToEclipse(this);
   }
 
   get opened(): boolean {
@@ -378,9 +377,13 @@ export default class EditorStore {
     log.debug('Redo', this.doStateCommand(redo));
   }
 
-  toggleLineNumbers(): void {
-    this.showLineNumbers = !this.showLineNumbers;
+  setShowLineNumbers(showLineNumbers: boolean): void {
+    this.showLineNumbers = showLineNumbers;
     log.debug('Show line numbers', this.showLineNumbers);
+  }
+
+  toggleLineNumbers(): void {
+    this.setShowLineNumbers(!this.showLineNumbers);
   }
 
   toggleColorIdentifiers(): void {
@@ -432,6 +435,7 @@ export default class EditorStore {
   }
 
   dispose(): void {
+    this.eclipseConnector?.dispose();
     this.client?.dispose();
     this.delayedErrors.dispose();
     this.disposed = true;
@@ -536,7 +540,7 @@ export default class EditorStore {
     return true;
   }
 
-  private clearUnsavedChanges(): void {
+  clearUnsavedChanges(): void {
     this.unsavedChanges = false;
   }
 
@@ -572,6 +576,10 @@ export default class EditorStore {
     if (!this.unsavedChanges) {
       return false;
     }
+    if (this.eclipseConnector !== undefined) {
+      this.eclipseConnector.save();
+      return true;
+    }
     if (this.fileHandle === undefined) {
       return this.saveFileAs();
     }
@@ -582,6 +590,10 @@ export default class EditorStore {
   }
 
   saveFileAs(): boolean {
+    if (this.eclipseConnector !== undefined) {
+      this.eclipseConnector.saveAs();
+      return true;
+    }
     const blob = new Blob([this.state.sliceDoc()], {
       type: REFINERY_CONTENT_TYPE,
     });

@@ -4,7 +4,7 @@
  * SPDX-License-Identifier: EPL-2.0
  */
 
-import { makeAutoObservable } from 'mobx';
+import { makeAutoObservable, runInAction } from 'mobx';
 
 export enum ThemePreference {
   System,
@@ -17,6 +17,8 @@ export type SelectedPane = 'code' | 'graph' | 'table';
 export default class ThemeStore {
   preference = ThemePreference.System;
 
+  insideIDE = false;
+
   systemDarkMode: boolean;
 
   showCode = true;
@@ -26,10 +28,15 @@ export default class ThemeStore {
   showTable = false;
 
   constructor() {
+    if ('refineryEclipseHostAPI' in window) {
+      this.insideIDE = true;
+    }
     const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
     this.systemDarkMode = mediaQuery.matches;
     mediaQuery.addEventListener('change', (event) => {
-      this.systemDarkMode = event.matches;
+      runInAction(() => {
+        this.systemDarkMode = event.matches;
+      });
     });
     makeAutoObservable(this, {
       isShowing: false,

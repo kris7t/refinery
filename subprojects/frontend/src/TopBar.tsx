@@ -164,11 +164,13 @@ export default observer(function TopBar(): JSX.Element {
         <Typography variant="h6" component="h1" pl={1}>
           Refinery {import.meta.env.DEV && <DevModeBadge>Dev</DevModeBadge>}
         </Typography>
-        {large && editorStore?.simpleName !== undefined && (
-          <FileName unsavedChanges={editorStore.unsavedChanges}>
-            {editorStore.simpleName}
-          </FileName>
-        )}
+        {large &&
+          editorStore?.simpleName !== undefined &&
+          !themeStore?.insideIDE && (
+            <FileName unsavedChanges={editorStore.unsavedChanges}>
+              {editorStore.simpleName}
+            </FileName>
+          )}
         <Stack direction="row" alignItems="center" flexGrow={1} marginLeft={1}>
           {medium && !large && (
             <PaneButtons themeStore={themeStore} hideLabel />
@@ -190,7 +192,7 @@ export default observer(function TopBar(): JSX.Element {
           </Stack>
         )}
         <Stack direction="row" marginLeft={1} gap={1} alignItems="center">
-          {veryLarge && (
+          {veryLarge && !themeStore.insideIDE && (
             <Stack direction="row" alignItems="center">
               <Tooltip title="Refinery home page">
                 <IconButton
@@ -228,7 +230,7 @@ export default observer(function TopBar(): JSX.Element {
               hideWarnings={!extraLarge}
             />
           </ButtonStack>
-          <ToggleDarkModeButton />
+          {!themeStore?.insideIDE && <ToggleDarkModeButton />}
         </Stack>
       </Toolbar>
     </AppBar>
