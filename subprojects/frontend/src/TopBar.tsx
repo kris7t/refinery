@@ -17,7 +17,7 @@ import { styled, useTheme } from '@mui/material/styles';
 import useMediaQuery from '@mui/material/useMediaQuery';
 import { throttle } from 'lodash-es';
 import { observer } from 'mobx-react-lite';
-import { useEffect, useMemo, useState } from 'react';
+import { MouseEventHandler, useEffect, useMemo, useState } from 'react';
 
 import PaneButtons from './PaneButtons';
 import { useRootStore } from './RootStoreProvider';
@@ -131,6 +131,19 @@ export default observer(function TopBar(): JSX.Element {
   const veryLarge = useMediaQuery(breakpoints.up('lg'));
   const extraLarge = useMediaQuery(breakpoints.up('xl'));
 
+  const openLink: MouseEventHandler<HTMLAnchorElement> = (event) => {
+    if ('refineryEclipseHostAPI' in window) {
+      event.preventDefault();
+      const { href } = event.currentTarget;
+      window.refineryEclipseHostAPI(
+        JSON.stringify({
+          request: 'openLink',
+          href,
+        }),
+      );
+    }
+  };
+
   return (
     <AppBar
       position="static"
@@ -192,12 +205,13 @@ export default observer(function TopBar(): JSX.Element {
           </Stack>
         )}
         <Stack direction="row" marginLeft={1} gap={1} alignItems="center">
-          {veryLarge && !themeStore.insideIDE && (
+          {veryLarge && (
             <Stack direction="row" alignItems="center">
               <Tooltip title="Refinery home page">
                 <IconButton
                   href="https://refinery.tools/"
                   target="_blank"
+                  onClick={openLink}
                   color="inherit"
                 >
                   <HomeIcon />
@@ -207,15 +221,17 @@ export default observer(function TopBar(): JSX.Element {
                 <IconButton
                   href="https://refinery.tools/learn/"
                   target="_blank"
+                  onClick={openLink}
                   color="inherit"
                 >
                   <BookIcon />
                 </IconButton>
               </Tooltip>
-              <Tooltip title="Check us out at GitHub">
+              <Tooltip title="Check us out on GitHub">
                 <IconButton
                   href="https://github.com/graphs4value/refinery"
                   target="_blank"
+                  onClick={openLink}
                   color="inherit"
                 >
                   <GitHubIcon />

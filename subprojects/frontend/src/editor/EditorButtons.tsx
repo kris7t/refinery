@@ -57,55 +57,57 @@ export default observer(function EditorButtons({
   return (
     <Stack direction="row" flexGrow={1}>
       {!themeStore?.insideIDE && (
-        <Tooltip title="Open">
-          <IconButton
-            disabled={editorStore === undefined}
-            onClick={() => editorStore?.openFile()}
-            color="inherit"
-          >
-            <FileOpenIcon fontSize="small" />
-          </IconButton>
-        </Tooltip>
+        <>
+          <Tooltip title="Open">
+            <IconButton
+              disabled={editorStore === undefined}
+              onClick={() => editorStore?.openFile()}
+              color="inherit"
+            >
+              <FileOpenIcon fontSize="small" />
+            </IconButton>
+          </Tooltip>
+          <Tooltip title="Save">
+            <IconButton
+              disabled={!editorStore?.unsavedChanges}
+              onClick={() => editorStore?.saveFile()}
+              color="inherit"
+            >
+              <SaveIcon fontSize="small" />
+            </IconButton>
+          </Tooltip>
+          {'showSaveFilePicker' in window && (
+            <Tooltip title="Save as">
+              <IconButton
+                disabled={editorStore === undefined}
+                onClick={() => editorStore?.saveFileAs()}
+                color="inherit"
+              >
+                <SaveAsIcon fontSize="small" />
+              </IconButton>
+            </Tooltip>
+          )}
+          <Tooltip title="Undo">
+            <IconButton
+              disabled={!editorStore?.canUndo}
+              onClick={() => editorStore?.undo()}
+              color="inherit"
+              sx={{ ml: 1 }}
+            >
+              <UndoIcon fontSize="small" />
+            </IconButton>
+          </Tooltip>
+          <Tooltip title="Redo">
+            <IconButton
+              disabled={!editorStore?.canRedo}
+              onClick={() => editorStore?.redo()}
+              color="inherit"
+            >
+              <RedoIcon fontSize="small" />
+            </IconButton>
+          </Tooltip>
+        </>
       )}
-      <Tooltip title="Save">
-        <IconButton
-          disabled={!editorStore?.unsavedChanges}
-          onClick={() => editorStore?.saveFile()}
-          color="inherit"
-        >
-          <SaveIcon fontSize="small" />
-        </IconButton>
-      </Tooltip>
-      {('showSaveFilePicker' in window || themeStore?.insideIDE) && (
-        <Tooltip title="Save as">
-          <IconButton
-            disabled={editorStore === undefined}
-            onClick={() => editorStore?.saveFileAs()}
-            color="inherit"
-          >
-            <SaveAsIcon fontSize="small" />
-          </IconButton>
-        </Tooltip>
-      )}
-      <Tooltip title="Undo">
-        <IconButton
-          disabled={!editorStore?.canUndo}
-          onClick={() => editorStore?.undo()}
-          color="inherit"
-          sx={{ ml: 1 }}
-        >
-          <UndoIcon fontSize="small" />
-        </IconButton>
-      </Tooltip>
-      <Tooltip title="Redo">
-        <IconButton
-          disabled={!editorStore?.canRedo}
-          onClick={() => editorStore?.redo()}
-          color="inherit"
-        >
-          <RedoIcon fontSize="small" />
-        </IconButton>
-      </Tooltip>
       <ToggleButtonGroup size="small" className="rounded" sx={{ mx: 1 }}>
         <MuiTooltip title="Line numbers">
           <ToggleButton
