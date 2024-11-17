@@ -12,6 +12,8 @@ import {
   type PluginValue,
 } from '@codemirror/view';
 
+import setSelectionEnabled from '../utils/setSelectionEnabled';
+
 import { getDiagnostics } from './exposeDiagnostics';
 import findOccurrences from './findOccurrences';
 import normalizeWheel from './normalizeWheel';
@@ -114,6 +116,7 @@ class ScrollbarsPlugin implements PluginValue {
       }
       this.rightThumb.classList.remove('cm-thumb-active');
       this.rightTrack.releasePointerCapture(event.pointerId);
+      setSelectionEnabled(true);
       this.scrollingRight = undefined;
     });
     this.rightTrack.addEventListener('wheel', (event) => {
@@ -167,6 +170,7 @@ class ScrollbarsPlugin implements PluginValue {
       }
       this.bottomThumb.classList.remove('cm-thumb-active');
       this.bottomTrack.releasePointerCapture(event.pointerId);
+      setSelectionEnabled(true);
       this.scrollingBottom = undefined;
     });
     this.bottomTrack.addEventListener('wheel', (event) => {
@@ -231,6 +235,7 @@ class ScrollbarsPlugin implements PluginValue {
     if (this.scrollingRight !== undefined) {
       return;
     }
+    setSelectionEnabled(false);
     this.scrollingRight = event.pointerId;
     this.previousRight = event.clientY;
     this.rightTrack.setPointerCapture(event.pointerId);
@@ -241,6 +246,7 @@ class ScrollbarsPlugin implements PluginValue {
     if (this.scrollingBottom !== undefined) {
       return;
     }
+    setSelectionEnabled(false);
     this.scrollingBottom = event.pointerId;
     this.previousBottom = event.clientX;
     this.bottomTrack.setPointerCapture(event.pointerId);

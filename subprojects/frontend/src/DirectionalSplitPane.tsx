@@ -1,5 +1,5 @@
 /*
- * SPDX-FileCopyrightText: 2021-2023 The Refinery Authors <https://refinery.tools/>
+ * SPDX-FileCopyrightText: 2021-2024 The Refinery Authors <https://refinery.tools/>
  *
  * SPDX-License-Identifier: EPL-2.0
  */
@@ -11,6 +11,8 @@ import Stack from '@mui/material/Stack';
 import { alpha, useTheme } from '@mui/material/styles';
 import { useCallback, useRef, useState } from 'react';
 import { useResizeDetector } from 'react-resize-detector';
+
+import setSelectionEnabled from './utils/setSelectionEnabled';
 
 export default function DirectionalSplitPane({
   primary: left,
@@ -149,6 +151,7 @@ export default function DirectionalSplitPane({
               return;
             }
             sliderRef.current?.setPointerCapture(event.pointerId);
+            setSelectionEnabled(false);
             setResizing(event.pointerId);
           }}
           onPointerUp={(event) => {
@@ -165,6 +168,7 @@ export default function DirectionalSplitPane({
               // also allow resetting the split by snapping to the middle.
               setFraction(snapPosition);
             }
+            setSelectionEnabled(true);
             setResizing(undefined);
           }}
           onPointerMove={(event) => {
