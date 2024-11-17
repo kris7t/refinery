@@ -81,7 +81,10 @@ function ExportPanel({
   svgContainer: HTMLElement | undefined;
   dialog: boolean;
 }): JSX.Element {
-  const { exportSettingsStore } = useRootStore();
+  const {
+    exportSettingsStore,
+    themeStore: { insideIDE },
+  } = useRootStore();
 
   const icon = useCallback(
     (show: boolean) =>
@@ -106,7 +109,7 @@ function ExportPanel({
               });
           }}
         >
-          Download
+          {insideIDE ? 'Save as' : 'Download'}
         </Button>
         {'write' in navigator.clipboard && format === 'png' && (
           <Button
@@ -126,7 +129,7 @@ function ExportPanel({
         )}
       </>
     ),
-    [svgContainer, graph, exportSettingsStore, format, emptyGraph],
+    [svgContainer, graph, exportSettingsStore, format, emptyGraph, insideIDE],
   );
 
   return (

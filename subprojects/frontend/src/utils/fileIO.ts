@@ -65,6 +65,23 @@ export async function saveBlob(
   name: string,
   options: FilePickerOptions,
 ): Promise<OpenResult | undefined> {
+  if ('refineryEclipseHostAPI' in window) {
+    const fileReader = new FileReader();
+    const url = await new Promise<string>((resolve, reject) => {
+      fileReader.onloadend = () => resolve(fileReader.result as string);
+      fileReader.onerror = () =>
+        reject(fileReader.error ?? new Error('Unknown error'));
+      fileReader.readAsDataURL(blob);
+    });
+    window.refineryEclipseHostAPI(
+      JSON.stringify({
+        request: 'saveFile',
+        data: url.substring(url.indexOf(',') + 1),
+        name,
+      }),
+    );
+    return undefined;
+  }
   if ('showSaveFilePicker' in window) {
     const handle = await window.showSaveFilePicker({
       ...options,

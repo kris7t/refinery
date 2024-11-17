@@ -77,7 +77,7 @@ export default observer(function EditorButtons({
         </IconButton>
       </Tooltip>
       {('showSaveFilePicker' in window || themeStore?.insideIDE) && (
-        <Tooltip title={`Save as\u2026`}>
+        <Tooltip title="Save as">
           <IconButton
             disabled={editorStore === undefined}
             onClick={() => editorStore?.saveFileAs()}
