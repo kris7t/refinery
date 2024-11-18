@@ -24,7 +24,8 @@ public class SecurityHeadersFilter implements Filter {
 					"img-src 'self' data: blob:; " +
 					"font-src 'self'; " +
 					// Fetch data:application/octet-stream;base64 URIs to unpack compressed URL fragments.
-					"connect-src 'self' data:; " +
+					// Allow communication with Eclipse via swt://browserfunction callbacks.
+					"connect-src 'self' data: swt://browserfunction; " +
 					"manifest-src 'self'; " +
 					"worker-src 'self' blob:;");
 			httpResponse.setHeader("X-Content-Type-Options", "nosniff");
