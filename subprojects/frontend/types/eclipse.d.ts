@@ -8,4 +8,6 @@ interface Window {
   readonly refineryEclipseHostAPI?: (data: string) => string | null;
 
   refineryEclipsePageAPI?: (data: unknown) => void;
+
+  refineryEclipsePageStart?: () => void;
 }

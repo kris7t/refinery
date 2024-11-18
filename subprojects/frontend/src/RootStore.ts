@@ -66,7 +66,9 @@ export default class RootStore {
       );
       if (typeof responseString === 'string') {
         const response: unknown = JSON.parse(responseString);
-        this.initialValue = String(response);
+        runInAction(() => {
+          this.initialValue = String(response);
+        });
       }
     }
     (async () => {
