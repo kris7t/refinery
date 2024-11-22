@@ -70,7 +70,7 @@ function start() {
   }
 }
 
-if (window.location.hash === '#delayedStart') {
+if (window.location.hash === '#eclipse') {
   if ('refineryEclipseHostAPI' in window) {
     window.refineryEclipsePageStart = () => {
       // Nothing to start manually, but let the polling loop injected by Eclipse exit gracefully.

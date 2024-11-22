@@ -63,6 +63,7 @@ export function createHistoryExtension(): Extension {
 
 export default function createEditorState(
   initialValue: string,
+  insideIDE: boolean,
   store: EditorStore,
 ): EditorState {
   return EditorState.create({
@@ -131,13 +132,29 @@ export default function createEditorState(
       scrollbarsExtension(),
       keymap.of([
         { key: 'Mod-Shift-f', run: () => store.formatText() },
-        { key: 'Mod-o', run: () => store.openFile() },
-        {
-          key: 'Mod-s',
-          run: () => store.saveFile(),
-          shift: () => store.saveFileAs(),
-          preventDefault: true,
-        },
+        ...(insideIDE
+          ? [
+              'Mod-o',
+              'Mod-s',
+              'Mod-z',
+              'Mod-y',
+              'Mod-Shift-z',
+              'Ctrl-Shift-z',
+            ].map((key) => ({
+              key,
+              // Inside Eclipse, these keybinds are handled by the command framework.
+              run: () => true,
+              preventDefault: true,
+            }))
+          : [
+              { key: 'Mod-o', run: () => store.openFile() },
+              {
+                key: 'Mod-s',
+                run: () => store.saveFile(),
+                shift: () => store.saveFileAs(),
+                preventDefault: true,
+              },
+            ]),
         ...closeBracketsKeymap,
         ...completionKeymap,
         ...foldKeymap,
@@ -156,7 +173,8 @@ export default function createEditorState(
         // Override keys in `searchKeymap` to go through the `EditorStore`.
         {
           key: 'Mod-f',
-          run: () => store.searchPanel.open(),
+          // Inside Eclipse, `Mod-f` is handled by the command framework.
+          run: () => (insideIDE ? true : store.searchPanel.open()),
           scope: 'editor search-panel',
         },
         {

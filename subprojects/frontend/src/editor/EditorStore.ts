@@ -8,7 +8,13 @@ import type {
   CompletionContext,
   CompletionResult,
 } from '@codemirror/autocomplete';
-import { redo, redoDepth, undo, undoDepth } from '@codemirror/commands';
+import {
+  isolateHistory,
+  redo,
+  redoDepth,
+  undo,
+  undoDepth,
+} from '@codemirror/commands';
 import {
   type Diagnostic,
   setDiagnostics,
@@ -124,10 +130,11 @@ export default class EditorStore {
   constructor(
     initialValue: string,
     pwaStore: PWAStore,
+    insideIDE: boolean,
     onUpdate: (text: string) => void,
   ) {
     this.id = nanoid();
-    this.state = createEditorState(initialValue, this);
+    this.state = createEditorState(initialValue, insideIDE, this);
     this.delayedErrors = new EditorErrors(this);
     this.searchPanel = new SearchPanelStore(this);
     this.lintPanel = new LintPanelStore(this);
@@ -144,10 +151,11 @@ export default class EditorStore {
       log.error('Failed to load XtextClient', error);
     });
     this.graph = new GraphStore(this);
-    makeAutoObservable<EditorStore, 'client'>(this, {
+    makeAutoObservable<EditorStore, 'client' | 'eclipseConnector'>(this, {
       id: false,
       state: observable.ref,
       client: observable.ref,
+      eclipseConnector: false,
       view: observable.ref,
       searchPanel: false,
       lintPanel: false,
@@ -542,6 +550,23 @@ export default class EditorStore {
 
   clearUnsavedChanges(): void {
     this.unsavedChanges = false;
+  }
+
+  updateContents(newContents: string): void {
+    if (this.state.sliceDoc() === newContents) {
+      return;
+    }
+    this.dispatch({
+      changes: [
+        {
+          from: 0,
+          to: this.state.doc.length,
+          insert: newContents,
+        },
+      ],
+      annotations: [isolateHistory.of('full')],
+    });
+    this.clearUnsavedChanges();
   }
 
   private setFile({ name, handle }: OpenResult): void {

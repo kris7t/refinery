@@ -66,9 +66,9 @@ export default class RootStore {
       );
       if (typeof responseString === 'string') {
         const response: unknown = JSON.parse(responseString);
-        runInAction(() => {
-          this.initialValue = String(response);
-        });
+        this.setInitialValue(String(response));
+      } else {
+        this.setInitialValue('');
       }
     }
     (async () => {
@@ -95,6 +95,7 @@ export default class RootStore {
       const editorStore = new EditorStore(
         this.initialValue,
         this.pwaStore,
+        this.insideIDE,
         (text) => this.compressor?.compress(text),
       );
       this.editorStore = editorStore;

@@ -4,7 +4,7 @@
  * SPDX-License-Identifier: EPL-2.0
  */
 
-import { IReactionDisposer, reaction } from 'mobx';
+import { IReactionDisposer, reaction, runInAction } from 'mobx';
 
 import type EditorStore from './EditorStore';
 
@@ -25,7 +25,7 @@ export class EclipseConnector {
             dirty,
           });
         },
-        { fireImmediately: true },
+        { fireImmediately: false },
       ),
       reaction(
         () => editorStore.canUndo,
@@ -35,7 +35,7 @@ export class EclipseConnector {
             canUndo,
           });
         },
-        { fireImmediately: true },
+        { fireImmediately: false },
       ),
       reaction(
         () => editorStore.canRedo,
@@ -45,11 +45,28 @@ export class EclipseConnector {
             canRedo,
           });
         },
-        { fireImmediately: true },
+        { fireImmediately: false },
       ),
     ];
-    const showLineNumbers = this.hostAPI({ request: 'getShowLineNumbers' });
-    editorStore.setShowLineNumbers(!!showLineNumbers);
+    const startResult = this.hostAPI({
+      request: 'started',
+      dirty: editorStore.unsavedChanges,
+      canUndo: editorStore.canUndo,
+      canRedo: editorStore.canRedo,
+    });
+    if (typeof startResult !== 'object' || startResult === null) {
+      return;
+    }
+    const showLineNumbers =
+      'showLineNumbers' in startResult ? !!startResult.showLineNumbers : false;
+    const contents =
+      'contents' in startResult ? String(startResult.contents) : undefined;
+    runInAction(() => {
+      editorStore.setShowLineNumbers(showLineNumbers);
+      if (contents !== undefined) {
+        editorStore.updateContents(contents);
+      }
+    });
   }
 
   private hostAPI(request: object): unknown {
@@ -68,6 +85,8 @@ export class EclipseConnector {
     let result: object | undefined;
     if (request.request === 'getContents') {
       result = { contents: this.editorStore.state.sliceDoc() };
+    } else if (request.request === 'updateContents' && 'contents' in request) {
+      this.editorStore.updateContents(String(request.contents));
     } else if (request.request === 'clearDirty') {
       this.editorStore.clearUnsavedChanges();
     } else if (request.request === 'undo') {
