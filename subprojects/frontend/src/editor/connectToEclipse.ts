@@ -74,13 +74,13 @@ export class EclipseConnector {
     return result === null ? undefined : JSON.parse(result);
   }
 
-  private pageAPI(request: unknown): void {
+  private pageAPI(request: unknown): string | null {
     if (
       typeof request !== 'object' ||
       request === null ||
       !('request' in request)
     ) {
-      return;
+      return null;
     }
     let result: object | undefined;
     if (request.request === 'getContents') {
@@ -98,9 +98,10 @@ export class EclipseConnector {
     } else {
       result = { error: 'Unknown request' };
     }
-    if (result !== undefined && 'id' in request) {
-      this.hostAPI({ ...result, id: request.id });
+    if (result === undefined) {
+      return null;
     }
+    return JSON.stringify(result);
   }
 
   save(): void {

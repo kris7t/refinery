@@ -7,7 +7,7 @@
 interface Window {
   readonly refineryEclipseHostAPI?: (data: string) => string | null;
 
-  refineryEclipsePageAPI?: (data: unknown) => void;
+  refineryEclipsePageAPI?: (data: unknown) => string | null;
 
   refineryEclipsePageStart?: () => void;
 }
