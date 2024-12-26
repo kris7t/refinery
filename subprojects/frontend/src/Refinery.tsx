@@ -1,5 +1,5 @@
 /*
- * SPDX-FileCopyrightText: 2021-2023 The Refinery Authors <https://refinery.tools/>
+ * SPDX-FileCopyrightText: 2021-2024 The Refinery Authors <https://refinery.tools/>
  *
  * SPDX-License-Identifier: EPL-2.0
  */
@@ -11,13 +11,22 @@ import { SnackbarProvider } from 'notistack';
 import TopBar from './TopBar';
 import UpdateNotification from './UpdateNotification';
 import WorkArea from './WorkArea';
+import AIPane from './ai/AIPane';
 
 export default function Refinery(): JSX.Element {
   return (
     <SnackbarProvider TransitionComponent={Grow}>
       <UpdateNotification />
-      <Stack direction="column" height="100%" overflow="auto">
+      <Stack
+        sx={{
+          position: 'relative',
+          flexDirection: 'column',
+          height: '100%',
+          overflow: 'auto',
+        }}
+      >
         <TopBar />
+        <AIPane />
         <WorkArea />
       </Stack>
     </SnackbarProvider>

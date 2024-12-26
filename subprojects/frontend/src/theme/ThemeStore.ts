@@ -12,7 +12,7 @@ export enum ThemePreference {
   PreferDark,
 }
 
-export type SelectedPane = 'code' | 'graph' | 'table';
+export type SelectedPane = 'code' | 'graph' | 'table' | 'ai';
 
 export default class ThemeStore {
   preference = ThemePreference.System;
@@ -24,6 +24,8 @@ export default class ThemeStore {
   showGraph = true;
 
   showTable = false;
+
+  showAI = false;
 
   constructor() {
     const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
@@ -70,6 +72,9 @@ export default class ThemeStore {
       case 'table':
         this.toggleTable();
         break;
+      case 'ai':
+        this.toggleAI();
+        break;
       default:
         throw new Error(`Unknown pane: ${String(pane)}`);
     }
@@ -83,6 +88,8 @@ export default class ThemeStore {
         return this.showGraph;
       case 'table':
         return this.showTable;
+      case 'ai':
+        return this.showAI;
       default:
         throw new Error(`Unknown pane: ${String(pane)}`);
     }
@@ -92,6 +99,7 @@ export default class ThemeStore {
     if (!this.showGraph && !this.showTable) {
       return;
     }
+    this.hideAI();
     this.showCode = !this.showCode;
   }
 
@@ -99,6 +107,7 @@ export default class ThemeStore {
     if (!this.showCode && !this.showTable) {
       return;
     }
+    this.hideAI();
     this.showGraph = !this.showGraph;
   }
 
@@ -106,7 +115,16 @@ export default class ThemeStore {
     if (!this.showCode && !this.showGraph) {
       return;
     }
+    this.hideAI();
     this.showTable = !this.showTable;
+  }
+
+  toggleAI(): void {
+    this.showAI = !this.showAI;
+  }
+
+  hideAI(): void {
+    this.showAI = false;
   }
 
   get selectedPane(): SelectedPane {
@@ -123,6 +141,12 @@ export default class ThemeStore {
   }
 
   setSelectedPane(pane: SelectedPane, keepCode = true): void {
+    if (pane === 'ai') {
+      // AI pane can never appear on its own.
+      this.showAI = true;
+      return;
+    }
+    this.hideAI();
     this.showCode = pane === 'code' || (keepCode && this.showCode);
     this.showGraph = pane === 'graph';
     this.showTable = pane === 'table';

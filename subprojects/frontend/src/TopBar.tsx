@@ -137,6 +137,7 @@ export default observer(function TopBar(): JSX.Element {
       elevation={0}
       color="transparent"
       sx={(theme) => ({
+        zIndex: 2000,
         background: theme.palette.outer.background,
         borderBottom: `1px solid ${theme.palette.outer.border}`,
         appRegion: 'drag',
@@ -222,9 +223,15 @@ export default observer(function TopBar(): JSX.Element {
             </Stack>
           )}
           <ButtonStack direction="row">
-            {medium && <ConcretizeButton editorStore={editorStore} />}
+            {medium && (
+              <ConcretizeButton
+                editorStore={editorStore}
+                themeStore={themeStore}
+              />
+            )}
             <GenerateButton
               editorStore={editorStore}
+              themeStore={themeStore}
               hideWarnings={!extraLarge}
             />
           </ButtonStack>

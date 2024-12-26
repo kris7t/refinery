@@ -9,6 +9,8 @@ import CloseIcon from '@mui/icons-material/Close';
 import PlayArrowIcon from '@mui/icons-material/PlayArrow';
 import { observer } from 'mobx-react-lite';
 
+import type ThemeStore from '../theme/ThemeStore';
+
 import AnimatedButton from './AnimatedButton';
 import type EditorStore from './EditorStore';
 
@@ -16,9 +18,11 @@ const GENERATE_LABEL = 'Generate';
 
 const GenerateButton = observer(function GenerateButton({
   editorStore,
+  themeStore,
   hideWarnings,
 }: {
   editorStore: EditorStore | undefined;
+  themeStore: ThemeStore;
   hideWarnings?: boolean | undefined;
 }): JSX.Element {
   if (editorStore === undefined) {
@@ -84,7 +88,10 @@ const GenerateButton = observer(function GenerateButton({
     return (
       <AnimatedButton
         aria-label={`Select next diagnostic out of ${summary}`}
-        onClick={() => editorStore.nextDiagnostic()}
+        onClick={() => {
+          themeStore.hideAI();
+          editorStore.nextDiagnostic();
+        }}
         color="error"
         startIcon={<CancelIcon />}
       >
@@ -99,6 +106,7 @@ const GenerateButton = observer(function GenerateButton({
       color={warningCount > 0 ? 'warning' : 'primary'}
       startIcon={<PlayArrowIcon />}
       onClick={(event) => {
+        themeStore.hideAI();
         if (event.shiftKey) {
           editorStore.startModelGeneration(1);
         } else {

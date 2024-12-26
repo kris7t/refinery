@@ -7,18 +7,25 @@
 import CircularProgress from '@mui/material/CircularProgress';
 import { styled } from '@mui/material/styles';
 
-const LoadingRoot = styled('div')(({ theme }) => ({
+const LoadingRoot = styled('div', {
+  name: 'Loading-Root',
+  shouldForwardProp: (propName) => propName !== 'transparent',
+})<{ transparent: boolean }>(({ theme, transparent }) => ({
   width: '100%',
   height: '100%',
   display: 'flex',
   alignItems: 'center',
   justifyContent: 'center',
-  background: theme.palette.outer.background,
+  background: transparent ? 'transparent' : theme.palette.outer.background,
 }));
 
-export default function Loading() {
+export default function Loading({
+  transparent = false,
+}: {
+  transparent?: boolean;
+}): JSX.Element {
   return (
-    <LoadingRoot>
+    <LoadingRoot transparent={transparent}>
       <CircularProgress size={60} color="inherit" />
     </LoadingRoot>
   );
