@@ -5,11 +5,13 @@
  */
 
 import Dialog from '@mui/material/Dialog';
+import Fade, { type FadeProps } from '@mui/material/Fade';
 import IconButton from '@mui/material/IconButton';
 import Paper from '@mui/material/Paper';
-import Slide from '@mui/material/Slide';
+import Slide, { type SlideProps } from '@mui/material/Slide';
 import Tooltip from '@mui/material/Tooltip';
 import { styled } from '@mui/material/styles';
+import useMediaQuery from '@mui/material/useMediaQuery';
 import React, { useCallback, useId, useState } from 'react';
 
 import SlideInDialog from './SlideInDialog';
@@ -35,6 +37,22 @@ const SlideInPanelRoot = styled('div', {
     margin: theme.spacing(1),
   },
 }));
+
+function Transition({
+  prefersReducedMotion,
+  anchor,
+  ...props
+}: {
+  prefersReducedMotion: boolean;
+  anchor: 'left' | 'right';
+} & FadeProps &
+  SlideProps): JSX.Element {
+  return prefersReducedMotion ? (
+    <Fade {...props} />
+  ) : (
+    <Slide direction={anchor === 'left' ? 'right' : 'left'} {...props} />
+  );
+}
 
 export default function SlideInPanel({
   anchor,
@@ -62,6 +80,9 @@ export default function SlideInPanel({
   const id = useId();
   const [show, setShow] = useState(false);
   const close = useCallback(() => setShow(false), []);
+  const prefersReducedMotion = useMediaQuery(
+    '(prefers-reduced-motion: reduce)',
+  );
 
   return (
     <SlideInPanelRoot
@@ -90,8 +111,9 @@ export default function SlideInPanel({
           </SlideInDialog>
         </Dialog>
       ) : (
-        <Slide
-          direction={anchor === 'left' ? 'right' : 'left'}
+        <Transition
+          prefersReducedMotion={prefersReducedMotion}
+          anchor={anchor}
           in={show}
           id={id}
           mountOnEnter
@@ -102,7 +124,7 @@ export default function SlideInPanel({
               {children}
             </SlideInDialog>
           </Paper>
-        </Slide>
+        </Transition>
       )}
     </SlideInPanelRoot>
   );

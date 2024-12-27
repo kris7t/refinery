@@ -6,9 +6,11 @@
 
 import Backdrop from '@mui/material/Backdrop';
 import Box from '@mui/material/Box';
+import Fade, { type FadeProps } from '@mui/material/Fade';
 import Paper from '@mui/material/Paper';
-import Slide from '@mui/material/Slide';
+import Slide, { type SlideProps } from '@mui/material/Slide';
 import { useTheme } from '@mui/material/styles';
+import useMediaQuery from '@mui/material/useMediaQuery';
 import { observer } from 'mobx-react-lite';
 import { Suspense, lazy } from 'react';
 
@@ -19,11 +21,28 @@ const AIArea = lazy(() => import('./AIArea'));
 
 const oversizeTop = 48;
 
+function Transition({
+  prefersReducedMotion,
+  ...props
+}: {
+  prefersReducedMotion: boolean;
+} & FadeProps &
+  SlideProps): JSX.Element {
+  return prefersReducedMotion ? (
+    <Fade {...props} />
+  ) : (
+    <Slide direction="down" {...props} />
+  );
+}
+
 function AIPane(): JSX.Element {
   const { themeStore } = useRootStore();
   const theme = useTheme();
   const topOffset = 65 - oversizeTop;
   const topOffsetSmall = 49 - oversizeTop;
+  const prefersReducedMotion = useMediaQuery(
+    '(prefers-reduced-motion: reduce)',
+  );
 
   return (
     <>
@@ -44,8 +63,8 @@ function AIPane(): JSX.Element {
           },
         }}
       >
-        <Slide
-          direction="down"
+        <Transition
+          prefersReducedMotion={prefersReducedMotion}
           in={themeStore.showAI}
           mountOnEnter
           unmountOnExit
@@ -68,7 +87,7 @@ function AIPane(): JSX.Element {
               <AIArea />
             </Suspense>
           </Paper>
-        </Slide>
+        </Transition>
       </Box>
     </>
   );

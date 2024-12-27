@@ -46,6 +46,9 @@ const PaneButtonGroup = styled(ToggleButtonGroup, {
         transition: theme.transitions.create('width', {
           duration: theme.transitions.duration.standard,
         }),
+        '@media (prefers-reduced-motion: reduce)': {
+          transition: 'none',
+        },
       },
       '&.MuiToggleButtonGroup-grouped': {
         borderTopLeftRadius: theme.shape.borderRadius,
