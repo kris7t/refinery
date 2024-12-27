@@ -94,18 +94,23 @@ const PaneButton = observer(function PaneButton({
   label,
   icon,
   hideLabel,
+  setCircleCoords,
 }: {
   themeStore: ThemeStore;
   value: SelectedPane;
   label: string;
   icon: React.ReactNode;
   hideLabel: boolean;
+  setCircleCoords?: (coords: string) => void;
 }): JSX.Element {
   const button = (
     <ToggleButton
       value={value}
       selected={themeStore.isShowing(value)}
       onClick={(event) => {
+        if (setCircleCoords) {
+          setCircleCoords(`${event.clientX}px ${event.clientY}px`);
+        }
         if (event.shiftKey || event.ctrlKey) {
           themeStore.setSelectedPane(value, event.shiftKey);
         } else {
@@ -122,9 +127,11 @@ const PaneButton = observer(function PaneButton({
 
 function PaneButtons({
   themeStore,
+  setCircleCoords,
   hideLabel,
 }: {
   themeStore: ThemeStore;
+  setCircleCoords: (coords: string) => void;
   hideLabel?: boolean;
 }): JSX.Element {
   const hideLabelOrDefault = hideLabel ?? false;
@@ -162,6 +169,7 @@ function PaneButtons({
           <AutoAwesomeIcon fontSize="small" sx={{ transform: 'scaleX(-1)' }} />
         }
         hideLabel={hideLabelOrDefault}
+        setCircleCoords={setCircleCoords}
       />
     </PaneButtonGroup>
   );

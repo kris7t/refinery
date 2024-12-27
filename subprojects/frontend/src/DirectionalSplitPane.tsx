@@ -8,7 +8,12 @@ import MoreHorizIcon from '@mui/icons-material/MoreHoriz';
 import MoreVertIcon from '@mui/icons-material/MoreVert';
 import Box from '@mui/material/Box';
 import Stack from '@mui/material/Stack';
-import { alpha, useTheme } from '@mui/material/styles';
+import {
+  alpha,
+  type SxProps,
+  type Theme,
+  useTheme,
+} from '@mui/material/styles';
 import { useCallback, useRef, useState } from 'react';
 import { useResizeDetector } from 'react-resize-detector';
 
@@ -17,11 +22,13 @@ export default function DirectionalSplitPane({
   secondary: right,
   primaryOnly: showLeftOnly,
   secondaryOnly: showRightOnly,
+  sx,
 }: {
   primary: React.ReactNode | ((horizontal: boolean) => React.ReactNode);
   secondary: React.ReactNode | ((horizontal: boolean) => React.ReactNode);
   primaryOnly?: boolean;
   secondaryOnly?: boolean;
+  sx?: SxProps<Theme>;
 }): JSX.Element {
   const theme = useTheme();
   const stackRef = useRef<HTMLDivElement | null>(null);
@@ -59,12 +66,15 @@ export default function DirectionalSplitPane({
   return (
     <Stack
       direction={direction}
-      sx={{
-        height: '100%',
-        width: '100%',
-        overflow: 'hidden',
-        position: 'relative',
-      }}
+      sx={[
+        {
+          height: '100%',
+          width: '100%',
+          overflow: 'hidden',
+          position: 'relative',
+        },
+        ...(sx instanceof Array ? sx : [sx ?? {}]),
+      ]}
       ref={ref}
     >
       {!showRightOnly && (

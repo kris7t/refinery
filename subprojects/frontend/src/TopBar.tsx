@@ -13,11 +13,12 @@ import Stack from '@mui/material/Stack';
 import Toolbar from '@mui/material/Toolbar';
 import Tooltip from '@mui/material/Tooltip';
 import Typography from '@mui/material/Typography';
-import { styled, useTheme } from '@mui/material/styles';
+import { getOverlayAlpha, styled, useTheme } from '@mui/material/styles';
 import useMediaQuery from '@mui/material/useMediaQuery';
 import { throttle } from 'lodash-es';
 import { observer } from 'mobx-react-lite';
 import { useEffect, useMemo, useState } from 'react';
+import { useResizeDetector } from 'react-resize-detector';
 
 import PaneButtons from './PaneButtons';
 import { useRootStore } from './RootStoreProvider';
@@ -130,19 +131,58 @@ export default observer(function TopBar(): JSX.Element {
   const large = useMediaQuery(breakpoints.up('md'));
   const veryLarge = useMediaQuery(breakpoints.up('lg'));
   const extraLarge = useMediaQuery(breakpoints.up('xl'));
+  const { showAI } = themeStore;
+  const [circleCoords, setCircleCoords] = useState('50% 50%');
+  const { ref } = useResizeDetector({
+    // Make sure the background doesn't get stuck at the previous position of the AI button.
+    onResize: () => setCircleCoords('50% 50%'),
+  });
 
   return (
     <AppBar
       position="static"
       elevation={0}
       color="transparent"
+      ref={ref}
       sx={(theme) => ({
-        zIndex: 2000,
+        position: 'relative',
+        zIndex: 1200,
         background: theme.palette.outer.background,
-        borderBottom: `1px solid ${theme.palette.outer.border}`,
         appRegion: 'drag',
         '.MuiButtonBase-root': {
           appRegion: 'no-drag',
+        },
+        '&::before': {
+          content: '" "',
+          position: 'absolute',
+          left: 0,
+          top: 0,
+          width: '100%',
+          height: '100%',
+          backgroundColor: theme.palette.background.paper,
+          backgroundImage:
+            theme.palette.mode === 'dark'
+              ? `linear-gradient(
+                  rgba(255, 255, 255, ${getOverlayAlpha(6)}),
+                  rgba(255, 255, 255, ${getOverlayAlpha(6)})
+                )`
+              : 'none',
+          clipPath: `circle(var(--scale) at ${circleCoords})`,
+          '--scale': showAI ? '100%' : '0%',
+          transition: theme.transitions.create('--scale', {
+            duration: showAI
+              ? theme.transitions.duration.enteringScreen
+              : theme.transitions.duration.leavingScreen,
+          }),
+          ['@media (prefers-reduced-motion: reduce)']: {
+            clipPath: 'none',
+            opacity: showAI ? 1 : 0,
+            transition: theme.transitions.create('opacity', {
+              duration: showAI
+                ? theme.transitions.duration.enteringScreen
+                : theme.transitions.duration.leavingScreen,
+            }),
+          },
         },
       })}
     >
@@ -172,7 +212,11 @@ export default observer(function TopBar(): JSX.Element {
         )}
         <Stack direction="row" alignItems="center" flexGrow={1} marginLeft={1}>
           {medium && !large && (
-            <PaneButtons themeStore={themeStore} hideLabel />
+            <PaneButtons
+              themeStore={themeStore}
+              setCircleCoords={setCircleCoords}
+              hideLabel
+            />
           )}
         </Stack>
         {large && (
@@ -187,7 +231,10 @@ export default observer(function TopBar(): JSX.Element {
               transform: 'translateX(-50%)',
             }}
           >
-            <PaneButtons themeStore={themeStore} />
+            <PaneButtons
+              themeStore={themeStore}
+              setCircleCoords={setCircleCoords}
+            />
           </Stack>
         )}
         <Stack direction="row" marginLeft={1} gap={1} alignItems="center">

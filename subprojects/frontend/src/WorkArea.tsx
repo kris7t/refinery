@@ -14,6 +14,7 @@ import EditorPane from './editor/EditorPane';
 export default observer(function WorkArea(): JSX.Element {
   const { themeStore, editorStore } = useRootStore();
   const lintPanelOpen = editorStore?.lintPanel.state ?? false;
+  const { showAI } = themeStore;
 
   return (
     <DirectionalSplitPane
@@ -25,6 +26,14 @@ export default observer(function WorkArea(): JSX.Element {
       )}
       primaryOnly={!themeStore.showGraph && !themeStore.showTable}
       secondaryOnly={!themeStore.showCode}
+      sx={(theme) => ({
+        borderTop: `1px solid ${showAI ? theme.palette.background.default : theme.palette.outer.border}`,
+        transition: theme.transitions.create('border-top-color', {
+          duration: showAI
+            ? theme.transitions.duration.enteringScreen
+            : theme.transitions.duration.leavingScreen,
+        }),
+      })}
     />
   );
 });
