@@ -173,6 +173,7 @@ export default observer(function TopBar(): JSX.Element {
             duration: showAI
               ? theme.transitions.duration.enteringScreen
               : theme.transitions.duration.leavingScreen,
+            easing: 'linear',
           }),
           ['@media (prefers-reduced-motion: reduce)']: {
             clipPath: 'none',

@@ -27,6 +27,40 @@
         initial-value: 0%;
         inherits: false;
       }
+
+      @property --origin-x {
+        syntax: '<length>';
+        inherits: true;
+      }
+
+      @property --origin-y {
+        syntax: '<length>';
+        inherits: true;
+      }
+
+      @keyframes circle-in {
+        from { clip-path: circle(0% at var(--origin-x) var(--origin-y)); }
+        to { clip-path: circle(100% at var(--origin-x) var(--origin-y)); }
+      }
+
+      :root {
+        --origin-x: 50%;
+        --origin-y: 50%;
+      }
+
+      ::view-transition-old(root) {
+        animation: none;
+      }
+
+      ::view-transition-new(root) {
+        animation: 250ms linear both circle-in;
+      }
+
+      @media (prefers-reduced-motion: reduce) {
+        ::view-transition-new(root) {
+          animation: none;
+        }
+      }
     </style>
   </head>
   <body>

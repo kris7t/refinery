@@ -9,6 +9,7 @@ import LightModeOutlinedIcon from '@mui/icons-material/LightModeOutlined';
 import IconButton from '@mui/material/IconButton';
 import Tooltip from '@mui/material/Tooltip';
 import { observer } from 'mobx-react-lite';
+import React from 'react';
 import { flushSync } from 'react-dom';
 
 import { useRootStore } from './RootStoreProvider';
@@ -17,8 +18,10 @@ import getLogger from './utils/getLogger';
 
 const logger = getLogger('ToggleDarkModeButton');
 
-function toggleWithViewTransition(themeStore: ThemeStore): void {
+function toggleWithViewTransition(themeStore: ThemeStore, event: React.MouseEvent): void {
   document.body.classList.add('notransition');
+  document.documentElement.style.setProperty('--origin-x', `${event.clientX}px`);
+  document.documentElement.style.setProperty('--origin-y', `${event.clientY}px`);
   const transition = document.startViewTransition(() => {
     flushSync(() => themeStore.toggleDarkMode());
   });
@@ -44,12 +47,12 @@ export default observer(function ToggleDarkModeButton(): JSX.Element {
   const { themeStore } = useRootStore();
   const { darkMode } = themeStore;
 
-  const callback = () => {
+  const callback = (event: React.MouseEvent) => {
     if (
       'startViewTransition' in document ||
       window.matchMedia('(prefers-reduced-motion: reduce)').matches
     ) {
-      toggleWithViewTransition(themeStore);
+      toggleWithViewTransition(themeStore, event);
     } else {
       toggleWithoutViewTransition(themeStore);
     }
