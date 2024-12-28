@@ -13,7 +13,7 @@ import Stack from '@mui/material/Stack';
 import Toolbar from '@mui/material/Toolbar';
 import Tooltip from '@mui/material/Tooltip';
 import Typography from '@mui/material/Typography';
-import { getOverlayAlpha, styled, useTheme } from '@mui/material/styles';
+import { styled, useTheme } from '@mui/material/styles';
 import useMediaQuery from '@mui/material/useMediaQuery';
 import { throttle } from 'lodash-es';
 import { observer } from 'mobx-react-lite';
@@ -159,21 +159,16 @@ export default observer(function TopBar(): JSX.Element {
           top: 0,
           width: '100%',
           height: '100%',
-          backgroundColor: theme.palette.background.paper,
-          backgroundImage:
-            theme.palette.mode === 'dark'
-              ? `linear-gradient(
-                  rgba(255, 255, 255, ${getOverlayAlpha(6)}),
-                  rgba(255, 255, 255, ${getOverlayAlpha(6)})
-                )`
-              : 'none',
+          background: theme.palette.outer.elevated,
           clipPath: `circle(var(--scale) at ${circleCoords})`,
           '--scale': showAI ? '100%' : '0%',
           transition: theme.transitions.create('--scale', {
             duration: showAI
               ? theme.transitions.duration.enteringScreen
               : theme.transitions.duration.leavingScreen,
-            easing: 'linear',
+            easing: showAI
+              ? theme.transitions.easing.easeIn
+              : theme.transitions.easing.easeOut,
           }),
           ['@media (prefers-reduced-motion: reduce)']: {
             clipPath: 'none',

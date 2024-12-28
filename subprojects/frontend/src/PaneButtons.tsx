@@ -14,6 +14,7 @@ import { alpha, styled } from '@mui/material/styles';
 import { observer } from 'mobx-react-lite';
 
 import Tooltip from './Tooltip';
+import isMac from './editor/isMac';
 import type ThemeStore from './theme/ThemeStore';
 import type { SelectedPane } from './theme/ThemeStore';
 
@@ -108,10 +109,12 @@ const PaneButton = observer(function PaneButton({
       value={value}
       selected={themeStore.isShowing(value)}
       onClick={(event) => {
-        if (setCircleCoords) {
+        if (event.detail !== 0 && setCircleCoords) {
+          // Only set the coordinates if the event is triggered by the pointer (not keyboard),
+          // because we need valid `clientX` and `clientY` values.
           setCircleCoords(`${event.clientX}px ${event.clientY}px`);
         }
-        if (event.shiftKey || event.ctrlKey) {
+        if (event.shiftKey || event.ctrlKey || (isMac && event.metaKey)) {
           themeStore.setSelectedPane(value, event.shiftKey);
         } else {
           themeStore.togglePane(value);

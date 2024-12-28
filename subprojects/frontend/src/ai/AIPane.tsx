@@ -9,7 +9,7 @@ import Box from '@mui/material/Box';
 import Fade, { type FadeProps } from '@mui/material/Fade';
 import Paper from '@mui/material/Paper';
 import Slide, { type SlideProps } from '@mui/material/Slide';
-import { getOverlayAlpha, useTheme } from '@mui/material/styles';
+import { useTheme } from '@mui/material/styles';
 import useMediaQuery from '@mui/material/useMediaQuery';
 import { observer } from 'mobx-react-lite';
 import { Suspense, lazy } from 'react';
@@ -152,13 +152,7 @@ function AIPane(): JSX.Element {
               maxHeight: maxHeightSmall,
               minHeight: `calc(min(${minHeight}, ${maxHeightSmall}))`,
               padding: `calc(${theme.spacing(2)} + ${oversizeTop}px) ${theme.spacing(2)} ${theme.spacing(2)} ${theme.spacing(2)}`,
-              backgroundImage:
-                theme.palette.mode === 'dark'
-                  ? `linear-gradient(
-                  rgba(255, 255, 255, ${getOverlayAlpha(4)}),
-                  rgba(255, 255, 255, ${getOverlayAlpha(4)})
-                )`
-                  : 'none',
+              background: theme.palette.background.default,
               [theme.breakpoints.up('sm')]: {
                 maxHeight,
                 minHeight: `calc(min(${minHeight}, ${maxHeight}))`,
