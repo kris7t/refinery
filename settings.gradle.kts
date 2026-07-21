@@ -12,6 +12,7 @@ include(
 		"chat",
 		"client-js",
 		"docs",
+		"electron",
 		"frontend",
 		"generator",
 		"generator-cli",

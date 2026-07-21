@@ -27,6 +27,7 @@ import MuiTooltip from '@mui/material/Tooltip';
 import { observer } from 'mobx-react-lite';
 
 import Tooltip from '../Tooltip';
+import isElectron from '../utils/isElectron';
 
 import ConnectButton from './ConnectButton';
 import type EditorStore from './EditorStore';
@@ -169,7 +170,7 @@ export default observer(function EditorButtons({
           <FormatPaintIcon fontSize="small" />
         </IconButton>
       </Tooltip>
-      <ConnectButton editorStore={editorStore} />
+      {isElectron || <ConnectButton editorStore={editorStore} />}
     </Stack>
   );
 });

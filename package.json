@@ -21,12 +21,14 @@
     "subprojects/chat",
     "subprojects/client-js",
     "subprojects/docs",
+    "subprojects/electron",
     "subprojects/frontend"
   ],
   "scripts": {
     "chat": "yarn workspace @tools.refinery/chat",
     "client": "yarn workspace @tools.refinery/client",
     "docs": "yarn workspace @tools.refinery/docs",
+    "electron": "yarn workspace @tools.refinery/electron",
     "frontend": "yarn workspace @tools.refinery/frontend",
     "typecheck": "yarn run g:tsc -p tsconfig.json",
     "lint": "yarn run g:lint",
@@ -72,6 +74,9 @@
     "core-js": {
       "built": true
     },
+    "electron-winstaller": {
+      "built": true
+    },
     "esbuild": {
       "built": true
     },
@@ -81,6 +86,7 @@
   },
   "resolutions": {
     "d3-zoom@npm:^3.0.0": "patch:d3-zoom@npm%3A3.0.0#~/.yarn/patches/d3-zoom-npm-3.0.0-18f706a421.patch",
-    "d3-zoom@npm:3": "patch:d3-zoom@npm%3A3.0.0#~/.yarn/patches/d3-zoom-npm-3.0.0-18f706a421.patch"
+    "d3-zoom@npm:3": "patch:d3-zoom@npm%3A3.0.0#~/.yarn/patches/d3-zoom-npm-3.0.0-18f706a421.patch",
+    "app-builder-lib@npm:26.15.7": "patch:app-builder-lib@npm%3A26.15.7#~/.yarn/patches/app-builder-lib-npm-26.15.7-5677bfe17a.patch"
   }
 }

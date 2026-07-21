@@ -7,6 +7,7 @@
 import { Visibility } from '@tools.refinery/client';
 
 import getLogger from '../utils/getLogger';
+import isElectron from '../utils/isElectron';
 
 import {
   type CompressRequest,
@@ -53,7 +54,7 @@ function fromFragment(
 }
 
 export default class Compressor {
-  private readonly worker = new CompressionWorker();
+  private worker: Worker | undefined;
 
   private readonly hashChangeHandler = () => this.updateHash();
 
@@ -66,6 +67,11 @@ export default class Compressor {
   private nextVersion: CompressorVersion = 1;
 
   constructor(private readonly onDecompressed: DecompressCallback) {
+    if (isElectron) {
+      // No hash-based links in Electron, so no need to instantiate the compressor.
+      return;
+    }
+    this.worker = new CompressionWorker();
     this.worker.onerror = (err) => LOG.error({ err }, 'Worker error');
     this.worker.onmessageerror = (err: unknown) =>
       LOG.error({ err }, 'Worker message error');
@@ -111,6 +117,9 @@ export default class Compressor {
   }
 
   compress(text: string, visibility?: Record<string, Visibility>): void {
+    if (isElectron) {
+      // No hash-based links in Electron, so no need to run the compressor.
+    }
     if (visibility === undefined || Object.keys(visibility).length === 0) {
       this.doCompress(1, text);
       return;
@@ -129,7 +138,7 @@ export default class Compressor {
       return;
     }
     this.compressing = true;
-    this.worker.postMessage({
+    this.worker?.postMessage({
       request: 'compress',
       text,
       version,
@@ -153,7 +162,7 @@ export default class Compressor {
 
   dispose(): void {
     window.removeEventListener('hashchange', this.hashChangeHandler);
-    this.worker.terminate();
+    this.worker?.terminate();
   }
 
   private compressionEnded(): void {
@@ -165,6 +174,10 @@ export default class Compressor {
   }
 
   private updateHash(): void {
+    if (!this.worker) {
+      // No hash-based links in Electron, so no need to run the decompressor.
+      return;
+    }
     if (window.location.hash === this.fragment) {
       return;
     }

@@ -1,0 +1,9 @@
+Copyright (c) 2015 Loopline Systems
+Copyright 2026, The Refinery Authors <https://refinery.tools/>
+
+SPDX-License-Identifier: MIT
+
+This file incorporates patches from the Refinery authors.
+
+It implements a workaround for
+https://github.com/electron-userland/electron-builder/issues/10033

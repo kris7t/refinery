@@ -21,6 +21,7 @@ const SlideInDialogRoot = styled('div', {
     overflow: 'hidden',
     display: 'flex',
     flexDirection: 'column',
+    appRegion: 'no-drag',
     '.SlideInDialog-title': {
       display: 'flex',
       flexDirection: 'row',
