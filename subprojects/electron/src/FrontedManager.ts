@@ -1,0 +1,51 @@
+/*
+ * SPDX-FileCopyrightText: 2026 The Refinery Authors <https://refinery.tools/>
+ *
+ * SPDX-License-Identifier: EPL-2.0
+ */
+
+import type { ChildProcess } from 'node:child_process';
+import path from 'node:path';
+
+import ServerManager from './ServerManager';
+import spawn from './utils/spawn';
+
+export default class FrontendManager extends ServerManager {
+  constructor(
+    port: number,
+    private readonly backendHost: string,
+    private readonly backendPort: number,
+  ) {
+    super('FrontendManager', port);
+  }
+
+  protected override spawnChild(): ChildProcess {
+    const yarnwCommand = `.${path.sep}yarnw`;
+    return spawn(
+      yarnwCommand,
+      ['frontend', 'dev', '--logLevel', 'error'],
+      {
+        cwd: path.join(__dirname, '../../../../..'),
+        env: {
+          ...process.env,
+          REFINERY_LISTEN_HOST: FrontendManager.hostname,
+          REFINERY_LISTEN_PORT: String(this.port),
+          REFINERY_API_HOST: this.backendHost,
+          REFINERY_API_PORT: String(this.backendPort),
+        },
+      },
+    );
+  }
+
+  get origin(): string {
+    return `http://${FrontendManager.hostname}:${this.port}`;
+  }
+
+  get address(): string {
+    return `${this.origin}/`;
+  }
+
+  override get healthAddress(): string {
+    return this.address;
+  }
+}

@@ -4,18 +4,16 @@
  * SPDX-License-Identifier: EPL-2.0
  */
 
-import { makeAutoObservable } from 'mobx';
+import { action, makeAutoObservable } from 'mobx';
 
-export enum ThemePreference {
-  System,
-  PreferLight,
-  PreferDark,
-}
+import isElectron from '../utils/isElectron';
+
+export type ThemePreference = 'system' | 'light' | 'dark';
 
 export type SelectedPane = 'code' | 'graph' | 'table' | 'chat';
 
 export default class ThemeStore {
-  preference = ThemePreference.System;
+  preference = 'system';
 
   systemDarkMode: boolean;
 
@@ -33,6 +31,15 @@ export default class ThemeStore {
     mediaQuery.addEventListener('change', (event) => {
       this.systemDarkMode = event.matches;
     });
+    if (window.refinery) {
+      window.refinery.onThemeSourceChange((nextPreference) => {
+        if (this.preference !== nextPreference) {
+          action(() => {
+            this.preference = nextPreference;
+          });
+        }
+      });
+    }
     makeAutoObservable(this, {
       isShowing: false,
     });
@@ -40,9 +47,9 @@ export default class ThemeStore {
 
   get darkMode(): boolean {
     switch (this.preference) {
-      case ThemePreference.PreferLight:
+      case 'light':
         return false;
-      case ThemePreference.PreferDark:
+      case 'dark':
         return true;
       default:
         return this.systemDarkMode;
@@ -50,14 +57,21 @@ export default class ThemeStore {
   }
 
   toggleDarkMode(): void {
+    let nextPreference: ThemePreference;
+    if (isElectron) {
+      // In Electron, `systemDarkMode` comes from `nativeTheme` and already takes the
+      // theme source override we set into account, so we can't rely on it to restore
+      // 'system' theme source preference.
+      nextPreference = this.darkMode ? 'light' : 'dark';
+    }
     if (this.darkMode) {
-      this.preference = this.systemDarkMode
-        ? ThemePreference.PreferLight
-        : ThemePreference.System;
+      nextPreference = this.systemDarkMode ? 'light' : 'system';
     } else {
-      this.preference = this.systemDarkMode
-        ? ThemePreference.System
-        : ThemePreference.PreferDark;
+      nextPreference = this.systemDarkMode ? 'system' : 'dark';
+    }
+    this.preference = nextPreference;
+    if (window.refinery) {
+      window.refinery.setThemeSource(nextPreference);
     }
   }
 
