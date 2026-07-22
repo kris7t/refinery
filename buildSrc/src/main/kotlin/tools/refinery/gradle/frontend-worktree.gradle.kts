@@ -20,6 +20,8 @@ frontend {
 	})
 }
 
+val lastInstallFile = layout.buildDirectory.files("last-yarn-install.txt")
+
 abstract class FrontendPropertiesHandler @Inject constructor(objectFactory: ObjectFactory) {
 	companion object {
 		private const val INSTALLED_NODE_VERSION_PROPERTY = "installedNodeVersion"
@@ -78,6 +80,10 @@ tasks {
 
 	installFrontend {
 		inputs.files("package.json", "yarn.lock")
+		outputs.files(lastInstallFile)
+		doLast {
+			outputs.files.singleFile.outputStream().close()
+		}
 	}
 
 	register("clobberFrontend", Delete::class) {
