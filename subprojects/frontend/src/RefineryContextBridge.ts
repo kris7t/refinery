@@ -21,4 +21,6 @@ export default interface RefineryContextBridge {
   onServerStateChange(callback: ServerStateChangeCallback): void;
   setThemeSource(themeSource: ThemeSource): void;
   onThemeSourceChange(callback: ThemeSourceChangeCallback): void;
+  openDialog(id: string): void;
+  closeDialog(id: string): void;
 }

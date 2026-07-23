@@ -4,7 +4,7 @@
  * SPDX-License-Identifier: EPL-2.0
  */
 
-import { action, makeAutoObservable } from 'mobx';
+import { makeAutoObservable, runInAction } from 'mobx';
 
 import isElectron from '../utils/isElectron';
 
@@ -29,12 +29,14 @@ export default class ThemeStore {
     const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
     this.systemDarkMode = mediaQuery.matches;
     mediaQuery.addEventListener('change', (event) => {
-      this.systemDarkMode = event.matches;
+      runInAction(() => {
+        this.systemDarkMode = event.matches;
+      });
     });
     if (window.refinery) {
       window.refinery.onThemeSourceChange((nextPreference) => {
         if (this.preference !== nextPreference) {
-          action(() => {
+          runInAction(() => {
             this.preference = nextPreference;
           });
         }
