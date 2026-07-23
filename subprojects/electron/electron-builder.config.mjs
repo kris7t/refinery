@@ -4,8 +4,8 @@
  * SPDX-License-Identifier: EPL-2.0
  */
 
-import path from 'node:path';
 import { readFile } from 'node:fs/promises';
+import path from 'node:path';
 
 import rawVersion from './scripts/version.mjs';
 
