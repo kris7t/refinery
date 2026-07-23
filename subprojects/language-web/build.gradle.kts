@@ -50,13 +50,6 @@ application {
 }
 
 tasks {
-	jar {
-		dependsOn(webapp)
-		from(webapp) {
-			into("webapp")
-		}
-	}
-
 	register<JavaExec>("serve") {
 		dependsOn(webapp)
 		val mainRuntimeClasspath = sourceSets.main.map { it.runtimeClasspath }

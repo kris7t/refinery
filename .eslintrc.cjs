@@ -76,6 +76,7 @@ module.exports = {
   },
   ignorePatterns: [
     'build/**/*',
+    'docker/**/*',
     'subprojects/*/build/**/*',
     'subprojects/*/dist/**/*',
     'subprojects/docs/.docusaurus/**/*',

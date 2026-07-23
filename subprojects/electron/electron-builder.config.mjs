@@ -50,6 +50,7 @@ const config = {
     darkModeSupport: true,
   },
   npmRebuild: false,
+  publish: null,
   files: [
     'package.json',
     {

@@ -102,6 +102,7 @@ jobs:
           path: |
             subprojects/**/build/distributions/*.tar
             subprojects/chat/build/esbuild/production/index.mjs
+            subprojects/frontend/build/vite/production/**/*
           compression-level: 0
           retention-days: 5  # No need to preserve for long, since they are uploaded to GHCR
       - name: Build signed Maven repository
