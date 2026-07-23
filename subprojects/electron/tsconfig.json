@@ -6,7 +6,7 @@
 {
   "extends": "../../tsconfig.base.json",
   "compilerOptions": {
-    "lib": ["ES2022"],
+    "lib": ["ES2025"],
     "types": ["node"],
     "emitDeclarationOnly": true,
     "rootDir": "..",
