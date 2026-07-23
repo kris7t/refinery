@@ -60,7 +60,12 @@ tasks {
 
 	var extractBackend = register<RunYarnTaskType>("extractBackend") {
 		dependsOn(installFrontend)
-		dependsOn(assembleFiles)
+		inputs.files(
+			rootProject.file("yarn.lock"),
+			rootProject.file("package.json"),
+			"package.json",
+			fileTree("scripts"),
+		)
 		inputs.files(backendDistribution)
 		outputs.dir(layout.buildDirectory.dir("backend"))
 		outputs.dir(layout.buildDirectory.dir("esbuild/production"))
