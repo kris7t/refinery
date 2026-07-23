@@ -14,11 +14,6 @@ val webapp = configurations.create("webapp") {
 	isCanBeResolved = true
 }
 
-val distTarConfiguration = configurations.create("distTar") {
-	isCanBeConsumed = true
-	isCanBeResolved = false
-}
-
 dependencies {
 	implementation(project(":refinery-generator"))
 	implementation(project(":refinery-language"))
@@ -83,11 +78,5 @@ tasks {
 		standardInput = System.`in`
 		group = "run"
 		description = "Start a Jetty web server serving the Xtext API without assets."
-	}
-}
-
-artifacts {
-	add("distTar", layout.buildDirectory.file("distributions/${name}-${version}.tar")) {
-		builtBy(tasks.distTar)
 	}
 }
