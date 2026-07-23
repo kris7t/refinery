@@ -28,7 +28,7 @@ import GenerateButton from './editor/GenerateButton';
 function useWindowControlsOverlayVisible(): boolean {
   const [windowControlsOverlayVisible, setWindowControlsOverlayVisible] =
     useState(
-      'windowControlsOverlayVisible' in navigator &&
+      'windowControlsOverlay' in navigator &&
         !!navigator.windowControlsOverlay?.visible,
     );
   const updateWindowControlsOverlayVisible = useMemo(
