@@ -13,6 +13,8 @@ const serverStateCallbacks: ServerStateChangeCallback[] = [];
 
 const themeSourceCallbacks: ThemeSourceChangeCallback[] = [];
 
+const openDialogs = new Set<string>();
+
 ipcRenderer.on('refinery:serverStateChanged', (_event, serverState: boolean) => {
   for (const callback of serverStateCallbacks) {
     callback(serverState);
@@ -24,6 +26,10 @@ ipcRenderer.on('refinery:themeSourceChanged', (_event, themeSource: ThemeSource)
     callback(themeSource);
   }
 });
+
+function updateDialogCount() {
+  ipcRenderer.send('refinery:setModalDialogCount', openDialogs.size);
+}
 
 contextBridge.exposeInMainWorld('refinery', {
   async getBackendConfig() {
@@ -49,5 +55,23 @@ contextBridge.exposeInMainWorld('refinery', {
     (ipcRenderer.invoke('refinery:getThemeSource') as Promise<ThemeSource>)
       .then(callback)
       .catch((error) => console.log(error));
+  },
+  openDialog(id) {
+    if (openDialogs.has(id)) {
+      console.error('Duplicate dialog', id);
+    } else {
+      openDialogs.add(id);
+      updateDialogCount();
+    }
+  },
+  closeDialog(id) {
+    if (openDialogs.delete(id)) {
+      updateDialogCount();
+    } else {
+      console.error('Unknown dialog', id);
+    }
   }
 } satisfies RefineryContextBridge);
+
+// Clear the previous dialog count on page reload.
+updateDialogCount();

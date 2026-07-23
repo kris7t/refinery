@@ -4,13 +4,14 @@
  * SPDX-License-Identifier: EPL-2.0
  */
 
-import Dialog from '@mui/material/Dialog';
 import IconButton from '@mui/material/IconButton';
 import Paper from '@mui/material/Paper';
 import Slide from '@mui/material/Slide';
 import Tooltip from '@mui/material/Tooltip';
 import { styled } from '@mui/material/styles';
 import React, { useCallback, useId, useState } from 'react';
+
+import Dialog from '../Dialog';
 
 import SlideInDialog from './SlideInDialog';
 
