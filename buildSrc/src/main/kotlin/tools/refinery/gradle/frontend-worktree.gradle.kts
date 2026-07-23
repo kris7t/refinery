@@ -12,6 +12,7 @@ import java.util.Properties
 
 plugins {
 	id("tools.refinery.gradle.internal.frontend-conventions")
+	id("tools.refinery.gradle.sonarqube")
 }
 
 frontend {
@@ -86,11 +87,16 @@ tasks {
 		}
 	}
 
-	register("clobberFrontend", Delete::class) {
+	register<Delete>("clobberFrontend") {
 		delete(frontend.nodeInstallDirectory)
 		delete(".yarn/cache")
 		delete(".yarn/install-state.gz")
 		delete(".yarn/sdks")
 		delete(".yarn/unplugged")
 	}
+}
+
+sonarqube.properties {
+	property("sonar.nodejs.executable", "${frontend.nodeInstallDirectory.get()}/bin/node")
+	property("sonar.eslint.reportPaths", "${layout.buildDirectory.get()}/eslint.json")
 }
