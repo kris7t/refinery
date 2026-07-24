@@ -4,7 +4,7 @@
  * SPDX-License-Identifier: EPL-2.0
  */
 
-import type { ChildProcess } from 'node:child_process';
+import { ChildProcess } from 'node:child_process';
 import { EventEmitter } from 'node:events';
 
 import { type ProcessLike, treeKillSync } from '@alloc/tree-kill';
@@ -26,6 +26,25 @@ const KILL_TIMEOUT = ms('1s');
  * healthy before giving up.
  */
 const STARTUP_TIMEOUT = ms('5m');
+
+/** A value that may be available synchronously or via a promise. */
+type Awaitable<T> = T | PromiseLike<T>;
+
+/** Teardown callback returned by {@link ServerManager.spawnChild}. */
+type OnStopped = () => void;
+
+/**
+ * A freshly spawned child together with an optional teardown callback.
+ *
+ * `onStopped` runs exactly once after the child has stopped for any reason —
+ * whether it failed to start, exited or crashed, was asked to stop, or had its
+ * spawn aborted before it came up — making it the mirror image of whatever
+ * {@link ServerManager.spawnChild} set up alongside the process.
+ */
+export interface SpawnedChild {
+  readonly child: ChildProcess;
+  readonly onStopped?: OnStopped;
+}
 
 interface StartResolvers {
   readonly resolve: () => void;
@@ -72,17 +91,28 @@ interface StartResolvers {
 type State =
   | { readonly name: 'stopped' }
   | {
+      readonly name: 'spawning';
+      /** Present only for a user-initiated {@link ServerManager.start}. */
+      readonly resolvers: StartResolvers | undefined;
+    }
+  | {
       readonly name: 'starting';
       readonly child: ChildProcess;
+      readonly onStopped: OnStopped | undefined;
       /** Present only for a user-initiated {@link ServerManager.start}. */
       readonly resolvers: StartResolvers | undefined;
       pollTimer: NodeJS.Timeout | undefined;
       startupTimer: NodeJS.Timeout | undefined;
     }
-  | { readonly name: 'started'; readonly child: ChildProcess }
+  | {
+      readonly name: 'started';
+      readonly child: ChildProcess;
+      readonly onStopped: OnStopped | undefined;
+    }
   | {
       readonly name: 'stopping';
       readonly child: ChildProcess;
+      readonly onStopped: OnStopped | undefined;
       readonly killTimer: NodeJS.Timeout;
     }
   | { readonly name: 'restarting'; readonly restartTimer: NodeJS.Timeout };
@@ -107,7 +137,7 @@ export default abstract class ServerManager extends EventEmitter<ServerManagerEv
 
   static readonly hostname = '127.0.0.1';
 
-  private readonly logger: Logger;
+  protected readonly logger: Logger;
 
   constructor(
     name: string,
@@ -143,7 +173,12 @@ export default abstract class ServerManager extends EventEmitter<ServerManagerEv
     });
   }
 
-  protected abstract spawnChild(): ChildProcess;
+  /**
+   * Spawns the underlying process. Return the bare {@link ChildProcess}, or a
+   * {@link SpawnedChild} pairing it with an `onStopped` teardown callback when
+   * the spawn allocates resources that must be released once the child stops.
+   */
+  protected abstract spawnChild(): Awaitable<ChildProcess | SpawnedChild>;
 
   /**
    * Requests a graceful shutdown (`SIGTERM`, escalating to `SIGKILL`) and
@@ -159,13 +194,19 @@ export default abstract class ServerManager extends EventEmitter<ServerManagerEv
         clearTimeout(state.restartTimer);
         this.state = { name: 'stopped' };
         break;
+      case 'spawning':
+        // No child exists yet; the pending spawn observes the state change and
+        // reaps the process if it is already too late to cancel.
+        this.state = { name: 'stopped' };
+        state.resolvers?.reject(new Error('Server startup aborted'));
+        break;
       case 'starting':
         this.clearStartupTimers(state);
-        this.beginStopping(state.child);
+        this.beginStopping(state.child, state.onStopped);
         state.resolvers?.reject(new Error('Server startup aborted'));
         break;
       case 'started':
-        this.beginStopping(state.child);
+        this.beginStopping(state.child, state.onStopped);
         break;
       default:
         break;
@@ -192,6 +233,7 @@ export default abstract class ServerManager extends EventEmitter<ServerManagerEv
       case 'stopping':
         return state.child;
       case 'stopped':
+      case 'spawning':
       case 'restarting':
       default:
         return undefined;
@@ -204,20 +246,55 @@ export default abstract class ServerManager extends EventEmitter<ServerManagerEv
    * failures schedule another attempt instead of rejecting a caller.
    */
   private spawn(resolvers?: StartResolvers): void {
-    let child: ChildProcess;
-    try {
-      child = this.spawnChild();
-    } catch (error) {
-      this.handleSpawnFailure(
-        resolvers,
-        new Error('Failed to spawn server', { cause: error }),
-      );
-      return;
-    }
+    // Enter `spawning` synchronously so that a concurrent `stop` (or a repeated
+    // `start`) is observed by the asynchronous {@link spawnChild} below via the
+    // captured state object.
+    const spawning: State = { name: 'spawning', resolvers };
+    this.state = spawning;
 
+    (async () => {
+      let spawned: ChildProcess | SpawnedChild;
+      try {
+        spawned = await this.spawnChild();
+      } catch (error) {
+        if (this.state !== spawning) {
+          // A `stop` aborted the spawn while `spawnChild` was in flight.
+          return;
+        }
+        this.handleSpawnFailure(
+          resolvers,
+          new Error('Failed to spawn server', { cause: error }),
+        );
+        return;
+      }
+      const child = spawned instanceof ChildProcess ? spawned : spawned.child;
+      const onStopped = this.wrapOnStopped(
+        spawned instanceof ChildProcess ? undefined : spawned.onStopped,
+      );
+      if (this.state !== spawning) {
+        // A `stop` aborted the spawn while `spawnChild` was in flight; the
+        // freshly created child is now orphaned, so reap it and run its
+        // teardown.
+        sendSignal(child, 'SIGKILL');
+        onStopped?.();
+        return;
+      }
+      this.beginStarting(child, onStopped, resolvers);
+    })().catch((err) => {
+      this.logger.error({ err }, 'Unexpected error while spawning server');
+    });
+  }
+
+  /** Wires up a freshly spawned child and begins polling for health. */
+  private beginStarting(
+    child: ChildProcess,
+    onStopped: OnStopped | undefined,
+    resolvers: StartResolvers | undefined,
+  ): void {
     const state: State = {
       name: 'starting',
       child,
+      onStopped,
       resolvers,
       pollTimer: undefined,
       startupTimer: undefined,
@@ -262,7 +339,11 @@ export default abstract class ServerManager extends EventEmitter<ServerManagerEv
       }
       if (healthy) {
         this.clearStartupTimers(state);
-        this.state = { name: 'started', child: state.child };
+        this.state = {
+          name: 'started',
+          child: state.child,
+          onStopped: state.onStopped,
+        };
         this.logger.info('Server started');
         state.resolvers?.resolve();
         return;
@@ -300,10 +381,12 @@ export default abstract class ServerManager extends EventEmitter<ServerManagerEv
           { exitCode: code, signal },
           'Server quit unexpectedly, restarting',
         );
+        state.onStopped?.();
         this.scheduleRestart();
         break;
       case 'stopping':
         clearTimeout(state.killTimer);
+        state.onStopped?.();
         this.state = { name: 'stopped' };
         break;
       default:
@@ -325,6 +408,7 @@ export default abstract class ServerManager extends EventEmitter<ServerManagerEv
       case 'started':
         this.logger.error({ err: error }, 'Server errored, restarting');
         sendSignal(child, 'SIGKILL');
+        state.onStopped?.();
         this.scheduleRestart();
         break;
       case 'stopping':
@@ -341,6 +425,7 @@ export default abstract class ServerManager extends EventEmitter<ServerManagerEv
     this.clearStartupTimers(state);
     // Ensure an abandoned-but-alive child (e.g. startup timeout) is reaped.
     sendSignal(state.child, 'SIGKILL');
+    state.onStopped?.();
     this.handleSpawnFailure(state.resolvers, error);
   }
 
@@ -369,13 +454,40 @@ export default abstract class ServerManager extends EventEmitter<ServerManagerEv
     this.state = { name: 'restarting', restartTimer };
   }
 
-  private beginStopping(child: ChildProcess): void {
+  private beginStopping(
+    child: ChildProcess,
+    onStopped: OnStopped | undefined,
+  ): void {
     const killTimer = setTimeout(
       () => sendSignal(child, 'SIGKILL'),
       KILL_TIMEOUT,
     );
-    this.state = { name: 'stopping', child, killTimer };
+    this.state = { name: 'stopping', child, onStopped, killTimer };
     sendSignal(child, 'SIGTERM');
+  }
+
+  /**
+   * Normalises a teardown callback so it runs at most once and never throws,
+   * letting every terminal transition invoke it unconditionally.
+   */
+  private wrapOnStopped(
+    onStopped: OnStopped | undefined,
+  ): OnStopped | undefined {
+    if (!onStopped) {
+      return undefined;
+    }
+    let done = false;
+    return () => {
+      if (done) {
+        return;
+      }
+      done = true;
+      try {
+        onStopped();
+      } catch (err) {
+        this.logger.error({ err }, 'Error while running child teardown');
+      }
+    };
   }
 
   private clearStartupTimers(state: State & { name: 'starting' }): void {

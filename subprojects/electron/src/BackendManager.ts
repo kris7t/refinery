@@ -9,8 +9,9 @@ import path from 'node:path';
 
 import type BackendConfig from '@tools.refinery/frontend/xtext/BackendConfig';
 
-import ServerManager from './ServerManager';
-import spawn from './utils/spawn';
+import ServerManager, { type SpawnedChild } from './ServerManager';
+import spawnJava from './utils/spawnJava';
+import spawnScript from './utils/spawnScript';
 
 export default class BackendManager extends ServerManager {
   constructor(
@@ -20,7 +21,7 @@ export default class BackendManager extends ServerManager {
     super('BackendManager', port);
   }
 
-  protected override spawnChild(): ChildProcess {
+  protected override spawnChild(): ChildProcess | Promise<SpawnedChild> {
     const envVars = {
       ...process.env,
       REFINERY_LISTEN_HOST: BackendManager.hostname,
@@ -33,7 +34,7 @@ export default class BackendManager extends ServerManager {
     };
     if (process.isDev) {
       const gradlewCommand = `.${path.sep}gradlew`;
-      return spawn(
+      return spawnScript(
         gradlewCommand,
         ['--console=plain', '--quiet', '--stacktrace', 'serveBackend'],
         {
@@ -42,25 +43,8 @@ export default class BackendManager extends ServerManager {
         },
       );
     } else {
-      const javaDir = path.resolve(process.resourcesPath, 'jre');
-      const javaBinDir = path.join(javaDir, 'bin');
-      const pathEnv = process.env['PATH'];
-      const newPathEnv =
-        pathEnv === undefined || pathEnv === ''
-          ? javaBinDir
-          : `${javaBinDir}${path.delimiter}${pathEnv}`;
-      const backendCommand = path.resolve(
-        process.resourcesPath,
-        'backend',
-        'bin',
-        'refinery-language-web',
-      );
-      return spawn(backendCommand, [], {
-        env: {
-          ...envVars,
-          PATH: newPathEnv,
-          JAVA_HOME: javaDir,
-        },
+      return spawnJava('tools.refinery.language.web.ServerLauncher', [], {
+        env: envVars,
       });
     }
   }

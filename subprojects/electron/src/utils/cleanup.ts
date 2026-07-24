@@ -27,5 +27,5 @@ app.on('will-quit', () => {
 });
 
 export function onCleanup(callback: () => void): void {
-  cleanupFunctions.push(callback);
+  cleanupFunctions.unshift(callback);
 }
