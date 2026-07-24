@@ -8,7 +8,7 @@ import type { ChildProcess } from 'node:child_process';
 import path from 'node:path';
 
 import ServerManager from './ServerManager';
-import spawn from './utils/spawn';
+import spawnScript from './utils/spawnScript';
 
 export default class FrontendManager extends ServerManager {
   constructor(
@@ -21,7 +21,7 @@ export default class FrontendManager extends ServerManager {
 
   protected override spawnChild(): ChildProcess {
     const yarnwCommand = `.${path.sep}yarnw`;
-    return spawn(
+    return spawnScript(
       yarnwCommand,
       ['frontend', 'dev', '--logLevel', 'error'],
       {

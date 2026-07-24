@@ -18,6 +18,7 @@ if (
   packageJSON === null ||
   !('version' in packageJSON)
 ) {
+  throw new Error('Missing "version" field in app/package.json');
 } else if (
   typeof packageJSON.version !== 'string' ||
   packageJSON.version !== rawVersion.toLowerCase()
@@ -65,7 +66,7 @@ const config = {
   extraResources: [
     {
       from: 'build/backend',
-      to: 'backend',
+      to: 'lib',
       filter: '**/*',
     },
     {

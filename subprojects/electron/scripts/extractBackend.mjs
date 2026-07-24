@@ -4,8 +4,7 @@
  * SPDX-License-Identifier: EPL-2.0
  */
 
-import { readFile, rm, mkdir, writeFile } from 'node:fs/promises';
-import os from 'node:os';
+import { rm, mkdir } from 'node:fs/promises';
 import path from 'node:path';
 
 import { extract } from 'tar';
@@ -56,7 +55,7 @@ const otherTargetsRegExp = new RegExp(
 );
 
 /**
- * Extract a Gradle distribution tar and patch platform-specific files.
+ * Extract jars from a Gradle distribution tar.
  *
  * @param {string} name
  * @returns {Promise<void>}
@@ -66,42 +65,18 @@ async function extractDistTar(name) {
     import.meta.dirname,
     `../../${name}/build/distributions/refinery-${name}-${version}.tar`,
   );
-  const startShellName = `refinery-${name}`;
-  const startBatName = `${startShellName}.bat`;
-  const [scriptToPatchName, scriptToSkipName, classpathPrefix] =
-    process.platform === 'win32'
-      ? [startBatName, startShellName, 'set CLASSPATH=']
-      : [startShellName, startBatName, 'CLASSPATH='];
   await extract({
     file: distTar,
-    strip: 1,
+    strip: 2,
     cwd: targetDir,
     filter(filePath) {
+      const dirName = path.basename(path.dirname(filePath));
       const fileName = path.basename(filePath);
       return (
-        !otherTargetsRegExp.test(fileName) && fileName !== scriptToSkipName
+        dirName === 'lib' && !otherTargetsRegExp.test(fileName)
       );
     },
   });
-  const scriptToPatchPath = path.join(targetDir, 'bin', scriptToPatchName);
-  let patchedScript = (await readFile(scriptToPatchPath, 'utf-8'))
-    .split(/\r?\n/)
-    .map((line) => {
-      if (!line.startsWith(classpathPrefix)) {
-        return line;
-      }
-      const patchedClasspath = line
-        .substring(classpathPrefix.length)
-        .split(path.delimiter)
-        .filter((entry) => !otherTargetsRegExp.test(entry))
-        .join(path.delimiter);
-      return `${classpathPrefix}${patchedClasspath}`;
-    })
-    .join(os.EOL);
-  if (!patchedScript.endsWith(os.EOL)) {
-    patchedScript = `${patchedScript}${os.EOL}`;
-  }
-  await writeFile(scriptToPatchPath, patchedScript, 'utf-8');
 }
 
 await rm(targetDir, { recursive: true, force: true });
