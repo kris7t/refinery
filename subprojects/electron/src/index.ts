@@ -56,7 +56,7 @@ protocol.registerSchemesAsPrivileged([
   },
 ]);
 
-function createWindow(pageURL: string) {
+function createWindow(pageURL: string): BrowserWindow {
   const { backgroundColor, accentColor, titleBarOverlay } = getTheme(
     nativeTheme.shouldUseDarkColors,
   );
@@ -87,6 +87,8 @@ function createWindow(pageURL: string) {
   window
     .loadURL(pageURL)
     .catch((error) => logger.error({ err: error }, 'Failed to load webpage'));
+
+  return window;
 }
 
 async function run() {
@@ -115,11 +117,6 @@ async function run() {
 
   const backend = new BackendManager(backendPort, allowedOrigins);
   onCleanup(() => backend.stop());
-  const backendReady = backend.start();
-  backendReady.catch(() => {
-    // Attach a no-op exception handler so that the exception is not counted as unhandled.
-    // We'll await the original `backendReady` promise later to extract the exception from it.
-  });
   const securityHeaders = {
     'Content-Security-Policy':
       "default-src 'none'; " +
@@ -204,15 +201,25 @@ async function run() {
     });
   });
 
-  createWindow(pageURL);
+  // Only start the backend once the UI is ready to show to avoid CPU contention
+  // slowing down time to UI interactivity.
+  await new Promise<void>((resolve, reject) => {
+    const window = createWindow(pageURL);
+    window.once('ready-to-show', () => {
+        app.on('activate', () => {
+          if (BrowserWindow.getAllWindows().length === 0) {
+            createWindow(pageURL);
+          }
+        });
 
-  app.on('activate', () => {
-    if (BrowserWindow.getAllWindows().length === 0) {
-      createWindow(pageURL);
-    }
+      resolve();
+    });
+    window.webContents.on('did-fail-load', (_event, _errorCode, errorDescription) => {
+      reject(new Error(errorDescription));
+    });
   });
 
-  await backendReady;
+  await backend.start();
 }
 
 run().catch((error) => {
