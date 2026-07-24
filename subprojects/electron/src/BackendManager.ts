@@ -9,7 +9,7 @@ import path from 'node:path';
 
 import type BackendConfig from '@tools.refinery/frontend/xtext/BackendConfig';
 
-import ServerManager, { type SpawnedChild } from './ServerManager';
+import ServerManager from './ServerManager';
 import spawnJava from './utils/spawnJava';
 import spawnScript from './utils/spawnScript';
 
@@ -21,7 +21,7 @@ export default class BackendManager extends ServerManager {
     super('BackendManager', port);
   }
 
-  protected override spawnChild(): ChildProcess | Promise<SpawnedChild> {
+  protected override spawnChild(): ChildProcess {
     const envVars = {
       ...process.env,
       REFINERY_LISTEN_HOST: BackendManager.hostname,
