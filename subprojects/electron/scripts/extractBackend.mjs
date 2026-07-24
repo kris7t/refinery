@@ -4,12 +4,13 @@
  * SPDX-License-Identifier: EPL-2.0
  */
 
-import { rm, mkdir } from 'node:fs/promises';
+import { rm, mkdir, readdir } from 'node:fs/promises';
 import path from 'node:path';
 
 import { extract } from 'tar';
 
 import version from './version.mjs';
+import writeManifestJar from './writeManifestJar.mjs';
 
 const targetDir = path.join(import.meta.dirname, '../build/backend');
 
@@ -72,9 +73,7 @@ async function extractDistTar(name) {
     filter(filePath) {
       const dirName = path.basename(path.dirname(filePath));
       const fileName = path.basename(filePath);
-      return (
-        dirName === 'lib' && !otherTargetsRegExp.test(fileName)
-      );
+      return dirName === 'lib' && !otherTargetsRegExp.test(fileName);
     },
   });
 }
@@ -82,3 +81,13 @@ async function extractDistTar(name) {
 await rm(targetDir, { recursive: true, force: true });
 await mkdir(targetDir, { recursive: true });
 await extractDistTar('language-web');
+
+// Create a pathing jar to shorten the runtime classpath.
+const classpath = (await readdir(targetDir, { withFileTypes: true }))
+  .filter((entry) => entry.isFile() && /\.jar$/i.test(entry.name))
+  .map(({ name }) => name)
+  .toSorted();
+await writeManifestJar(path.join(targetDir, 'refinery-all.jar'), classpath, {
+  'Bundle-SymbolicName': 'tools.refinery.refinery-all',
+  'Bundle-Version': version,
+});

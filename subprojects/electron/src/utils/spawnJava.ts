@@ -4,7 +4,10 @@
  * SPDX-License-Identifier: EPL-2.0
  */
 
-import child_process, { ChildProcess, type SpawnOptionsWithoutStdio } from 'node:child_process';
+import child_process, {
+  ChildProcess,
+  type SpawnOptionsWithoutStdio,
+} from 'node:child_process';
 import path from 'node:path';
 
 import { isWindows } from './platform';
@@ -22,12 +25,17 @@ export default function spawnJava(
       ? javaBinDir
       : `${javaBinDir}${path.delimiter}${pathEnv}`;
   const javaBinary = path.join(javaBinDir, isWindows ? 'java.exe' : 'java');
-  const libDir = path.resolve(process.resourcesPath, 'lib');
+  const pathingJar = path.resolve(
+    process.resourcesPath,
+    'lib',
+    'refinery-all.jar',
+  );
 
   const newEnv: NodeJS.ProcessEnv = {
     ...(options.env ?? {}),
     PATH: newPathEnv,
     JAVA_HOME: javaDir,
+    CLASSPATH: pathingJar,
   };
   // Do not inherit Java options from the environment to ensure portability.
   delete newEnv['_JAVA_OPTIONS'];
@@ -38,8 +46,6 @@ export default function spawnJava(
     [
       '--enable-native-access=ALL-UNNAMED',
       '--sun-misc-unsafe-memory-access=allow',
-      '-classpath',
-      path.join(libDir, '*'),
       mainClass,
       ...args,
     ],
