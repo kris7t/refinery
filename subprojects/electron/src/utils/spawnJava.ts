@@ -13,6 +13,7 @@ import path from 'node:path';
 import { isWindows } from './platform';
 
 export default function spawnJava(
+  packageName: string,
   mainClass: string,
   args: string[],
   options: SpawnOptionsWithoutStdio,
@@ -25,11 +26,12 @@ export default function spawnJava(
       ? javaBinDir
       : `${javaBinDir}${path.delimiter}${pathEnv}`;
   const javaBinary = path.join(javaBinDir, isWindows ? 'java.exe' : 'java');
-  const pathingJar = path.resolve(
+
+  const libDir = path.resolve(
     process.resourcesPath,
     'lib',
-    'refinery-all.jar',
   );
+  const pathingJar = path.join(libDir, `${packageName}-all.jar`);
 
   const newEnv: NodeJS.ProcessEnv = {
     ...(options.env ?? {}),
@@ -39,6 +41,7 @@ export default function spawnJava(
   };
   // Do not inherit Java options from the environment to ensure portability.
   delete newEnv['_JAVA_OPTIONS'];
+  delete newEnv['JDK_JAVA_OPTIONS'];
   delete newEnv['JAVA_TOOL_OPTIONS'];
 
   return child_process.spawn(

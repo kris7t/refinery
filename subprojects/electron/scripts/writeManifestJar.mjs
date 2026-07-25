@@ -105,12 +105,12 @@ function buildManifest(entries, extraHeaders = {}) {
  * unchanged.
  *
  * @param {string} outPath The output file path.
- * @param {string[]} entries The classpath entires to write.
+ * @param {Iterable<string>} entries The classpath entires to write.
  * @param {Record<string, string>} extraHeaders Extra headers to write to the JAR manifest.
  * @returns {Promise<void>} Resolves when the jar was successfully written.
  */
 export default function writePathingJar(outPath, entries, extraHeaders = {}) {
-  const manifest = buildManifest(entries, extraHeaders);
+  const manifest = buildManifest(Array.from(entries).toSorted(), extraHeaders);
 
   return new Promise((resolve, reject) => {
     const zip = new ZipFile();

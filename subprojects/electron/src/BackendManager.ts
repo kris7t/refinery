@@ -43,9 +43,14 @@ export default class BackendManager extends ServerManager {
         },
       );
     } else {
-      return spawnJava('tools.refinery.language.web.ServerLauncher', [], {
-        env: envVars,
-      });
+      return spawnJava(
+        'refinery-language-web',
+        'tools.refinery.language.web.ServerLauncher',
+        [],
+        {
+          env: envVars,
+        },
+      );
     }
   }
 

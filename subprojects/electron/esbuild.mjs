@@ -22,14 +22,14 @@ const success = watch ? 'watch build succeeded' : 'build succeeded';
 /**
  * Creates a new ESBuild context for the specify entry point.
  *
- * @param {string} entryPoint
+ * @param {string[]} entryPoints
  * @param {import('esbuild').Format} outputFormat
  * @param {string} extension
  * @returns {Promise<import('esbuild').BuildContext>}
  */
-function createContext(entryPoint, outputFormat, extension) {
+function createContext(entryPoints, outputFormat, extension) {
   return esbuild.context({
-    entryPoints: [entryPoint],
+    entryPoints,
     outdir: `build/esbuild/${mode}`,
     bundle: true,
     treeShaking: true,
@@ -57,7 +57,7 @@ function createContext(entryPoint, outputFormat, extension) {
           build.onEnd((result) => {
             if (result.errors.length === 0) {
               const time = format(new Date(), `HH:mm:ss.sss`);
-              console.log(`[${time}] ${entryPoint} ${mode} ${success}`);
+              console.log(`[${time}] ${entryPoints.join(', ')} ${mode} ${success}`);
             }
           });
         },
@@ -67,8 +67,8 @@ function createContext(entryPoint, outputFormat, extension) {
 }
 
 const contexts = await Promise.all([
-  createContext('src/index.ts', 'cjs', '.cjs'),
-  createContext('src/preload.ts', 'iife', '.js'),
+  createContext(['src/index.ts', 'src/cli.ts'], 'cjs', '.cjs'),
+  createContext(['src/preload.ts'], 'iife', '.js'),
 ]);
 
 if (watch) {

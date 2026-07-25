@@ -27,6 +27,7 @@ val backendDistribution: Configuration = configurations.create("backendDistribut
 
 dependencies {
 	frontendAssets(project(":refinery-frontend", "productionAssets"))
+	backendDistribution(project(":refinery-generator-cli", "distTar"))
 	backendDistribution(project(":refinery-language-web", "distTar"))
 	typeCheckTypes(project(":refinery-frontend", "typings"))
 }

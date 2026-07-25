@@ -1,0 +1,6 @@
+#!/bin/sh
+DIR=$(dirname -- "$(readlink -f -- "$0")")
+ROOT=$(cd -- "$DIR/@REL_ROOT@" && pwd -P)
+[ -f "$ROOT/@REL_EXE@" ] || ROOT=@APP_DIR@
+export ELECTRON_RUN_AS_NODE=1
+exec "$ROOT/@REL_EXE@" "$ROOT/@REL_CLI@" "$@"

@@ -4,7 +4,7 @@
  * SPDX-License-Identifier: EPL-2.0
  */
 
-import { readFile } from 'node:fs/promises';
+import { chmod, mkdir, readFile, writeFile } from 'node:fs/promises';
 import path from 'node:path';
 
 import rawVersion from './scripts/version.mjs';
@@ -51,6 +51,7 @@ const config = {
   },
   npmRebuild: false,
   publish: null,
+  toolsets: { appimage: '1.0.3' },
   files: [
     'package.json',
     {
@@ -76,6 +77,48 @@ const config = {
       filter: '**/*',
     },
   ],
+  async afterPack(context) {
+    const { appOutDir, electronPlatformName, packager } = context;
+    const app = packager.appInfo;
+    const tpl = await readFile('src/refinery-cli.sh.in', 'utf-8');
+
+    const emit = async (
+      /** @type {string} **/ dest,
+      /** @type {Record<string, string>} */ vars,
+    ) => {
+      const out = tpl.replace(/@(\w+)@/g, (_, /** @type {string} */ k) => {
+        if (!(k in vars))
+          throw new Error(`${dest}: unknown placeholder @${k}@`);
+        return String(vars[k]);
+      });
+      await mkdir(path.dirname(dest), { recursive: true });
+      await writeFile(dest, out);
+      await chmod(dest, 0o755);
+    };
+
+    if (electronPlatformName === 'darwin') {
+      const contents = path.join(
+        appOutDir,
+        `${app.productFilename}.app`,
+        'Contents',
+      );
+      await emit(path.join(contents, 'Resources/bin/refinery'), {
+        REL_ROOT: '../..',
+        REL_EXE: `MacOS/${app.productFilename}`,
+        REL_CLI: 'Resources/app.asar/cli.cjs',
+        APP_DIR: `/Applications/${app.productFilename}.app/Contents`,
+      });
+    }
+
+    if (electronPlatformName === 'linux') {
+      await emit(path.join(appOutDir, 'bin/refinery'), {
+        REL_ROOT: '..',
+        REL_EXE: app.name,
+        REL_CLI: 'resources/app.asar/cli.cjs',
+        APP_DIR: `/opt/${app.sanitizedProductName}`,
+      });
+    }
+  },
 };
 
 export default config;
