@@ -49,6 +49,14 @@ const config = {
     category: 'public.app-category.developer-tools',
     darkModeSupport: true,
   },
+  deb: {
+    afterInstall: 'src/after-install.tpl',
+    afterRemove: 'src/after-remove.tpl',
+  },
+  rpm: {
+    afterInstall: 'src/after-install.tpl',
+    afterRemove: 'src/after-remove.tpl',
+  },
   npmRebuild: false,
   publish: null,
   toolsets: { appimage: '1.0.3' },
@@ -64,6 +72,8 @@ const config = {
       to: 'frontend',
       filter: ['**/*', '!**/*.br', '!**/*.gz'],
     },
+    // For the workaround in `beforeBuild` to work, we explicitly need to exclude `node_modules`.
+    '!node_modules/**/*',
   ],
   extraResources: [
     {
@@ -77,6 +87,11 @@ const config = {
       filter: '**/*',
     },
   ],
+  beforeBuild() {
+    // Disable dependency installation. See
+    // https://github.com/electron-userland/electron-builder/issues/10033#issuecomment-5078613647
+    return false;
+  },
   async afterPack(context) {
     const { appOutDir, electronPlatformName, packager } = context;
     const app = packager.appInfo;

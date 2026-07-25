@@ -86,7 +86,6 @@
   },
   "resolutions": {
     "d3-zoom@npm:^3.0.0": "patch:d3-zoom@npm%3A3.0.0#~/.yarn/patches/d3-zoom-npm-3.0.0-18f706a421.patch",
-    "d3-zoom@npm:3": "patch:d3-zoom@npm%3A3.0.0#~/.yarn/patches/d3-zoom-npm-3.0.0-18f706a421.patch",
-    "app-builder-lib@npm:26.15.7": "patch:app-builder-lib@npm%3A26.15.7#~/.yarn/patches/app-builder-lib-npm-26.15.7-5677bfe17a.patch"
+    "d3-zoom@npm:3": "patch:d3-zoom@npm%3A3.0.0#~/.yarn/patches/d3-zoom-npm-3.0.0-18f706a421.patch"
   }
 }
