@@ -8,6 +8,8 @@ import { createWriteStream } from 'node:fs';
 
 import { ZipFile } from 'yazl';
 
+import wrapLine from './wrapLine.mjs';
+
 /**
  * The jar manifest spec limits every physical line to 72 bytes. A logical
  * value longer than that continues on the next line, which must begin with
@@ -15,37 +17,12 @@ import { ZipFile } from 'yazl';
  * payload. The limit is on UTF-8 *bytes*, and a multi-byte character must not
  * be split across the boundary.
  *
- * We sidestep the split-character hazard entirely by percent-encoding every
- * Class-Path entry (see toClassPathEntry), which makes the value pure ASCII so
- * one byte == one character. This wrapper still operates on bytes so it stays
- * correct even if a caller passes a non-ASCII header value elsewhere: it
- * advances by whole UTF-8 sequences and never exceeds the byte budget.
- *
  * @param {string} name The manifest header name.
  * @param {string} value The manifest header value.
  * @returns {string} The linewrapped manifest header.
  */
 function wrapManifestLine(name, value) {
-  const enc = new TextEncoder();
-  const lines = [];
-  let line = '';
-  let bytes = 0;
-  let budget = 72; // first line; continuations get 71
-
-  for (const cp of `${name}: ${value}`) {
-    const w = enc.encode(cp).length;
-    if (bytes + w > budget) {
-      lines.push(line);
-      line = '';
-      bytes = 0;
-      budget = 71;
-    }
-    line += cp;
-    bytes += w;
-  }
-  if (line) lines.push(line);
-
-  return lines.map((l, i) => (i === 0 ? l : ' ' + l)).join('\r\n');
+  return wrapLine(`${name}: ${value}`);
 }
 
 /**
@@ -105,12 +82,12 @@ function buildManifest(entries, extraHeaders = {}) {
  * unchanged.
  *
  * @param {string} outPath The output file path.
- * @param {Iterable<string>} entries The classpath entires to write.
+ * @param {string[]} entries The classpath entires to write.
  * @param {Record<string, string>} extraHeaders Extra headers to write to the JAR manifest.
  * @returns {Promise<void>} Resolves when the jar was successfully written.
  */
 export default function writePathingJar(outPath, entries, extraHeaders = {}) {
-  const manifest = buildManifest(Array.from(entries).toSorted(), extraHeaders);
+  const manifest = buildManifest(entries, extraHeaders);
 
   return new Promise((resolve, reject) => {
     const zip = new ZipFile();

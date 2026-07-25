@@ -4,11 +4,13 @@
  * SPDX-License-Identifier: EPL-2.0
  */
 
-import { rm, mkdir } from 'node:fs/promises';
+import { rm, mkdir, writeFile } from 'node:fs/promises';
 import path from 'node:path';
 
 import { extract } from 'tar';
 
+import fixMtimes from './fixMtimes.mjs';
+import { stripJarSignatures } from './stripJarSignatures.mjs';
 import version from './version.mjs';
 import writeManifestJar from './writeManifestJar.mjs';
 
@@ -92,10 +94,14 @@ async function extractDistTar(name) {
  * @returns {Promise<void>}
  */
 function writePathingJar(name, entries) {
-  return writeManifestJar(path.join(targetDir, `${name}.jar`), entries, {
-    'Bundle-SymbolicName': `tools.refinery.${name}`,
-    'Bundle-Version': version,
-  });
+  return writeManifestJar(
+    path.join(targetDir, `${name}.jar`),
+    Array.from(entries).toSorted(),
+    {
+      'Bundle-SymbolicName': `tools.refinery.${name}`,
+      'Bundle-Version': version,
+    },
+  );
 }
 
 await rm(targetDir, { recursive: true, force: true });
@@ -112,3 +118,22 @@ await Promise.all([
   writePathingJar('refinery-language-web-all', webOnlyLibs),
   writePathingJar('refinery-generator-cli-all', cliOnlyLibs),
 ]);
+
+const classes = Array.from(
+  new Set(
+    (
+      await Promise.all(
+        Array.from(commonLibs).map(async (entry) => {
+          const entryPath = path.join(targetDir, entry);
+          const classesInJar = await stripJarSignatures(entryPath);
+          await fixMtimes(entryPath);
+          return classesInJar;
+        }),
+      )
+    ).flat(),
+  ),
+).toSorted();
+
+const classListPath = path.join(targetDir, 'refinery-common-all.lst');
+await writeFile(classListPath, classes.join('\n') + '\n', 'utf-8');
+await fixMtimes(classListPath);
