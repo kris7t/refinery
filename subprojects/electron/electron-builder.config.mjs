@@ -49,9 +49,17 @@ const config = {
     category: 'public.app-category.developer-tools',
     darkModeSupport: true,
   },
+  appImage: {
+    artifactName: '${productName}-${version}-${arch}.${ext}',
+  },
   deb: {
     afterInstall: 'src/after-install.tpl',
     afterRemove: 'src/after-remove.tpl',
+  },
+  pacman: {
+    afterInstall: 'src/after-install.tpl',
+    afterRemove: 'src/after-remove.tpl',
+    artifactName: '${name}-${version}-${arch}.pkg.tar.xz',
   },
   rpm: {
     afterInstall: 'src/after-install.tpl',
@@ -102,9 +110,10 @@ const config = {
       /** @type {Record<string, string>} */ vars,
     ) => {
       const out = tpl.replace(/@(\w+)@/g, (_, /** @type {string} */ k) => {
-        if (!(k in vars))
-          throw new Error(`${dest}: unknown placeholder @${k}@`);
-        return String(vars[k]);
+        if (k in vars) {
+          return String(vars[k]);
+        }
+        throw new Error(`${dest}: unknown placeholder @${k}@`);
       });
       await mkdir(path.dirname(dest), { recursive: true });
       await writeFile(dest, out);
