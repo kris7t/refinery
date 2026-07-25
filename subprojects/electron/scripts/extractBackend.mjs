@@ -4,13 +4,16 @@
  * SPDX-License-Identifier: EPL-2.0
  */
 
-import { rm, mkdir } from 'node:fs/promises';
+import { rm, mkdir, unlink, utimes } from 'node:fs/promises';
 import path from 'node:path';
+import { pipeline } from 'stream/promises';
 
 import { extract } from 'tar';
+import yauzl from 'yauzl';
 
 import version from './version.mjs';
 import writeManifestJar from './writeManifestJar.mjs';
+import { createWriteStream } from 'node:fs';
 
 const targetDir = path.join(import.meta.dirname, '../build/backend');
 
@@ -49,6 +52,7 @@ switch (process.arch) {
 }
 /** @type {targets[number]} */
 const currentTarget = `${currentPlatform}-${currentArch}`;
+const currentTargetSuffix = `-${currentTarget}`;
 
 const otherTargets = targets.filter((target) => target !== currentTarget);
 const otherTargetsRegExp = new RegExp(
@@ -59,7 +63,7 @@ const otherTargetsRegExp = new RegExp(
  * Extract jars from a Gradle distribution tar.
  *
  * @param {string} name
- * @returns {Promise<Set<string>>}
+ * @returns {Promise<[string[], string[]]>}
  */
 async function extractDistTar(name) {
   const distTar = path.join(
@@ -68,6 +72,8 @@ async function extractDistTar(name) {
   );
   /** @type {string[]} */
   const libs = [];
+  /** @type {string[]} */
+  const natives = [];
   await extract({
     file: distTar,
     'keep-existing': true,
@@ -78,12 +84,16 @@ async function extractDistTar(name) {
       const fileName = path.basename(filePath);
       const matches = dirName === 'lib' && !otherTargetsRegExp.test(fileName);
       if (matches && /\.jar$/i.test(fileName)) {
-        libs.push(fileName);
+        if (fileName.indexOf(currentArch) > 0) {
+          natives.push(fileName);
+        } else {
+          libs.push(fileName);
+        }
       }
       return matches;
     },
   });
-  return new Set(libs);
+  return [libs.toSorted(), natives];
 }
 
 /**
@@ -98,13 +108,67 @@ function writePathingJar(name, entries) {
   });
 }
 
+/**
+ * Extracts native dependencies from a `com.google.ortools.Loader` style per-platform jar.
+ *
+ * In such a jar, usually called `<library>-<platform>-<arch>-<version>.jar`,
+ * the `<library>-<platform>-<arch>/` directory in the root of the jar contains the native
+ * libraries used by `<library>-<version>.jar`. We extract the libraries into the `natives/`
+ * directory, which will be set as the value of the
+ *
+ *   + the `java.library.path` Java property to ensure that `System.loadLibrary` can find them;
+ *   + the `LD_LIBRARY_PATH`, so that the dynamic linker can find them when looking for
+ *     dynamically linked dependencies; and
+ *   + an element of `PATH`, so that the Windows dynamic linker can also find them.
+ *
+ * This mechanism is adopted from ORTools by the native libraries packaged by Refinery,
+ * so we should end up with all the natives in `native/` and can safely remove the jars
+ * thar originally contained them. This lets us avoid extracting the depndencies from the
+ * jars into a temporary directory every time they are accessed.
+ *
+ * @param {string} nativesDir}
+ * @param {string} jar
+ * @returns {Promise<void>}
+ */
+async function extractNativeJar(nativesDir, jar) {
+  const jarPath = path.join(targetDir, jar);
+  const zipFile = await yauzl.openPromise(jarPath);
+  for await (const entry of zipFile.eachEntry()) {
+    const { fileName } = entry;
+    if (fileName.endsWith('/')) {
+      continue;
+    }
+    const components = fileName.split('/');
+    if (components.length !== 2) {
+      continue;
+    }
+    const [dirName, baseName] = components;
+    if (!dirName || !dirName.endsWith(currentTargetSuffix) || !baseName || baseName === '') {
+      continue;
+    }
+    const extractPath = path.join(nativesDir, baseName);
+    const readStream = await zipFile.openReadStreamPromise(entry);
+    await pipeline(readStream, createWriteStream(extractPath, {
+      mode: 0o755,
+    }));
+    const lastModDate = entry.getLastModDate();
+    await utimes(extractPath, lastModDate, lastModDate);
+  }
+  await unlink(jarPath);
+}
+
 await rm(targetDir, { recursive: true, force: true });
 await mkdir(targetDir, { recursive: true });
 
-const webLibs = await extractDistTar('language-web');
-const cliLibs = await extractDistTar('generator-cli');
+// Extract sequentially so that shared files in the tars don't conflic with each other.
+const [webLibs, webNatives] = await extractDistTar('language-web');
+const [cliLibs, cliNatives] = await extractDistTar('generator-cli');
+const natives = Array.from(new Set([...webNatives, ...cliNatives])).toSorted();
+const nativesDir = path.join(targetDir, 'native');
+await mkdir(nativesDir);
 
 await Promise.all([
   writePathingJar('refinery-language-web-all', webLibs),
   writePathingJar('refinery-generator-cli-all', cliLibs),
+  ...natives.map((jar) => extractNativeJar(nativesDir, jar)),
 ]);

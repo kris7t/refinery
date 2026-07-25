@@ -7,9 +7,13 @@
 import pino from 'pino';
 import pretty from 'pino-pretty';
 
+const logLevel =
+  process.env['REFINERY_LOG_LEVEL']?.toLowerCase() ??
+  (process.isDev ? 'debug' : 'warn');
+
 const logger = pino(
   {
-    level: process.env['MODE'] === 'production' ? 'warn' : 'debug',
+    level: logLevel,
   },
   pretty({
     destination: 2,
