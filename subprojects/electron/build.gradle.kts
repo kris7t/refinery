@@ -53,6 +53,7 @@ tasks {
 		noHeaderFiles = true
 		noManPages = true
 		stripDebug = true
+		generateCdsArchive = true
 		addModules = listOf("java.base", "java.logging", "java.management", "java.naming", "java.xml", "jdk.zipfs")
 		output.set(layout.buildDirectory.dir("jre"))
 		description = "Create a stripped down JRE"

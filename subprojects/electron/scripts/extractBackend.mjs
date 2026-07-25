@@ -4,7 +4,7 @@
  * SPDX-License-Identifier: EPL-2.0
  */
 
-import { rm, mkdir, readdir } from 'node:fs/promises';
+import { rm, mkdir } from 'node:fs/promises';
 import path from 'node:path';
 
 import { extract } from 'tar';
@@ -59,35 +59,56 @@ const otherTargetsRegExp = new RegExp(
  * Extract jars from a Gradle distribution tar.
  *
  * @param {string} name
- * @returns {Promise<void>}
+ * @returns {Promise<Set<string>>}
  */
 async function extractDistTar(name) {
   const distTar = path.join(
     import.meta.dirname,
     `../../${name}/build/distributions/refinery-${name}-${version}.tar`,
   );
+  /** @type {string[]} */
+  const libs = [];
   await extract({
     file: distTar,
+    'keep-existing': true,
     strip: 2,
     cwd: targetDir,
     filter(filePath) {
       const dirName = path.basename(path.dirname(filePath));
       const fileName = path.basename(filePath);
-      return dirName === 'lib' && !otherTargetsRegExp.test(fileName);
+      const matches = dirName === 'lib' && !otherTargetsRegExp.test(fileName);
+      if (matches && /\.jar$/i.test(fileName)) {
+        libs.push(fileName);
+      }
+      return matches;
     },
+  });
+  return new Set(libs);
+}
+
+/**
+ * @param {string} name
+ * @param {Iterable<string>} entries
+ * @returns {Promise<void>}
+ */
+function writePathingJar(name, entries) {
+  return writeManifestJar(path.join(targetDir, `${name}.jar`), entries, {
+    'Bundle-SymbolicName': `tools.refinery.${name}`,
+    'Bundle-Version': version,
   });
 }
 
 await rm(targetDir, { recursive: true, force: true });
 await mkdir(targetDir, { recursive: true });
-await extractDistTar('language-web');
 
-// Create a pathing jar to shorten the runtime classpath.
-const classpath = (await readdir(targetDir, { withFileTypes: true }))
-  .filter((entry) => entry.isFile() && /\.jar$/i.test(entry.name))
-  .map(({ name }) => name)
-  .toSorted();
-await writeManifestJar(path.join(targetDir, 'refinery-all.jar'), classpath, {
-  'Bundle-SymbolicName': 'tools.refinery.refinery-all',
-  'Bundle-Version': version,
-});
+const webLibs = await extractDistTar('language-web');
+const cliLibs = await extractDistTar('generator-cli');
+const commonLibs = webLibs.intersection(cliLibs);
+const webOnlyLibs = webLibs.difference(commonLibs);
+const cliOnlyLibs = cliLibs.difference(commonLibs);
+
+await Promise.all([
+  writePathingJar('refinery-common-all', commonLibs),
+  writePathingJar('refinery-language-web-all', webOnlyLibs),
+  writePathingJar('refinery-generator-cli-all', cliOnlyLibs),
+]);
