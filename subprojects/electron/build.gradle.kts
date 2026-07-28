@@ -44,6 +44,15 @@ val assembleFiles: FileCollection = files(
 	"esbuild.mjs",
 ) + fileTree("app") + fileTree("scripts")
 
+// The Windows CLI launcher is cross-compiled with a downloaded Zig toolchain.
+// Only build it when we are actually producing Windows artifacts: on a Windows
+// host (electron-builder targets the host OS by default), or when a cross-build
+// forces it with `-Ptools.refinery.electron.winLauncher=true`. This keeps Linux/macOS
+// contributor builds free of the extra toolchain download.
+val buildWindowsLauncher: Boolean =
+	System.getProperty("os.name").startsWith("Windows") ||
+		(project.findProperty("tools.refinery.electron.winLauncher") as String?)?.toBoolean() == true
+
 val lintingFiles: FileCollection = assembleFiles + files(
 	rootProject.file(".eslintrc.cjs"),
 	rootProject.file("prettier.config.cjs"),
@@ -74,9 +83,41 @@ tasks {
 		description = "Extract backend binaries"
 	}
 
+	val installZig = register<RunYarnTaskType>("installZig") {
+		dependsOn(installFrontend)
+		inputs.files(
+			rootProject.file("yarn.lock"),
+			rootProject.file("package.json"),
+			"package.json",
+			"scripts/zig.mjs",
+			"scripts/installZig.mjs",
+		)
+		outputs.dir(layout.buildDirectory.dir("zig"))
+		args.set("run zig:install")
+		description = "Download the Zig toolchain used to build the Windows launcher"
+	}
+
+	val buildLauncher = register<RunYarnTaskType>("buildLauncher") {
+		dependsOn(installZig)
+		inputs.dir(layout.buildDirectory.dir("zig"))
+		inputs.files(
+			"package.json",
+			"scripts/zig.mjs",
+			"scripts/buildLauncher.mjs",
+			"src/refinery-launcher.c",
+		)
+		outputs.dir(layout.buildDirectory.dir("launcher"))
+		args.set("run launcher:build")
+		description = "Cross-compile the Windows CLI launcher with Zig"
+	}
+
 	assembleFrontend {
 		dependsOn(jlink)
 		dependsOn(extractBackend)
+		if (buildWindowsLauncher) {
+			dependsOn(buildLauncher)
+			inputs.dir(layout.buildDirectory.dir("launcher"))
+		}
 		inputs.files(frontendAssets)
 		inputs.dir(layout.buildDirectory.dir("jre"))
 		inputs.dir(layout.buildDirectory.dir("backend"))

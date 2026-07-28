@@ -36,6 +36,7 @@ const config = {
   directories: {
     app: 'app',
     output: 'build/dist',
+    buildResources: 'build-resources',
   },
   linux: {
     target: ['AppImage'],
@@ -43,6 +44,16 @@ const config = {
   },
   win: {
     target: ['nsis'],
+    extraFiles: [
+      {
+        from: 'build/launcher',
+        to: 'bin',
+        filter: ['refinery.exe'],
+      },
+    ],
+  },
+  nsis: {
+    include: 'src/installer.nsh',
   },
   mac: {
     target: ['dmg'],

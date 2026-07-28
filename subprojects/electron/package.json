@@ -15,6 +15,8 @@
     "build:electron": "MODE=production yarn run electron-builder --project . --config electron-builder.config.mjs",
     "bundle": "node esbuild.mjs",
     "backend:extract": "node scripts/extractBackend.mjs",
+    "zig:install": "node scripts/installZig.mjs",
+    "launcher:build": "node scripts/buildLauncher.mjs",
     "dev": "MODE=development yarn run bundle && electron build/esbuild/development/index.cjs",
     "typecheck": "yarn run g:tsc -p subprojects/electron/tsconfig.json",
     "lint": "yarn run g:lint subprojects/docs",
