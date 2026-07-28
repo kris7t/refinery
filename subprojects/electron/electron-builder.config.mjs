@@ -53,7 +53,7 @@ const config = {
     ],
   },
   nsis: {
-    include: 'src/installer.nsh',
+    include: 'build-resources/installer.nsh',
   },
   mac: {
     target: ['dmg'],
@@ -64,17 +64,17 @@ const config = {
     artifactName: '${productName}-${version}-${arch}.${ext}',
   },
   deb: {
-    afterInstall: 'src/after-install.tpl',
-    afterRemove: 'src/after-remove.tpl',
+    afterInstall: 'build-resources/after-install.tpl',
+    afterRemove: 'build-resources/after-remove.tpl',
   },
   pacman: {
-    afterInstall: 'src/after-install.tpl',
-    afterRemove: 'src/after-remove.tpl',
+    afterInstall: 'build-resources/after-install.tpl',
+    afterRemove: 'build-resources/after-remove.tpl',
     artifactName: '${name}-${version}-${arch}.pkg.tar.xz',
   },
   rpm: {
-    afterInstall: 'src/after-install.tpl',
-    afterRemove: 'src/after-remove.tpl',
+    afterInstall: 'build-resources/after-install.tpl',
+    afterRemove: 'build-resources/after-remove.tpl',
   },
   npmRebuild: false,
   publish: null,
@@ -114,7 +114,7 @@ const config = {
   async afterPack(context) {
     const { appOutDir, electronPlatformName, packager } = context;
     const app = packager.appInfo;
-    const tpl = await readFile('src/refinery-cli.sh.in', 'utf-8');
+    const tpl = await readFile('build-resources/refinery-cli.sh.in', 'utf-8');
 
     const emit = async (
       /** @type {string} **/ dest,

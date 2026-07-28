@@ -122,6 +122,7 @@ tasks {
 		inputs.dir(layout.buildDirectory.dir("jre"))
 		inputs.dir(layout.buildDirectory.dir("backend"))
 		inputs.files(assembleFiles)
+		inputs.dir("build-resources")
 		outputs.dir(productionResources)
 		outputs.dir(distDir)
 	}
