@@ -18,6 +18,7 @@ env:
   RUNNER_UBUNTU_ARM: &runner-ubuntu-arm ubuntu-26.04-arm
   RUNNER_WINDOWS: &runner-windows windows-2025
   RUNNER_MACOS: &runner-macos macos-26
+  RUNNER_MACOS_INTEL: &runner-macos-intel macos-26-intel
 jobs:
   build:
     name: Build
@@ -31,6 +32,7 @@ jobs:
           - *runner-ubuntu-arm
           - *runner-windows
           - *runner-macos
+          - *runner-macos-intel
     runs-on: ${{ matrix.os }}
     steps:
       - name: Check for Sonar secret
