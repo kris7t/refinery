@@ -12,6 +12,9 @@ import tools.refinery.language.model.problem.ProblemFactory;
 import tools.refinery.language.model.problem.TheoryAction;
 import tools.refinery.language.model.problem.TheoryDeclaration;
 import tools.refinery.language.semantics.TracedException;
+import tools.refinery.logic.dnf.Query;
+import tools.refinery.logic.term.truthvalue.TruthValue;
+import tools.refinery.logic.term.truthvalue.TruthValueTerms;
 import tools.refinery.store.model.ModelStore;
 import tools.refinery.store.model.ModelStoreBuilder;
 import tools.refinery.store.reasoning.theory.Theory;
@@ -233,7 +236,7 @@ class TheoryDispatchTest {
 
 	// The dispatch logic never inspects the rule contents, so a placeholder rule is enough.
 	private static TheoryRule rule() {
-		return new TheoryRule(null, null);
+		return new TheoryRule(Query.builder("example").build(), TruthValueTerms.constant(TruthValue.TRUE));
 	}
 
 	private record Registered(TheoryDeclaration declaration, FakeTheory theory) {
