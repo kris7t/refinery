@@ -82,7 +82,8 @@ val mavenRepository = tasks.register<Task>("mavenRepository") {
 gradle.projectsEvaluated {
 	mavenRepository.configure {
 		for (subproject in rootProject.subprojects) {
-			if (subproject.plugins.hasPlugin(MavenPublishPlugin::class)) {
+			if (subproject.name != "refinery-gradle-plugins" && subproject.plugins.hasPlugin(
+					MavenPublishPlugin::class)) {
 				val publishTask = subproject.tasks.named("publishMavenJavaPublicationToFileRepository")
 				publishTask.configure {
 					mustRunAfter(cleanMavenRepository)
@@ -91,9 +92,7 @@ gradle.projectsEvaluated {
 			}
 		}
 
-		val pluginPublishTask = project("refinery-gradle-plugins")
-			.tasks
-			.named("publishAllPublicationsToFileRepository")
+		val pluginPublishTask = project("refinery-gradle-plugins").tasks.named("publishAllPublicationsToFileRepository")
 		pluginPublishTask.configure {
 			mustRunAfter(cleanMavenRepository)
 		}
