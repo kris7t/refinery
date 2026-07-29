@@ -3,16 +3,17 @@
  *
  * SPDX-License-Identifier: EPL-2.0
  */
-package tools.refinery.generator.cli.utils;
+package tools.refinery.generator.cli.output;
 
 import org.eclipse.emf.ecore.resource.Resource;
 import tools.refinery.generator.ModelFacade;
+import tools.refinery.generator.cli.utils.CliUtils;
 
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.util.Map;
 
-public class CliProblemSerializer {
+public class CliProblemOutput {
 	public void saveModel(ModelFacade modelFacade, String outputPath) throws IOException {
 		saveModel(modelFacade, outputPath, true);
 	}

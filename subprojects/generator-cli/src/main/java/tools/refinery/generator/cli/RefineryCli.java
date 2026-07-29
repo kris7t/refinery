@@ -33,7 +33,13 @@ public class RefineryCli {
 	@Inject
 	private GenerateCommand generateCommand;
 
+	private boolean hideGraphicalOutput;
 	private JCommander jCommander;
+
+	public void setHideGraphicalOutput(boolean hideGraphicalOutput) {
+		this.hideGraphicalOutput = hideGraphicalOutput;
+		jCommander = null;
+	}
 
 	public int run(String[] args) {
 		Command command = null;
@@ -60,9 +66,15 @@ public class RefineryCli {
 					.programName("refinery")
 					.addObject(this)
 					.addCommand("generate", generateCommand, "g")
-					.addCommand("check", checkCommand)
-					.addCommand("concretize", concretizeCommand)
+					.addCommand("check", checkCommand, "v")
+					.addCommand("concretize", concretizeCommand, "c")
 					.build();
+			var usageFormatter = new RefineryUsageFormatter(jCommander, hideGraphicalOutput);
+			jCommander.setUsageFormatter(usageFormatter);
+			for (var command : jCommander.getCommands().values()) {
+				var commandUsageFormatter = new RefineryUsageFormatter(command, hideGraphicalOutput);
+				command.setUsageFormatter(commandUsageFormatter);
+			}
 		}
 		return jCommander;
 	}
@@ -91,12 +103,14 @@ public class RefineryCli {
 	public static void main(String[] args) {
 		int exitValue = EXIT_FAILURE;
 		RefineryCli cli = null;
+		boolean showGraphicalOutput = "1".equals(System.getenv("REFINERY_SHOW_GRAPHICAL_OUTPUT"));
 		try {
 			cli = StandaloneRefinery.getInjector().getInstance(RefineryCli.class);
 		} catch (RuntimeException e) {
 			LOGGER.error("Initialization error", e);
 		}
 		if (cli != null) {
+			cli.setHideGraphicalOutput(!showGraphicalOutput);
 			exitValue = cli.run(args);
 		}
 		System.exit(exitValue);

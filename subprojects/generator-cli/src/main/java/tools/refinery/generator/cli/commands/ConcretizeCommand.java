@@ -7,12 +7,13 @@ package tools.refinery.generator.cli.commands;
 
 import com.beust.jcommander.Parameter;
 import com.beust.jcommander.Parameters;
+import com.beust.jcommander.ParametersDelegate;
 import com.google.inject.Inject;
 import tools.refinery.generator.ModelSemanticsFactory;
 import tools.refinery.generator.cli.RefineryCli;
+import tools.refinery.generator.cli.output.CliProblemOutput;
+import tools.refinery.generator.cli.output.OutputOptions;
 import tools.refinery.generator.cli.utils.CliProblemLoader;
-import tools.refinery.generator.cli.utils.CliProblemSerializer;
-import tools.refinery.generator.cli.utils.CliUtils;
 
 import java.io.IOException;
 
@@ -20,14 +21,16 @@ import java.io.IOException;
 public class ConcretizeCommand implements Command {
 	private final CliProblemLoader loader;
 	private final ModelSemanticsFactory semanticsFactory;
-	private final CliProblemSerializer serializer;
+	private final CliProblemOutput serializer;
 
 	private String inputPath;
-	private String outputPath = CliUtils.STANDARD_OUTPUT_PATH;
+
+	@ParametersDelegate
+	private OutputOptions outputOptions = new OutputOptions();
 
 	@Inject
 	public ConcretizeCommand(CliProblemLoader loader, ModelSemanticsFactory semanticsFactory,
-							 CliProblemSerializer serializer) {
+							 CliProblemOutput serializer) {
 		this.loader = loader;
 		this.semanticsFactory = semanticsFactory;
 		this.serializer = serializer;
@@ -38,16 +41,11 @@ public class ConcretizeCommand implements Command {
 		this.inputPath = inputPath;
 	}
 
-	@Parameter(names = {"-output", "-o"}, description = "Output path")
-	public void setOutputPath(String outputPath) {
-		this.outputPath = outputPath;
-	}
-
 	@Override
 	public int run() throws IOException {
 		var problem = loader.loadProblem(inputPath);
 		try (var semantics = semanticsFactory.concretize(true).createSemantics(problem)) {
-			serializer.saveModel(semantics, outputPath);
+			serializer.saveModel(semantics, outputOptions.getOutputPath());
 		}
 		return RefineryCli.EXIT_SUCCESS;
 	}

@@ -6,12 +6,15 @@
 package tools.refinery.generator.cli.commands;
 
 import com.beust.jcommander.Parameter;
+import com.beust.jcommander.ParameterException;
 import com.beust.jcommander.Parameters;
+import com.beust.jcommander.ParametersDelegate;
 import com.google.inject.Inject;
 import tools.refinery.generator.ModelGeneratorFactory;
 import tools.refinery.generator.cli.RefineryCli;
+import tools.refinery.generator.cli.output.OutputOptions;
 import tools.refinery.generator.cli.utils.CliProblemLoader;
-import tools.refinery.generator.cli.utils.CliProblemSerializer;
+import tools.refinery.generator.cli.output.CliProblemOutput;
 import tools.refinery.generator.cli.utils.CliUtils;
 
 import java.io.IOException;
@@ -22,18 +25,20 @@ import java.util.List;
 public class GenerateCommand implements Command {
 	private final CliProblemLoader loader;
 	private final ModelGeneratorFactory generatorFactory;
-	private final CliProblemSerializer serializer;
+	private final CliProblemOutput serializer;
 
 	private String inputPath;
-	private String outputPath = CliUtils.STANDARD_OUTPUT_PATH;
 	private List<String> scopes = new ArrayList<>();
 	private List<String> overrideScopes = new ArrayList<>();
 	private long randomSeed = 1;
 	private int count = 1;
 
+	@ParametersDelegate
+	private OutputOptions outputOptions = new OutputOptions();
+
 	@Inject
 	public GenerateCommand(CliProblemLoader loader, ModelGeneratorFactory generatorFactory,
-						   CliProblemSerializer serializer) {
+	                       CliProblemOutput serializer) {
 		this.loader = loader;
 		this.generatorFactory = generatorFactory;
 		this.serializer = serializer;
@@ -44,37 +49,34 @@ public class GenerateCommand implements Command {
 		this.inputPath = inputPath;
 	}
 
-	@Parameter(names = {"-output", "-o"}, description = "Output path")
-	public void setOutputPath(String outputPath) {
-		this.outputPath = outputPath;
-	}
-
-	@Parameter(names = {"-scope", "-s"}, description = "Extra scope constraints")
+	@Parameter(names = {"-scope", "-s"}, description = "Extra scope constraints",
+			placeholder = "Type1=range,Type2=range,...")
 	public void setScopes(List<String> scopes) {
 		this.scopes = scopes;
 	}
 
-	@Parameter(names = {"-scope-override", "-S"}, description = "Override scope constraints")
+	@Parameter(names = {"-scope-override", "-S"}, description = "Override scope constraints",
+		placeholder ="Type1=range,Type2=range,...")
 	public void setOverrideScopes(List<String> overrideScopes) {
 		this.overrideScopes = overrideScopes;
 	}
 
-	@Parameter(names = {"-random-seed", "-r"}, description = "Random seed")
+	@Parameter(names = {"-random-seed", "-r"}, description = "Random seed", placeholder = "SEED")
 	public void setRandomSeed(long randomSeed) {
 		this.randomSeed = randomSeed;
 	}
 
-	@Parameter(names = {"-solution-number", "-n"}, description = "Maximum number of solutions")
+	@Parameter(names = {"-solution-number", "-n"}, description = "Maximum number of solutions", placeholder = "COUNT")
 	public void setCount(int count) {
 		if (count <= 0) {
-			throw new IllegalArgumentException("Count must be positive");
+			throw new ParameterException("Count must be positive");
 		}
 		this.count = count;
 	}
 
 	@Override
 	public int run() throws IOException {
-		if (count > 1 && CliUtils.isStandardStream(outputPath)) {
+		if (count > 1 && outputOptions.isStandardStream()) {
 			throw new IllegalArgumentException("Must provide output path if count is larger than 1");
 		}
 		var problem = loader.loadProblem(inputPath, scopes, overrideScopes);
@@ -83,6 +85,8 @@ public class GenerateCommand implements Command {
 			generator.setRandomSeed(randomSeed);
 			generator.setMaxNumberOfSolutions(count);
 			generator.generate();
+
+			var outputPath = outputOptions.getOutputPath();
 			if (count == 1) {
 				serializer.saveModel(generator, outputPath);
 			} else {
@@ -97,4 +101,3 @@ public class GenerateCommand implements Command {
 		return RefineryCli.EXIT_SUCCESS;
 	}
 }
-
