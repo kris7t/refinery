@@ -19,27 +19,27 @@ public enum OutputFormat {
 	PNG("png", true, false);
 
 	private final Pattern extensionPattern;
-	private final boolean needsRenderer;
+	private final boolean isGraphical;
 	private final boolean allowConsoleOutput;
 
-	OutputFormat(List<String> extensions, boolean needsRenderer, boolean allowConsoleOutput) {
+	OutputFormat(List<String> extensions, boolean isGraphical, boolean allowConsoleOutput) {
 		extensionPattern = Pattern.compile("\\.(?:%s)$".formatted(extensions.stream()
 				.map(Pattern::quote)
 				.collect(Collectors.joining("|"))), Pattern.CASE_INSENSITIVE);
-		this.needsRenderer = needsRenderer;
+		this.isGraphical = isGraphical;
 		this.allowConsoleOutput = allowConsoleOutput;
 	}
 
-	OutputFormat(String extension, boolean needsRenderer, boolean allowConsoleOutput) {
-		this(List.of(extension), needsRenderer, allowConsoleOutput);
+	OutputFormat(String extension, boolean isGraphical, boolean allowConsoleOutput) {
+		this(List.of(extension), isGraphical, allowConsoleOutput);
 	}
 
 	private boolean matchesFilePath(String filePath) {
 		return extensionPattern.matcher(filePath).find();
 	}
 
-	public boolean isRendererNeeded() {
-		return  needsRenderer;
+	public boolean isGraphical() {
+		return isGraphical;
 	}
 
 	public boolean isConsoleOutputAllowed() {

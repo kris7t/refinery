@@ -10,8 +10,7 @@ import com.beust.jcommander.ParameterException;
 import com.beust.jcommander.Parameters;
 import tools.refinery.generator.cli.utils.CliUtils;
 
-@Parameters(parametersValidators = OutputOptionsValidator.class)
-public class OutputOptions {
+public sealed abstract class OutputOptions {
 	private OutputFormat format;
 	private String outputPath = CliUtils.STANDARD_OUTPUT_PATH;
 	private boolean transparent = true;
@@ -84,5 +83,26 @@ public class OutputOptions {
 
 	public boolean isStandardStream() {
 		return CliUtils.isStandardStream(outputPath);
+	}
+
+	@Parameters(parametersValidators = OutputOptionsValidator.Refinery.class)
+	public static final class Refinery extends OutputOptions {
+		public Refinery() {
+			setFormat(OutputFormat.REFINERY);
+		}
+	}
+
+	@Parameters(parametersValidators = OutputOptionsValidator.Json.class)
+	public static final class Json extends OutputOptions {
+		public Json() {
+			setFormat(OutputFormat.JSON);
+		}
+	}
+
+	@Parameters(parametersValidators = OutputOptionsValidator.Png.class)
+	public static final class Png extends OutputOptions {
+		public Png() {
+			setFormat(OutputFormat.PNG);
+		}
 	}
 }

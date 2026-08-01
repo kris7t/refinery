@@ -22,7 +22,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 @Parameters(commandDescription = "Generate a model from a partial model")
-public class GenerateCommand implements Command {
+public class GenerateCommand implements OutputFormatCommand {
 	private final CliProblemLoader loader;
 	private final ModelGeneratorFactory generatorFactory;
 	private final CliProblemOutput serializer;
@@ -34,7 +34,7 @@ public class GenerateCommand implements Command {
 	private int count = 1;
 
 	@ParametersDelegate
-	private OutputOptions outputOptions = new OutputOptions();
+	private final OutputOptions.Refinery outputOptions = new OutputOptions.Refinery();
 
 	@Inject
 	public GenerateCommand(CliProblemLoader loader, ModelGeneratorFactory generatorFactory,
@@ -72,6 +72,11 @@ public class GenerateCommand implements Command {
 			throw new ParameterException("Count must be positive");
 		}
 		this.count = count;
+	}
+
+	@Override
+	public OutputOptions.Refinery getOutputOptions() {
+		return outputOptions;
 	}
 
 	@Override

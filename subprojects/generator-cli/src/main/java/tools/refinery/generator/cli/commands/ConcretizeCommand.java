@@ -18,7 +18,7 @@ import tools.refinery.generator.cli.utils.CliProblemLoader;
 import java.io.IOException;
 
 @Parameters(commandDescription = "Concretize a partial model")
-public class ConcretizeCommand implements Command {
+public class ConcretizeCommand implements OutputFormatCommand {
 	private final CliProblemLoader loader;
 	private final ModelSemanticsFactory semanticsFactory;
 	private final CliProblemOutput serializer;
@@ -26,7 +26,7 @@ public class ConcretizeCommand implements Command {
 	private String inputPath;
 
 	@ParametersDelegate
-	private OutputOptions outputOptions = new OutputOptions();
+	private final OutputOptions.Refinery outputOptions = new OutputOptions.Refinery();
 
 	@Inject
 	public ConcretizeCommand(CliProblemLoader loader, ModelSemanticsFactory semanticsFactory,
@@ -39,6 +39,11 @@ public class ConcretizeCommand implements Command {
 	@Parameter(description = "input path", required = true)
 	public void setInputPath(String inputPath) {
 		this.inputPath = inputPath;
+	}
+
+	@Override
+	public OutputOptions.Refinery getOutputOptions() {
+		return outputOptions;
 	}
 
 	@Override

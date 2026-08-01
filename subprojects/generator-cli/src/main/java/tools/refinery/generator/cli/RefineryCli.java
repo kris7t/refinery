@@ -33,6 +33,9 @@ public class RefineryCli {
 	@Inject
 	private RenderCommand renderCommand;
 
+	@Inject
+	private SemanticsCommand semanticsCommand;
+
 	private boolean showGraphicalOutput;
 	private JCommander jCommander;
 
@@ -65,12 +68,13 @@ public class RefineryCli {
 			var builder = JCommander.newBuilder()
 					.programName("refinery")
 					.addObject(this)
-					.addCommand("generate", generateCommand, "g")
 					.addCommand("check", checkCommand, "v")
-					.addCommand("concretize", concretizeCommand, "c");
+					.addCommand("concretize", concretizeCommand, "c")
+					.addCommand("generate", generateCommand, "g");
 			if (showGraphicalOutput) {
 				builder.addCommand("render", renderCommand, "r");
 			}
+			builder.addCommand("semantics", semanticsCommand, "s");
 			jCommander = builder.build();
 			var usageFormatter = new RefineryUsageFormatter(jCommander, showGraphicalOutput);
 			jCommander.setUsageFormatter(usageFormatter);

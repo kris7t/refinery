@@ -5,14 +5,31 @@
  */
 package tools.refinery.generator.cli.commands;
 
+import com.beust.jcommander.Parameter;
 import com.beust.jcommander.Parameters;
+import com.beust.jcommander.ParametersDelegate;
 import tools.refinery.generator.cli.headless.HeadlessRefinery;
+import tools.refinery.generator.cli.output.OutputOptions;
 
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 
 @Parameters(commandDescription = "Render a partial model as an image")
-public class RenderCommand implements Command {
+public class RenderCommand implements OutputFormatCommand {
+	private String inputPath;
+
+	@ParametersDelegate
+	private final OutputOptions.Png outputOptions = new OutputOptions.Png();
+
+	@Parameter(description = "input path", required = true)
+	public void setInputPath(String inputPath) {
+		this.inputPath = inputPath;
+	}
+
+	public OutputOptions.Png getOutputOptions() {
+		return outputOptions;
+	}
+
 	@Override
 	public int run() throws IOException {
 		var endpoint = System.getenv("REFINERY_IPC_ENDPOINT");

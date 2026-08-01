@@ -5,14 +5,16 @@
  */
 
 const commands = [
-  'generate',
-  'g',
-  'concretize',
-  'c',
   'check',
   'v',
+  'concretize',
+  'c',
+  'generate',
+  'g',
+  'semantics',
+  's',
   'render',
-  'r'
+  'r',
 ] as const;
 
 export default commands;
