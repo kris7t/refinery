@@ -9,10 +9,7 @@ import com.beust.jcommander.JCommander;
 import com.google.inject.Inject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import tools.refinery.generator.cli.commands.CheckCommand;
-import tools.refinery.generator.cli.commands.Command;
-import tools.refinery.generator.cli.commands.ConcretizeCommand;
-import tools.refinery.generator.cli.commands.GenerateCommand;
+import tools.refinery.generator.cli.commands.*;
 import tools.refinery.generator.standalone.StandaloneRefinery;
 
 import java.io.IOException;
@@ -33,11 +30,14 @@ public class RefineryCli {
 	@Inject
 	private GenerateCommand generateCommand;
 
-	private boolean hideGraphicalOutput;
+	@Inject
+	private RenderCommand renderCommand;
+
+	private boolean showGraphicalOutput;
 	private JCommander jCommander;
 
-	public void setHideGraphicalOutput(boolean hideGraphicalOutput) {
-		this.hideGraphicalOutput = hideGraphicalOutput;
+	public void setShowGraphicalOutput(boolean showGraphicalOutput) {
+		this.showGraphicalOutput = showGraphicalOutput;
 		jCommander = null;
 	}
 
@@ -62,17 +62,20 @@ public class RefineryCli {
 
 	private JCommander getjCommander() {
 		if (jCommander == null) {
-			jCommander = JCommander.newBuilder()
+			var builder = JCommander.newBuilder()
 					.programName("refinery")
 					.addObject(this)
 					.addCommand("generate", generateCommand, "g")
 					.addCommand("check", checkCommand, "v")
-					.addCommand("concretize", concretizeCommand, "c")
-					.build();
-			var usageFormatter = new RefineryUsageFormatter(jCommander, hideGraphicalOutput);
+					.addCommand("concretize", concretizeCommand, "c");
+			if (showGraphicalOutput) {
+				builder.addCommand("render", renderCommand, "r");
+			}
+			jCommander = builder.build();
+			var usageFormatter = new RefineryUsageFormatter(jCommander, showGraphicalOutput);
 			jCommander.setUsageFormatter(usageFormatter);
 			for (var command : jCommander.getCommands().values()) {
-				var commandUsageFormatter = new RefineryUsageFormatter(command, hideGraphicalOutput);
+				var commandUsageFormatter = new RefineryUsageFormatter(command, showGraphicalOutput);
 				command.setUsageFormatter(commandUsageFormatter);
 			}
 		}
@@ -110,7 +113,7 @@ public class RefineryCli {
 			LOGGER.error("Initialization error", e);
 		}
 		if (cli != null) {
-			cli.setHideGraphicalOutput(!showGraphicalOutput);
+			cli.setShowGraphicalOutput(showGraphicalOutput);
 			exitValue = cli.run(args);
 		}
 		System.exit(exitValue);

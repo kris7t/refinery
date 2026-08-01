@@ -17,8 +17,8 @@ import {
 } from 'electron';
 import z from 'zod';
 
-import getLogger from './utils/getLogger';
-import { isMac, isWindows } from './utils/platform';
+import getLogger from '../utils/getLogger';
+import { isMac, isWindows } from '../utils/platform';
 
 const logger = getLogger('getTheme');
 
@@ -103,46 +103,48 @@ function updateWindow(window: BrowserWindow): void {
   }
 }
 
-nativeTheme.on('updated', () => {
-  const { themeSource } = nativeTheme;
-  for (const window of BrowserWindow.getAllWindows()) {
-    window.webContents.send('refinery:themeSourceChanged', themeSource);
-    updateWindow(window);
-  }
-});
-
-ipcMain.handle(
-  'refinery:getThemeSource',
-  (): ThemeSource => nativeTheme.themeSource,
-);
-
-ipcMain.on('refinery:setThemeSource', (_event, rawThemeSource: unknown) => {
-  const themeSource = ThemeSource.safeParse(rawThemeSource);
-  if (themeSource.success) {
-    nativeTheme.themeSource = themeSource.data;
-  } else {
-    logger.error({ err: themeSource.error }, 'Failed to parse ThemeSource');
-  }
-});
-
-ipcMain.on('refinery:setModalDialogCount', (event, rawCount: unknown) => {
-  const browserWindow = BrowserWindow.fromWebContents(event.sender);
-  if (browserWindow === null) {
-    logger.error(
-      { processId: event.processId },
-      'Invalid setModalDialogCount from WebContents without a BrowserWindow',
-    );
-    return;
-  }
-  const count = ModalDialogCount.safeParse(rawCount);
-  if (count.success) {
-    const newValue = count.data;
-    const oldValue = modalDialogCount.get(browserWindow) ?? 0;
-    if (newValue !== oldValue) {
-      modalDialogCount.set(browserWindow, newValue);
-      updateWindow(browserWindow);
+export function attachNativeThemeHandler(): void {
+  nativeTheme.on('updated', () => {
+    const { themeSource } = nativeTheme;
+    for (const window of BrowserWindow.getAllWindows()) {
+      window.webContents.send('refinery:themeSourceChanged', themeSource);
+      updateWindow(window);
     }
-  } else {
-    logger.error({ err: count.error }, 'Failed to parse ModalDialogCount');
-  }
-});
+  });
+
+  ipcMain.handle(
+    'refinery:getThemeSource',
+    (): ThemeSource => nativeTheme.themeSource,
+  );
+
+  ipcMain.on('refinery:setThemeSource', (_event, rawThemeSource: unknown) => {
+    const themeSource = ThemeSource.safeParse(rawThemeSource);
+    if (themeSource.success) {
+      nativeTheme.themeSource = themeSource.data;
+    } else {
+      logger.error({ err: themeSource.error }, 'Failed to parse ThemeSource');
+    }
+  });
+
+  ipcMain.on('refinery:setModalDialogCount', (event, rawCount: unknown) => {
+    const browserWindow = BrowserWindow.fromWebContents(event.sender);
+    if (browserWindow === null) {
+      logger.error(
+        { processId: event.processId },
+        'Invalid setModalDialogCount from WebContents without a BrowserWindow',
+      );
+      return;
+    }
+    const count = ModalDialogCount.safeParse(rawCount);
+    if (count.success) {
+      const newValue = count.data;
+      const oldValue = modalDialogCount.get(browserWindow) ?? 0;
+      if (newValue !== oldValue) {
+        modalDialogCount.set(browserWindow, newValue);
+        updateWindow(browserWindow);
+      }
+    } else {
+      logger.error({ err: count.error }, 'Failed to parse ModalDialogCount');
+    }
+  });
+}

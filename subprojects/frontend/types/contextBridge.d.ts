@@ -6,4 +6,6 @@
 
 interface Window {
   refinery?: import('../src/RefineryContextBridge').default;
+
+  refineryHeadless?: import('../src/headless/RefineryHeadlessContextBridge').default;
 }

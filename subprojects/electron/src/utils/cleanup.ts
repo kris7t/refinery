@@ -4,8 +4,6 @@
  * SPDX-License-Identifier: EPL-2.0
  */
 
-import { app } from 'electron';
-
 import getLogger from "./getLogger";
 
 const logger = getLogger('utils.cleanup');
@@ -21,10 +19,6 @@ export default function cleanup(): void {
     }
   }
 }
-
-app.on('will-quit', () => {
-  cleanup();
-});
 
 export function onCleanup(callback: () => void): void {
   cleanupFunctions.unshift(callback);

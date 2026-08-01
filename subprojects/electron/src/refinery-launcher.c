@@ -45,7 +45,7 @@
 #define REFINERY_REL_EXE L"..\\Refinery.exe"
 #endif
 #ifndef REFINERY_REL_CLI
-#define REFINERY_REL_CLI L"..\\resources\\app.asar\\cli.cjs"
+#define REFINERY_REL_CLI L"..\\resources\\app.asar\\cli\\index.cjs"
 #endif
 
 static void fail(const wchar_t *what, DWORD err) {

@@ -33,9 +33,6 @@ const { mode, isDevelopment, devModePlugins, serverOptions } =
 process.env['NODE_ENV'] ??= mode;
 
 const fontsGlob = [
-  'open-sans-latin-*.ttf',
-  'open-sans-latin-400-{normal,italic}-*.woff2',
-  'open-sans-latin-700-*.woff2',
   'open-sans-latin-wdth-{normal,italic}-*.woff2',
   'jetbrains-mono-latin-wght-{normal,italic}-*.woff2',
 ];
@@ -104,6 +101,10 @@ const viteConfig: ViteConfig = {
     sourcemap: isDevelopment,
     minify: !isDevelopment,
     rollupOptions: {
+      input: {
+        main: 'index.html',
+        headless: 'headless.html',
+      },
       output: {
         chunkFileNames: ({ isDynamicEntry, isEntry }) =>
           isDynamicEntry || isEntry ? '[name]-[hash].js' : '[hash].js',

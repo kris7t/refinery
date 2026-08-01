@@ -9,16 +9,16 @@ import path from 'node:path';
 
 import type BackendConfig from '@tools.refinery/frontend/xtext/BackendConfig';
 
-import ServerManager from './ServerManager';
-import spawnJava from './utils/spawnJava';
-import spawnScript from './utils/spawnScript';
+import HttpServerManager from '../utils/HttpServerManager';
+import spawnJava from '../utils/spawnJava';
+import spawnScript from '../utils/spawnScript';
 
-export default class BackendManager extends ServerManager {
+export default class BackendManager extends HttpServerManager {
   constructor(
     port: number,
     private readonly allowedOrigins: string[] = [],
   ) {
-    super('BackendManager', port);
+    super('gui.BackendManager', port);
   }
 
   protected override spawnChild(): ChildProcess {

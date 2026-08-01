@@ -46,6 +46,7 @@ export default function spawnJava(
     // For macOS: dynamic linking for native libraries.
     DYLD_LIBRARY_PATH: nativesDir,
   };
+  delete newEnv['ELECTRON_RUN_AS_NODE'];
   // Do not inherit Java options from the environment to ensure portability.
   delete newEnv['_JAVA_OPTIONS'];
   delete newEnv['JDK_JAVA_OPTIONS'];

@@ -140,7 +140,7 @@ const config = {
       await emit(path.join(contents, 'Resources/bin/refinery'), {
         REL_ROOT: '../..',
         REL_EXE: `MacOS/${app.productFilename}`,
-        REL_CLI: 'Resources/app.asar/cli.cjs',
+        REL_CLI: 'Resources/app.asar/cli/index.cjs',
         APP_DIR: `/Applications/${app.productFilename}.app/Contents`,
       });
     }
@@ -149,7 +149,7 @@ const config = {
       await emit(path.join(appOutDir, 'bin/refinery'), {
         REL_ROOT: '..',
         REL_EXE: app.name,
-        REL_CLI: 'resources/app.asar/cli.cjs',
+        REL_CLI: 'resources/app.asar/cli/index.cjs',
         APP_DIR: `/opt/${app.sanitizedProductName}`,
       });
     }

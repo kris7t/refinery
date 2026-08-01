@@ -7,16 +7,16 @@
 import type { ChildProcess } from 'node:child_process';
 import path from 'node:path';
 
-import ServerManager from './ServerManager';
-import spawnScript from './utils/spawnScript';
+import HttpServerManager from '../utils/HttpServerManager';
+import spawnScript from '../utils/spawnScript';
 
-export default class FrontendManager extends ServerManager {
+export default class FrontendManager extends HttpServerManager {
   constructor(
     port: number,
     private readonly backendHost: string,
     private readonly backendPort: number,
   ) {
-    super('FrontendManager', port);
+    super('gui.FrontendManager', port);
   }
 
   protected override spawnChild(): ChildProcess {

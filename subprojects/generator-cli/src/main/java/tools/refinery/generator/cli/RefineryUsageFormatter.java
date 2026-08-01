@@ -17,22 +17,22 @@ import java.util.Set;
 class RefineryUsageFormatter extends FilteredUsageFormatter {
 	private static final Set<String> OPTIONS_TO_HIDE = Set.of("-transparent", "-embed-fonts", "-theme", "-scale");
 
-	private final boolean hideGraphicalOutput;
+	private final boolean showGraphicalOutput;
 
-	public RefineryUsageFormatter(JCommander commander, boolean hideGraphicalOutput) {
+	public RefineryUsageFormatter(JCommander commander, boolean showGraphicalOutput) {
 		super(commander);
-		this.hideGraphicalOutput = hideGraphicalOutput;
+		this.showGraphicalOutput = showGraphicalOutput;
 	}
 
 	@Override
 	protected boolean isHidden(ParameterDescription parameterDescription) {
-		return hideGraphicalOutput && Arrays.stream(parameterDescription.getParameter().names())
+		return !showGraphicalOutput && Arrays.stream(parameterDescription.getParameter().names())
 				.anyMatch(OPTIONS_TO_HIDE::contains);
 	}
 
 	@Override
 	protected <E extends Enum<E>> EnumSet<E> getPossibleValues(Class<E> type) {
-		if (hideGraphicalOutput && OutputFormat.class.equals(type)) {
+		if (!showGraphicalOutput && OutputFormat.class.equals(type)) {
 			// We just checked that this cast is valid.
 			@SuppressWarnings("unchecked")
 			var result = (EnumSet<E>) getPossibleOutputFormatValues();

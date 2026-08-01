@@ -67,8 +67,12 @@ function createContext(entryPoints, outputFormat, extension) {
 }
 
 const contexts = await Promise.all([
-  createContext(['src/index.ts', 'src/cli.ts'], 'cjs', '.cjs'),
-  createContext(['src/preload.ts'], 'iife', '.js'),
+  createContext(['src/index.ts', 'src/cli/index.ts'], 'cjs', '.cjs'),
+  createContext(
+    ['src/gui/preload.ts', 'src/headless/preload.ts'],
+    'iife',
+    '.js',
+  ),
 ]);
 
 if (watch) {
