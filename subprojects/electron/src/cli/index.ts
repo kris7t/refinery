@@ -4,6 +4,7 @@
  * SPDX-License-Identifier: EPL-2.0
  */
 
+import child_process from "node:child_process";
 import { once } from 'node:events';
 import { rmSync } from 'node:fs';
 import { chmod, mkdtemp } from 'node:fs/promises';
@@ -18,6 +19,7 @@ import { isWindows } from '../utils/platform';
 import spawnJava from '../utils/spawnJava';
 
 import HeadlessServerManager from './HeadlessServerManager';
+import commands from './commands';
 import isHeadlessNeeded from './isHeadlessNeeded';
 
 const log = getLogger('cli');
@@ -37,8 +39,36 @@ async function getEndpoint(): Promise<string> {
   return path.join(tempDir, 'sock');
 }
 
+function shouldLaunchGUI(args: string[]): boolean {
+  const firstArg = args[0];
+  return (
+    !firstArg ||
+    firstArg === '--' ||
+    (!(commands as readonly string[]).includes(firstArg) &&
+      !args.some((arg) => arg.startsWith('-') || arg.startsWith('@')))
+  );
+}
+
+function launchGUI(args: string[]) {
+  const newEnv = { ...process.env };
+  delete newEnv['ELECTRON_RUN_AS_NODE'];
+  child_process
+    .spawn(process.argv0, args, {
+      env: newEnv,
+      stdio: ['ignore', 'ignore', 'ignore'],
+      detached: true,
+    })
+    .unref();
+}
+
 async function runCLI(): Promise<number | null> {
   const args = process.argv.slice(2);
+
+  if (shouldLaunchGUI(args)) {
+    launchGUI(args);
+    return 0;
+  }
+
   const newEnv: NodeJS.ProcessEnv = {
     ...process.env,
     REFINERY_SHOW_GRAPHICAL_OUTPUT: '1',

@@ -4,9 +4,10 @@
  * SPDX-License-Identifier: EPL-2.0
  */
 
+import { Command } from './commands';
 import expandArgs from './expandArgs';
 
-const COMMANDS = ['render', 'r'];
+const COMMANDS: Command[] = ['render', 'r'];
 
 const FORMAT_OPTIONS = ['-format', '-f'];
 
@@ -37,7 +38,7 @@ export default async function isHeadlessNeeded(
   for await (const arg of expandArgs(args)) {
     switch (state) {
       case 'command':
-        if (COMMANDS.includes(arg)) {
+        if ((COMMANDS as string[]).includes(arg)) {
           return true;
         } else if (arg.startsWith('-')) {
           // The Refinery CLI has no top-level options,
