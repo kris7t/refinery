@@ -12,10 +12,9 @@ import com.beust.jcommander.ParametersDelegate;
 import com.google.inject.Inject;
 import tools.refinery.generator.ModelGeneratorFactory;
 import tools.refinery.generator.cli.RefineryCli;
+import tools.refinery.generator.cli.output.CliProblemOutput;
 import tools.refinery.generator.cli.output.OutputOptions;
 import tools.refinery.generator.cli.utils.CliProblemLoader;
-import tools.refinery.generator.cli.output.CliProblemOutput;
-import tools.refinery.generator.cli.utils.CliUtils;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -82,7 +81,7 @@ public class GenerateCommand implements OutputFormatCommand {
 	@Override
 	public int run() throws IOException {
 		if (count > 1 && outputOptions.isStandardStream()) {
-			throw new IllegalArgumentException("Must provide output path if count is larger than 1");
+			throw new ParameterException("Must provide output path if count is larger than 1");
 		}
 		var problem = loader.loadProblem(inputPath, scopes, overrideScopes);
 		generatorFactory.partialInterpretationBasedNeighborhoods(count >= 2);
@@ -91,15 +90,13 @@ public class GenerateCommand implements OutputFormatCommand {
 			generator.setMaxNumberOfSolutions(count);
 			generator.generate();
 
-			var outputPath = outputOptions.getOutputPath();
 			if (count == 1) {
-				serializer.saveModel(generator, outputPath);
+				serializer.saveModel(outputOptions, generator);
 			} else {
 				int solutionCount = generator.getSolutionCount();
 				for (int i = 0; i < solutionCount; i++) {
 					generator.loadSolution(i);
-					var pathWithIndex = CliUtils.getFileNameWithIndex(outputPath, i + 1);
-					serializer.saveModel(generator, pathWithIndex, false);
+					serializer.saveModel(outputOptions, generator, i);
 				}
 			}
 		}

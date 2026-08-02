@@ -3,7 +3,7 @@
  *
  * SPDX-License-Identifier: EPL-2.0
  */
-package tools.refinery.language.web.semantics;
+package tools.refinery.generator.json;
 
 import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
@@ -22,7 +22,7 @@ import java.util.TreeMap;
 import java.util.function.Function;
 
 @Singleton
-public class PartialInterpretation2Json {
+class PartialInterpretation2Json {
 	private static final String UNKNOWN_STRING = "unknown";
 	private static final String ERROR_STRING = "error";
 
@@ -30,6 +30,7 @@ public class PartialInterpretation2Json {
 	private SemanticsUtils semanticsUtils;
 
 	public JsonObject getPartialInterpretation(ModelFacade facade, CancellationToken cancellationToken) {
+		var model = facade.getModel();
 		var json = new JsonObject();
 		for (var entry : facade.getProblemTrace().getRelationTrace().entrySet()) {
 			var relation = entry.getKey();

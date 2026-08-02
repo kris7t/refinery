@@ -50,7 +50,7 @@ public class ConcretizeCommand implements OutputFormatCommand {
 	public int run() throws IOException {
 		var problem = loader.loadProblem(inputPath);
 		try (var semantics = semanticsFactory.concretize(true).createSemantics(problem)) {
-			serializer.saveModel(semantics, outputOptions.getOutputPath());
+			serializer.saveModel(outputOptions, semantics);
 		}
 		return RefineryCli.EXIT_SUCCESS;
 	}

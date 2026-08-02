@@ -3,7 +3,7 @@
  *
  * SPDX-License-Identifier: EPL-2.0
  */
-package tools.refinery.language.web.xtext.servlet;
+package tools.refinery.generator.json;
 
 import com.google.gson.Gson;
 import com.google.gson.JsonParseException;

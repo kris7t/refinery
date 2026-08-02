@@ -21,7 +21,7 @@
  * However, we changed the package name below to avoid potential clashes
  * with other jars on the classpath.
  */
-package tools.refinery.language.web.xtext.servlet;
+package tools.refinery.generator.json;
 
 import com.google.errorprone.annotations.CanIgnoreReturnValue;
 import com.google.gson.Gson;
