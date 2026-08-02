@@ -34,7 +34,7 @@ public enum OutputFormat {
 		this(List.of(extension), isGraphical, allowConsoleOutput);
 	}
 
-	private boolean matchesFilePath(String filePath) {
+	public boolean matchesFilePath(String filePath) {
 		return extensionPattern.matcher(filePath).find();
 	}
 

@@ -16,11 +16,21 @@ import java.nio.file.Path;
 
 public abstract class HeadlessRefinery implements AutoCloseable {
 	public static final int MAX_FRAME = 16 * 1024 * 1024;
+	public static final String ENDPOINT_ENV_VAR = "REFINERY_IPC_ENDPOINT";
+	public static final int TIMEOUT_MS = 5_000;
 
 	private static final String WINDOWS_PIPE_PREFIX = "\\\\.\\pipe\\";
 
+	public static HeadlessRefinery connect() throws IOException {
+		var endpoint = System.getenv(ENDPOINT_ENV_VAR);
+		if (endpoint == null) {
+			throw new IllegalStateException(ENDPOINT_ENV_VAR + " is not configures.");
+		}
+		return connect(endpoint);
+	}
+
 	public static HeadlessRefinery connect(String endpoint) throws IOException {
-		return connect(endpoint, 5_000);
+		return connect(endpoint, TIMEOUT_MS);
 	}
 
 	public static HeadlessRefinery connect(String endpoint, long timeoutMillis) throws IOException {
@@ -48,7 +58,12 @@ public abstract class HeadlessRefinery implements AutoCloseable {
 		}
 	}
 
-	public void send(byte[] payload) throws IOException {
+	public byte[] interact(byte[] request) throws IOException {
+		send(request);
+		return receive();
+	}
+
+	private void send(byte[] payload) throws IOException {
 		if (payload.length > MAX_FRAME) {
 			throw new IOException("frame too large: " + payload.length);
 		}
@@ -66,7 +81,7 @@ public abstract class HeadlessRefinery implements AutoCloseable {
 	/**
 	 * @return the next payload, or {@code null} at a clean end of stream.
 	 */
-	public byte[] receive() throws IOException {
+	private byte[] receive() throws IOException {
 		byte[] header = new byte[4];
 		int n = read(header, 0, 4);
 		if (n < 0) {

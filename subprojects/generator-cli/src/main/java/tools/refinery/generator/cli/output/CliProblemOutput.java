@@ -10,14 +10,13 @@ import com.google.inject.Inject;
 import com.google.inject.Singleton;
 import org.eclipse.emf.ecore.resource.Resource;
 import tools.refinery.generator.ModelFacade;
+import tools.refinery.generator.cli.headless.GraphRenderer;
 import tools.refinery.generator.cli.utils.CliUtils;
 import tools.refinery.generator.cli.utils.GsonUtil;
 import tools.refinery.generator.json.PartialModel2Json;
 import tools.refinery.generator.json.PartialModelJson;
 
-import java.io.FileOutputStream;
-import java.io.FileWriter;
-import java.io.IOException;
+import java.io.*;
 import java.nio.charset.StandardCharsets;
 import java.util.Map;
 
@@ -25,6 +24,9 @@ import java.util.Map;
 public class CliProblemOutput {
 	@Inject
 	private PartialModel2Json partialModel2Json;
+
+	@Inject
+	private GraphRenderer graphRenderer;
 
 	public void saveModel(OutputOptions options, ModelFacade modelFacade) throws IOException {
 		saveModel(options, modelFacade, options.getOutputPath(), true);
@@ -41,7 +43,7 @@ public class CliProblemOutput {
 		switch (outputOptions.getFormat()) {
 		case REFINERY -> saveRefinery(modelFacade, outputPath, allowStandardOutput);
 		case JSON -> saveJson(modelFacade, outputPath, allowStandardOutput);
-		default -> throw new IllegalArgumentException("Unsupported output format: " + outputOptions.getFormat());
+		default -> saveGraphical(outputOptions, modelFacade, outputPath, allowStandardOutput);
 		}
 	}
 
@@ -83,6 +85,39 @@ public class CliProblemOutput {
 	@SuppressWarnings("squid:S106")
 	private static void printJson(PartialModelJson json, Gson gson) {
 		gson.toJson(json, System.out);
+	}
+
+	private void saveGraphical(OutputOptions outputOptions, ModelFacade modelFacade, String outputPath,
+							   boolean allowStandardOutput) throws IOException {
+		var json = partialModel2Json.savePartialInterpretation(modelFacade);
+		byte[] jsonBytes;
+		try (var stream = new ByteArrayOutputStream();
+			 var writer = new OutputStreamWriter(stream, StandardCharsets.UTF_8)) {
+			GsonUtil.getGson().toJson(json, writer);
+			jsonBytes = stream.toByteArray();
+		}
+		saveGraphical(outputOptions, jsonBytes, outputPath, allowStandardOutput);
+	}
+
+	public void saveGraphical(OutputOptions outputOptions, byte[] jsonBytes) throws IOException {
+		saveGraphical(outputOptions, jsonBytes, outputOptions.getOutputPath(), true);
+	}
+
+	private void saveGraphical(OutputOptions outputOptions, byte[] jsonBytes, String outputPath,
+							   boolean allowStandardOutput) throws IOException {
+		var imageBytes = graphRenderer.render(outputOptions, jsonBytes);
+		if (CliUtils.isStandardStream(outputPath)) {
+			checkStandardOutputAllowed(allowStandardOutput);
+			printBytes(imageBytes);
+		} try (var outputStream = new FileOutputStream(outputPath)) {
+			outputStream.write(imageBytes);
+		}
+	}
+
+	// We deliberately write to the standard output if no output path is specified.
+	@SuppressWarnings("squid:S106")
+	private static void printBytes(byte[] bytes) throws IOException {
+		System.out.write(bytes);
 	}
 
 	private static void checkStandardOutputAllowed(boolean allowStandardOutput) {

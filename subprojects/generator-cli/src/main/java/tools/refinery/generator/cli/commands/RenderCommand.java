@@ -8,22 +8,35 @@ package tools.refinery.generator.cli.commands;
 import com.beust.jcommander.Parameter;
 import com.beust.jcommander.Parameters;
 import com.beust.jcommander.ParametersDelegate;
-import tools.refinery.generator.cli.headless.HeadlessRefinery;
+import com.google.inject.Inject;
+import tools.refinery.generator.ModelSemanticsFactory;
+import tools.refinery.generator.cli.output.CliProblemOutput;
+import tools.refinery.generator.cli.output.InputFormat;
+import tools.refinery.generator.cli.output.OutputFormat;
 import tools.refinery.generator.cli.output.OutputOptions;
+import tools.refinery.generator.cli.utils.CliProblemLoader;
+import tools.refinery.generator.cli.utils.CliUtils;
 
+import java.io.FileInputStream;
 import java.io.IOException;
-import java.nio.charset.StandardCharsets;
 
 @Parameters(commandDescription = "Render a partial model as an image")
-public class RenderCommand implements OutputFormatCommand {
-	private String inputPath;
+public class RenderCommand extends AbstractSemanticsCommand {
+	private InputFormat inputFormat;
 
 	@ParametersDelegate
 	private final OutputOptions.Png outputOptions = new OutputOptions.Png();
 
-	@Parameter(description = "input path", required = true)
-	public void setInputPath(String inputPath) {
-		this.inputPath = inputPath;
+	@Inject
+	public RenderCommand(CliProblemLoader loader, ModelSemanticsFactory semanticsFactory,
+	                     CliProblemOutput serializer) {
+		super(loader, semanticsFactory, serializer);
+	}
+
+	@Parameter(names = {"-input-format", "-i"}, description = "Partial model input format. If not specified, the " +
+			"format is auto-detected from the input file name.")
+	public void setInputFormat(InputFormat inputFormat) {
+		this.inputFormat = inputFormat;
 	}
 
 	public OutputOptions.Png getOutputOptions() {
@@ -32,16 +45,20 @@ public class RenderCommand implements OutputFormatCommand {
 
 	@Override
 	public int run() throws IOException {
-		var endpoint = System.getenv("REFINERY_IPC_ENDPOINT");
-		if (endpoint == null) {
-			throw new RuntimeException("Must specify IPC endpoint");
+		var inputPath = getInputPath();
+		if (inputFormat == InputFormat.REFINERY ||
+				(inputFormat == null && OutputFormat.REFINERY.matchesFilePath(inputPath))) {
+			return super.run();
 		}
-		try (var headless = HeadlessRefinery.connect(endpoint)) {
-			var bytes = "Hello World!".getBytes(StandardCharsets.UTF_8);
-			headless.send(bytes);
-			var response = headless.receive();
-			System.out.format("Received: %s%n", new String(response, StandardCharsets.UTF_8));
+		byte[] jsonBytes;
+		if (CliUtils.isStandardStream(inputPath)) {
+			jsonBytes = System.in.readAllBytes();
+		} else {
+			try (var inputStream = new FileInputStream(inputPath)) {
+				jsonBytes = inputStream.readAllBytes();
+			}
 		}
+		getSerializer().saveGraphical(getOutputOptions(), jsonBytes);
 		return 0;
 	}
 }
