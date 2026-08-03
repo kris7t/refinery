@@ -4,6 +4,9 @@
  * SPDX-License-Identifier: EPL-2.0
  */
 
+import type { Graphviz } from 'd3-graphviz';
+import type { BaseType } from 'd3-selection';
+
 import { type BBox, parsePolygonBBox, parsePathBBox } from './parseBBox';
 
 export const SVG_NS = 'http://www.w3.org/2000/svg';
@@ -146,6 +149,16 @@ function hrefToClass(node: SVGGElement) {
       }
     }
     a.parentNode.removeChild(a);
+  });
+}
+
+export function addSVGIcons(
+  renderer: Graphviz<BaseType, unknown, null, undefined>,
+) {
+  ['true', 'unknown', 'error'].forEach((icon) => {
+    renderer.addImage(`#${icon}`, 16, 16);
+    renderer.addImage(`#attribute-${icon}`, 16, 16);
+    renderer.addImage(`#string-${icon}`, 16, 16);
   });
 }
 

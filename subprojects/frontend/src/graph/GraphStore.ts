@@ -115,7 +115,7 @@ export default class GraphStore {
   private typeHashesMap = new Map<string, number>();
 
   constructor(
-    public readonly editorStore: EditorStore,
+    public readonly editorStore?: EditorStore,
     private readonly generatedModelName?: string,
     visibility?: Map<string, Visibility>,
   ) {
@@ -138,7 +138,7 @@ export default class GraphStore {
     return (
       !!this.semantics.source ||
       // We currently don't serialize the source code for concretized models on the server.
-      (!this.generated && !this.editorStore.concretize)
+      (!this.generated && !(this.editorStore?.concretize ?? false))
     );
   }
 
@@ -147,7 +147,7 @@ export default class GraphStore {
     if (source) {
       return source;
     }
-    if (!this.generated) {
+    if (!this.generated && this.editorStore) {
       return this.editorStore.state.sliceDoc();
     }
     return '';
@@ -238,6 +238,9 @@ export default class GraphStore {
   }
 
   get selectedSymbol(): RelationMetadata | undefined {
+    if (!this.editorStore) {
+      return undefined;
+    }
     const { selectedSymbolName } = this.editorStore;
     if (selectedSymbolName === undefined) {
       return undefined;
@@ -246,6 +249,9 @@ export default class GraphStore {
   }
 
   setSelectedSymbol(option: RelationMetadata | undefined): void {
+    if (!this.editorStore) {
+      return;
+    }
     this.editorStore.setSelectedSymbolName(option?.name);
     if (!this.selectedSymbolHasComputed) {
       this.editorStore.setShowComputed(false);
@@ -253,11 +259,11 @@ export default class GraphStore {
   }
 
   get showComputed(): boolean {
-    return this.editorStore.showComputed;
+    return this.editorStore?.showComputed ?? false;
   }
 
   toggleShowComputed(): void {
-    this.editorStore.toggleShowComputed();
+    this.editorStore?.toggleShowComputed();
   }
 
   setSemantics(semantics: SemanticsModelResult, source?: string): void {
@@ -313,11 +319,13 @@ export default class GraphStore {
   }
 
   get colorNodes(): boolean {
-    return this.editorStore.colorIdentifiers;
+    return this.editorStore?.colorIdentifiers ?? true;
   }
 
   get name(): string {
-    return this.generatedModelName ?? this.editorStore.simpleNameOrFallback;
+    return (
+      this.generatedModelName ?? this.editorStore?.simpleNameOrFallback ?? ''
+    );
   }
 
   get showNonExistent(): boolean {
@@ -348,17 +356,17 @@ export default class GraphStore {
   }
 
   get selectedSymbolHasComputed(): boolean {
-    return this.hasComputed(this.editorStore.selectedSymbolName);
+    return this.hasComputed(this.editorStore?.selectedSymbolName);
   }
 
   get concretize(): boolean {
-    return this.generated || this.editorStore.concretize;
+    return this.generated || (this.editorStore?.concretize ?? false);
   }
 
   get upToDate(): boolean {
     return (
       this.generated ||
-      this.editorStore.delayedErrors.semanticsUpToDate ||
+      (this.editorStore?.delayedErrors?.semanticsUpToDate ?? true) ||
       // Do not dim the graph and table views if there are no nodes to show
       // (e.g., during page loading).
       this.semantics.nodes.length === 0

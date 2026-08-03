@@ -4,47 +4,44 @@
  * SPDX-License-Identifier: EPL-2.0
  */
 
-import { JsonOutput } from '@tools.refinery/client';
+import Box from '@mui/material/Box';
+import CssBaseline from '@mui/material/CssBaseline';
+import { styled, ThemeProvider } from '@mui/material/styles';
+import { configure } from 'mobx';
+import { StrictMode } from 'react';
+import { createRoot } from 'react-dom/client';
 
-if ('refineryHeadless' in window) {
-  window.refineryHeadless.onRequest((request) => {
-    const [a1, a2, a3, a4] = request;
-    if (
-      a1 === undefined ||
-      a2 === undefined ||
-      a3 === undefined ||
-      a4 === undefined
-    ) {
-      throw new Error('Message too short');
-    }
-    const headerLength = (a1 << 24) | (a2 << 16) | (a3 << 8) | a4;
-    const decoder = new TextDecoder();
-    const header = JSON.parse(
-      decoder.decode(request.slice(4, 4 + headerLength)),
-    ) as undefined;
-    const body = JsonOutput.parse(
-      JSON.parse(decoder.decode(request.slice(4 + headerLength))),
+import { lightTheme } from '../theme/ThemeProvider';
+
+import HeadlessApp from './HeadlessApp';
+import HeadlessStore from './HeadlessStore';
+import serveIPCRequests from './serveIPCRequests';
+
+// Make sure `styled` ends up in the entry chunk.
+// https://github.com/mui/material-ui/issues/32727#issuecomment-1659945548
+(window as unknown as { fixViteIssue: unknown }).fixViteIssue = styled;
+
+configure({
+  enforceActions: 'always',
+});
+
+const store = new HeadlessStore();
+
+document.fonts.addEventListener('loadingdone', () => serveIPCRequests(store));
+
+document.addEventListener('DOMContentLoaded', () => {
+  const rootElement = document.getElementById('app');
+  if (rootElement !== null) {
+    const root = createRoot(rootElement);
+    root.render(
+      <StrictMode>
+        <ThemeProvider theme={lightTheme}>
+          <CssBaseline enableColorScheme />
+          <Box>
+            <HeadlessApp store={store} />
+          </Box>
+        </ThemeProvider>
+      </StrictMode>,
     );
-    const encoder = new TextEncoder();
-    const responseHeader = encoder.encode(
-      JSON.stringify({ result: 'success' }),
-    );
-    const responseBody = encoder.encode(
-      JSON.stringify({
-        header,
-        body,
-      }),
-    );
-    const responseHeaderLength = responseHeader.length;
-    const response = new Uint8Array(
-      4 + responseHeaderLength + responseBody.length,
-    );
-    response[0] = (responseHeaderLength >> 24) & 0xff;
-    response[1] = (responseHeaderLength >> 16) & 0xff;
-    response[2] = (responseHeaderLength >> 8) & 0xff;
-    response[3] = responseHeaderLength & 0xff;
-    response.set(responseHeader, 4);
-    response.set(responseBody, 4 + responseHeaderLength);
-    return Promise.resolve(response);
-  });
-}
+  }
+});

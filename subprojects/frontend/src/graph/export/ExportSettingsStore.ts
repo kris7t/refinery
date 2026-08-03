@@ -52,8 +52,16 @@ export default class ExportSettingsStore {
     this._transparent = !this._transparent;
   }
 
+  setTransparent(transparent: boolean): void {
+    this._transparent = transparent;
+  }
+
   toggleEmbedFonts(): void {
     this.embedFonts = !this.embedFonts;
+  }
+
+  setEmbedFonts(embedFonts: boolean): void {
+    this.embedFonts = embedFonts;
   }
 
   setScale(scale: number): void {

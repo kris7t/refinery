@@ -108,18 +108,6 @@ const viteConfig: ViteConfig = {
       output: {
         chunkFileNames: ({ isDynamicEntry, isEntry }) =>
           isDynamicEntry || isEntry ? '[name]-[hash].js' : '[hash].js',
-        // See https://github.com/rolldown/rolldown/issues/4932#issuecomment-4466274734
-        codeSplitting: {
-          minSize: 20_000,
-          minShareCount: 2,
-          groups: [
-            {
-              name: 'app',
-              entriesAware: true,
-              entriesAwareMergeThreshold: 20_000,
-            },
-          ],
-        },
       },
     },
   },
