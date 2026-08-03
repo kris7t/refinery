@@ -12,7 +12,6 @@ import org.eclipse.emf.ecore.resource.Resource;
 import tools.refinery.generator.ModelFacade;
 import tools.refinery.generator.cli.headless.GraphRenderer;
 import tools.refinery.generator.cli.utils.CliUtils;
-import tools.refinery.generator.cli.utils.GsonUtil;
 import tools.refinery.generator.json.PartialModel2Json;
 import tools.refinery.generator.json.PartialModelJson;
 
@@ -90,12 +89,7 @@ public class CliProblemOutput {
 	private void saveGraphical(OutputOptions outputOptions, ModelFacade modelFacade, String outputPath,
 							   boolean allowStandardOutput) throws IOException {
 		var json = partialModel2Json.savePartialInterpretation(modelFacade);
-		byte[] jsonBytes;
-		try (var stream = new ByteArrayOutputStream();
-			 var writer = new OutputStreamWriter(stream, StandardCharsets.UTF_8)) {
-			GsonUtil.getGson().toJson(json, writer);
-			jsonBytes = stream.toByteArray();
-		}
+		byte[] jsonBytes = GsonUtil.getGson().toJson(json).getBytes(StandardCharsets.UTF_8);
 		saveGraphical(outputOptions, jsonBytes, outputPath, allowStandardOutput);
 	}
 

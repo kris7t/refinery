@@ -5921,7 +5921,6 @@ __metadata:
     nanoid: "npm:^6.0.0"
     pino: "npm:^10.3.1"
     pino-pretty: "npm:^13.1.3"
-    serialize-error: "npm:^13.0.1"
     tar: "npm:^7.5.20"
     yauzl: "npm:^3.4.0"
     yazl: "npm:^3.3.1"
@@ -16041,13 +16040,6 @@ __metadata:
   languageName: node
   linkType: hard
 
-"non-error@npm:^0.1.0":
-  version: 0.1.0
-  resolution: "non-error@npm:0.1.0"
-  checksum: 10c0/acaba9060f2682037b85241d914bbbf17210024e5bcce9f80ce104fec8f2946a19222b0503e3c1a5ed6d172354cf772f474211680c9d8559e4868cdd8e9d878d
-  languageName: node
-  linkType: hard
-
 "nopt@npm:^10.0.0":
   version: 10.0.1
   resolution: "nopt@npm:10.0.1"
@@ -19374,16 +19366,6 @@ __metadata:
   languageName: node
   linkType: hard
 
-"serialize-error@npm:^13.0.1":
-  version: 13.0.1
-  resolution: "serialize-error@npm:13.0.1"
-  dependencies:
-    non-error: "npm:^0.1.0"
-    type-fest: "npm:^5.4.1"
-  checksum: 10c0/bca59e7b1d6ad6f8f50d698f2851b65a907a7a0fe63bb35fb8e1712781d7d7634fde49a2df1586d5aa6874e56c2e2304514725ef0810c7b964941d9bc7b7ae02
-  languageName: node
-  linkType: hard
-
 "serialize-error@npm:^7.0.1":
   version: 7.0.1
   resolution: "serialize-error@npm:7.0.1"
@@ -20385,13 +20367,6 @@ __metadata:
   languageName: node
   linkType: hard
 
-"tagged-tag@npm:^1.0.0":
-  version: 1.0.0
-  resolution: "tagged-tag@npm:1.0.0"
-  checksum: 10c0/91d25c9ffb86a91f20522cefb2cbec9b64caa1febe27ad0df52f08993ff60888022d771e868e6416cf2e72dab68449d2139e8709ba009b74c6c7ecd4000048d1
-  languageName: node
-  linkType: hard
-
 "tapable@npm:^2.0.0, tapable@npm:^2.2.1, tapable@npm:^2.3.0, tapable@npm:^2.3.3":
   version: 2.3.3
   resolution: "tapable@npm:2.3.3"
@@ -20757,15 +20732,6 @@ __metadata:
   version: 2.19.0
   resolution: "type-fest@npm:2.19.0"
   checksum: 10c0/a5a7ecf2e654251613218c215c7493574594951c08e52ab9881c9df6a6da0aeca7528c213c622bc374b4e0cb5c443aa3ab758da4e3c959783ce884c3194e12cb
-  languageName: node
-  linkType: hard
-
-"type-fest@npm:^5.4.1":
-  version: 5.8.0
-  resolution: "type-fest@npm:5.8.0"
-  dependencies:
-    tagged-tag: "npm:^1.0.0"
-  checksum: 10c0/c8aae118a763d550a9552a511dff6b71840a23dab4edf693cf1c4df22596942794e6f6723389bd9036a90182249d915158bacf0815a1ae87f05f901b1d5f574e
   languageName: node
   linkType: hard
 

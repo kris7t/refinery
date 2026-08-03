@@ -1,9 +1,9 @@
 /*
- * SPDX-FileCopyrightText: 2024 The Refinery Authors <https://refinery.tools/>
+ * SPDX-FileCopyrightText: 2024-2026 The Refinery Authors <https://refinery.tools/>
  *
  * SPDX-License-Identifier: EPL-2.0
  */
-package tools.refinery.generator.cli.utils;
+package tools.refinery.generator.cli.output;
 
 import com.google.gson.FormattingStyle;
 import com.google.gson.Gson;
@@ -11,13 +11,13 @@ import com.google.gson.GsonBuilder;
 import tools.refinery.generator.json.PartialModelJson;
 
 /**
- * Utility class containing global configuration for Gson.
+ * Utility class containing global configuration for Gson when used for serializing partial models.
  * <p>
  * Since this configuration only relates to our class hierarchy, it doesn't make sense to mock it.
  * Therefore, it has been implemented as a simple static final field holding a {@link Gson} instance.
  * </p>
  */
-public class GsonUtil {
+class GsonUtil {
 	private static final Gson GSON;
 
 	static {

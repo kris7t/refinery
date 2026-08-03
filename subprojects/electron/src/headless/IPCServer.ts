@@ -8,7 +8,6 @@ import { chmod } from 'node:fs/promises';
 import { createServer, type Server, type Socket } from 'node:net';
 
 import { nanoid } from 'nanoid';
-import { serializeError } from 'serialize-error';
 
 import getLogger from '../utils/getLogger';
 import { isWindows } from '../utils/platform';
@@ -49,19 +48,29 @@ class FrameDecoder {
   }
 }
 
-function encodeFrame(message: Uint8Array | Error): Buffer {
-  let body;
+function encodeFrame(id: string, message: Uint8Array | Error): Buffer {
   if (message instanceof Error) {
-    body = Buffer.from(
+    logger.error(
+      { err: message, requestID: id },
+      'Error while processing request',
+    );
+    const header = Buffer.from(
       JSON.stringify({
         result: 'error',
-        error: serializeError(message),
+        error: `${message.name}: ${message.message}`,
       }),
       'utf-8',
     );
-  } else {
-    body = Buffer.from(message);
+    if (header.length > MAX_FRAME - 4) {
+      throw new Error(`frame too large: ${header.length + 4}`);
+    }
+    const frame = Buffer.allocUnsafe(8 + header.length);
+    frame.writeUint32BE(header.length + 4, 0);
+    frame.writeUInt32BE(header.length, 4);
+    header.copy(frame, 8);
+    return frame;
   }
+  const body = Buffer.from(message);
   if (body.length > MAX_FRAME) {
     throw new Error(`frame too large: ${body.length}`);
   }
@@ -134,7 +143,7 @@ export default class IPCServer {
       logger.warn({ requestID: id }, 'Socket already destroyed');
     }
     logger.debug({ requestID: id }, 'Sending response');
-    socket.write(encodeFrame(buffer));
+    socket.write(encodeFrame(id, buffer));
   }
 
   stop(): void {

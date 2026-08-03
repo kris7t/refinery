@@ -41,15 +41,15 @@ public sealed abstract class OutputOptionsValidator implements IParametersValida
 		if (!isGraphical && Boolean.TRUE.equals(transparent)) {
 			throw new ParameterException("Output format %s cannot have a transparent background".formatted(format));
 		}
-		boolean canEmbedFonts = format == OutputFormat.PDF ||
-				(format == OutputFormat.SVG && theme != OutputTheme.AUTO);
+		boolean canEmbedFonts = format == OutputFormat.PNG ||
+				(format == OutputFormat.SVG && theme != null && !theme.supportsEmbedFonts());
 		if (!canEmbedFonts && Boolean.TRUE.equals(embedFonts)) {
 			throw new ParameterException("The selected output configuration cannot embed fonts.");
 		}
 		if (!isGraphical && theme != null) {
 			throw new ParameterException("Output format %s cannot set an output theme.".formatted(format));
 		}
-		if (format != OutputFormat.SVG && theme == OutputTheme.AUTO) {
+		if (format != OutputFormat.SVG && theme != null && !theme.isStatic()) {
 			throw new ParameterException("Output format %s cannot set an automatic output theme.".formatted(format));
 		}
 		if (format != OutputFormat.PNG && scale != null) {

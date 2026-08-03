@@ -12,6 +12,18 @@ public enum OutputTheme {
 	DARK,
 	AUTO;
 
+	public boolean isStatic() {
+		return this != AUTO;
+	}
+
+	public boolean supportsEmbedFonts() {
+		return isStatic();
+	}
+
+	public OutputTheme asStaticTheme() {
+		return isStatic() ? this : LIGHT;
+	}
+
 	@Override
 	public String toString() {
 		return name().toLowerCase(Locale.ROOT);

@@ -16,12 +16,12 @@ export default function spawnJava(
   packageName: string,
   mainClass: string,
   args: string[],
-  options: SpawnOptionsWithoutStdio,
+  {
+    interactive = false,
+    ...options
+  }: SpawnOptionsWithoutStdio & { interactive?: boolean },
 ): ChildProcess {
-  const libDir = path.resolve(
-    process.resourcesPath,
-    'lib',
-  );
+  const libDir = path.resolve(process.resourcesPath, 'lib');
   const javaDir = path.resolve(process.resourcesPath, 'jre');
   const javaBinDir = path.join(javaDir, 'bin');
   const javaBinary = path.join(javaBinDir, isWindows ? 'java.exe' : 'java');
@@ -69,7 +69,7 @@ export default function spawnJava(
     {
       ...options,
       env: newEnv,
-      stdio: ['ignore', 'inherit', 'inherit'],
+      stdio: [interactive ? 'inherit' : 'ignore', 'inherit', 'inherit'],
       detached: false,
       ...(isWindows ? { windowsHide: true } : {}),
     },

@@ -70,12 +70,23 @@ public abstract class HeadlessRefinery implements AutoCloseable {
 		// Header and body go out in a single write so a reader on the other end
 		// never sees a torn frame from a partially flushed handle.
 		byte[] frame = new byte[4 + payload.length];
-		frame[0] = (byte) (payload.length >>> 24);
-		frame[1] = (byte) (payload.length >>> 16);
-		frame[2] = (byte) (payload.length >>> 8);
-		frame[3] = (byte) payload.length;
+		writeLength(frame, payload.length);
 		System.arraycopy(payload, 0, frame, 4, payload.length);
 		writeFully(frame);
+	}
+
+	static void writeLength(byte[] frame, int length) {
+		frame[0] = (byte) (length >>> 24);
+		frame[1] = (byte) (length >>> 16);
+		frame[2] = (byte) (length >>> 8);
+		frame[3] = (byte) length;
+	}
+
+	static long readLength(byte[] frame) {
+		return ((long) (frame[0] & 0xFF) << 24)
+				| ((long) (frame[1] & 0xFF) << 16)
+				| ((long) (frame[2] & 0xFF) << 8)
+				| (frame[3] & 0xFF);
 	}
 
 	/**

@@ -86,7 +86,7 @@ async function runCLI(): Promise<number | null> {
     'refinery-generator-cli',
     'tools.refinery.generator.cli.RefineryCli',
     args,
-    { env: newEnv },
+    { interactive: true, env: newEnv },
   );
 
   for (const signal of ['SIGINT', 'SIGQUIT', 'SIGTERM'] as const) {
