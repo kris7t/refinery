@@ -87,7 +87,7 @@ public class CliProblemOutput {
 	}
 
 	private void saveGraphical(OutputOptions outputOptions, ModelFacade modelFacade, String outputPath,
-							   boolean allowStandardOutput) throws IOException {
+	                           boolean allowStandardOutput) throws IOException {
 		var json = partialModel2Json.savePartialInterpretation(modelFacade);
 		byte[] jsonBytes = GsonUtil.getGson().toJson(json).getBytes(StandardCharsets.UTF_8);
 		saveGraphical(outputOptions, jsonBytes, outputPath, allowStandardOutput);
@@ -98,13 +98,15 @@ public class CliProblemOutput {
 	}
 
 	private void saveGraphical(OutputOptions outputOptions, byte[] jsonBytes, String outputPath,
-							   boolean allowStandardOutput) throws IOException {
+	                           boolean allowStandardOutput) throws IOException {
 		var imageBytes = graphRenderer.render(outputOptions, jsonBytes);
 		if (CliUtils.isStandardStream(outputPath)) {
 			checkStandardOutputAllowed(allowStandardOutput);
 			printBytes(imageBytes);
-		} try (var outputStream = new FileOutputStream(outputPath)) {
-			outputStream.write(imageBytes);
+		} else {
+			try (var outputStream = new FileOutputStream(outputPath)) {
+				outputStream.write(imageBytes);
+			}
 		}
 	}
 

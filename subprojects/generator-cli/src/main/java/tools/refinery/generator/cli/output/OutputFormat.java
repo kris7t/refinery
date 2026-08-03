@@ -7,7 +7,6 @@ package tools.refinery.generator.cli.output;
 
 import java.util.List;
 import java.util.Locale;
-import java.util.Optional;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
@@ -49,16 +48,5 @@ public enum OutputFormat {
 	@Override
 	public String toString() {
 		return name().toLowerCase(Locale.ROOT);
-	}
-
-	public static Optional<OutputFormat> getFromOutputPath(String outputPath) {
-		if (outputPath != null) {
-			for (var value : values()) {
-				if (value.matchesFilePath(outputPath)) {
-					return Optional.of(value);
-				}
-			}
-		}
-		return Optional.empty();
 	}
 }

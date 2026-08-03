@@ -22,7 +22,7 @@ type State = 'command' | 'default' | 'format' | 'output';
 /**
  * Determines whether a Refinery CLI invocation requires the headless worker.
  *
- * + Invocations of the `generate` command always require a headless worker.
+ * + Invocations of the `render` command always require a headless worker.
  * + Output formats in `FORMATS` always require a headless worker.
  * + Output file paths matching `OUTPUTS` always require a headless worker,
  *   unless a different output format has been explicitly set.

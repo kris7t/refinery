@@ -5,6 +5,7 @@
  */
 package tools.refinery.generator.cli.headless;
 
+import com.beust.jcommander.ParameterException;
 import com.google.gson.JsonObject;
 import tools.refinery.generator.cli.output.OutputOptions;
 
@@ -16,6 +17,9 @@ import java.util.Arrays;
 
 public class GraphRenderer {
 	public byte[] render(OutputOptions options, byte[] serializedJson) throws IOException {
+		if (System.getenv(HeadlessRefinery.ENDPOINT_ENV_VAR) == null) {
+			throw new ParameterException("Graphical output is only supported in the desktop application");
+		}
 		var header = GraphicalOutputOptions.of(options);
 		var headerBytes = HeadlessGsonUtil.getGson().toJson(header).getBytes(StandardCharsets.UTF_8);
 		var message = new byte[4 + headerBytes.length + serializedJson.length];
@@ -47,6 +51,6 @@ public class GraphRenderer {
 		if (error == null || !error.isJsonPrimitive()) {
 			throw new IllegalStateException("Unknown error");
 		}
-		throw new IllegalStateException(error.toString());
+		throw new IllegalStateException(error.getAsString());
 	}
 }

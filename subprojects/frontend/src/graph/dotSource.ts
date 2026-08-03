@@ -194,7 +194,7 @@ function setLabelWidth(
       measureDiv.style.lineHeight = String(14 / 12);
       measureDiv.style.fontOpticalSizing = 'none';
       measureDiv.style.letterSpacing = '0';
-      measureDiv.style.textRendering = 'geometricPreicision';
+      measureDiv.style.textRendering = 'geometricPrecision';
       measureDiv.ariaHidden = 'true';
       document.body.appendChild(measureDiv);
     }

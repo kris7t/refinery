@@ -10,11 +10,14 @@ import com.beust.jcommander.ParameterException;
 import com.beust.jcommander.Parameters;
 import tools.refinery.generator.cli.utils.CliUtils;
 
+import java.util.Optional;
+
 public sealed abstract class OutputOptions {
+	private boolean formatExplicitlySet;
 	private OutputFormat format;
 	private String outputPath = CliUtils.STANDARD_OUTPUT_PATH;
 	private boolean transparent = true;
-	private boolean embedFonts = true;
+	private Boolean embedFonts;
 	private OutputTheme theme = OutputTheme.LIGHT;
 	private int scale = 1;
 
@@ -24,6 +27,14 @@ public sealed abstract class OutputOptions {
 
 	@Parameter(names = {"-format", "-f"}, description = "Output file format")
 	public void setFormat(OutputFormat format) {
+		setDefaultFormat(format);
+		formatExplicitlySet = true;
+	}
+
+	protected void setDefaultFormat(OutputFormat format) {
+		if (!isValidOutputFormat(format)) {
+			throw new ParameterException("This command does not support %s output".formatted(format));
+		}
 		this.format = format;
 	}
 
@@ -38,11 +49,12 @@ public sealed abstract class OutputOptions {
 	}
 
 	public boolean isEmbedFonts() {
-		return embedFonts;
+		return embedFonts == null ? format == OutputFormat.PDF : embedFonts;
 	}
 
 	@Parameter(names = "-embed-fonts", description = "Embed fonts into the output. Only for svg or pdf output " +
-			"formats. Embedding fonts into an svg document is not possible with the auto output theme.", arity = 1)
+			"formats. Embedding fonts into an svg document is not possible with the auto output theme.",
+			defaultValueDescription = "true for pdf output, false otherwise", arity = 1)
 	public void setEmbedFonts(boolean embedFonts) {
 		this.embedFonts = embedFonts;
 	}
@@ -65,7 +77,7 @@ public sealed abstract class OutputOptions {
 	@Parameter(names = "-scale", placeholder = "1-4", description = "Output image scale. Only for the png output " +
 			"format.")
 	public void setScale(int scale) {
-		if (scale < 0 || scale > 4) {
+		if (scale < 1 || scale > 4) {
 			throw new ParameterException("Scale must be between 1 and 4, inclusive.");
 		}
 		this.scale = scale;
@@ -79,30 +91,59 @@ public sealed abstract class OutputOptions {
 			placeholder = "PATH")
 	public void setOutputPath(String outputPath) {
 		this.outputPath = outputPath;
+		if (!formatExplicitlySet) {
+			var detectedFormat = getOutputFormatFromOutputPath(outputPath);
+			detectedFormat.ifPresent(this::setDefaultFormat);
+		}
 	}
 
 	public boolean isStandardStream() {
 		return CliUtils.isStandardStream(outputPath);
 	}
 
+	public boolean isValidOutputFormat(OutputFormat outputFormat) {
+		return true;
+	}
+
+	public Optional<OutputFormat> getOutputFormatFromOutputPath(String outputPath) {
+		if (outputPath != null) {
+			for (var value : OutputFormat.values()) {
+				if (isValidOutputFormat(value) && value.matchesFilePath(outputPath)) {
+					return Optional.of(value);
+				}
+			}
+		}
+		return Optional.empty();
+	}
+
 	@Parameters(parametersValidators = OutputOptionsValidator.Refinery.class)
 	public static final class Refinery extends OutputOptions {
 		public Refinery() {
-			setFormat(OutputFormat.REFINERY);
+			setDefaultFormat(OutputFormat.REFINERY);
 		}
 	}
 
 	@Parameters(parametersValidators = OutputOptionsValidator.Json.class)
 	public static final class Json extends OutputOptions {
 		public Json() {
-			setFormat(OutputFormat.JSON);
+			setDefaultFormat(OutputFormat.JSON);
+		}
+
+		@Override
+		public boolean isValidOutputFormat(OutputFormat outputFormat) {
+			return outputFormat != OutputFormat.REFINERY;
 		}
 	}
 
 	@Parameters(parametersValidators = OutputOptionsValidator.Png.class)
 	public static final class Png extends OutputOptions {
 		public Png() {
-			setFormat(OutputFormat.PNG);
+			setDefaultFormat(OutputFormat.PNG);
+		}
+
+		@Override
+		public boolean isValidOutputFormat(OutputFormat outputFormat) {
+			return outputFormat.isGraphical();
 		}
 	}
 }
