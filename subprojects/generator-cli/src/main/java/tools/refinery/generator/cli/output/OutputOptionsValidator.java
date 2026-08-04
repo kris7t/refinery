@@ -7,12 +7,23 @@ package tools.refinery.generator.cli.output;
 
 import com.beust.jcommander.IParametersValidator;
 import com.beust.jcommander.ParameterException;
+import org.jetbrains.annotations.VisibleForTesting;
 import tools.refinery.generator.cli.utils.CliUtils;
 
 import java.util.Map;
 import java.util.Optional;
+import java.util.function.BooleanSupplier;
 
 public sealed abstract class OutputOptionsValidator implements IParametersValidator {
+	@VisibleForTesting
+	static final BooleanSupplier DEFAULT_TERMINAL_DETECTOR = () -> {
+		var console = System.console();
+		return console != null && console.isTerminal();
+	};
+
+	@VisibleForTesting
+	static BooleanSupplier terminalDetector = DEFAULT_TERMINAL_DETECTOR;
+
 	private final OutputOptions outputOptions;
 
 	protected OutputOptionsValidator(OutputOptions outputOptions) {
@@ -29,8 +40,7 @@ public sealed abstract class OutputOptionsValidator implements IParametersValida
 		var embedFonts = (Boolean) parameters.get("-embed-fonts");
 		var theme = (OutputTheme) parameters.get("-theme");
 		var scale = (Integer) parameters.get("-scale");
-		var console = System.console();
-		boolean isTerminal = console != null && console.isTerminal();
+		boolean isTerminal = terminalDetector.getAsBoolean();
 		if (!isValidOutputFormat(format)) {
 			throw new ParameterException("This command does not support %s output".formatted(format));
 		}
