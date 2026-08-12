@@ -19,8 +19,8 @@ import { isWindows } from '../utils/platform';
 import spawnJava from '../utils/spawnJava';
 
 import HeadlessServerManager from './HeadlessServerManager';
-import commands from './commands';
 import isHeadlessNeeded from './isHeadlessNeeded';
+import shouldLaunchGUI from "./shouldLaunchGUI";
 
 const log = getLogger('cli');
 
@@ -37,16 +37,6 @@ async function getEndpoint(): Promise<string> {
   );
   await chmod(tempDir, 0o700);
   return path.join(tempDir, 'sock');
-}
-
-function shouldLaunchGUI(args: string[]): boolean {
-  const firstArg = args[0];
-  return (
-    !firstArg ||
-    firstArg === '--' ||
-    (!(commands as readonly string[]).includes(firstArg) &&
-      !args.some((arg) => arg.startsWith('-') || arg.startsWith('@')))
-  );
 }
 
 function launchGUI(args: string[]) {

@@ -6,6 +6,7 @@
 
 import org.panteleyev.jlink.JLinkTask
 import org.siouan.frontendgradleplugin.infrastructure.gradle.RunYarnTaskType
+import tools.refinery.gradle.utils.SonarPropertiesUtils
 
 plugins {
 	id("tools.refinery.gradle.frontend-workspace")
@@ -13,6 +14,7 @@ plugins {
 
 frontend {
 	assembleScript.set("run build")
+	checkScript.set(if (project.hasProperty("ci")) "run test:run:ci" else "run test:run")
 }
 
 val frontendAssets: Configuration = configurations.create("frontendAssets") {
@@ -56,6 +58,7 @@ val buildWindowsLauncher: Boolean =
 val lintingFiles: FileCollection = assembleFiles + files(
 	rootProject.file(".eslintrc.cjs"),
 	rootProject.file("prettier.config.cjs"),
+	"vitest.config.ts",
 )
 
 tasks {
@@ -127,6 +130,11 @@ tasks {
 		outputs.dir(distDir)
 	}
 
+	checkFrontend {
+		inputs.files("vitest.config.ts")
+		outputs.dir(layout.buildDirectory.dir("coverage"))
+	}
+
 	typeCheckFrontend {
 		dependsOn(rootProject.project("refinery-frontend").tasks.named("typeCheckFrontend"))
 		inputs.files(lintingFiles)
@@ -139,4 +147,11 @@ tasks {
 	fixFrontend {
 		inputs.files(lintingFiles)
 	}
+}
+
+sonarqube.properties {
+	SonarPropertiesUtils.addToList(properties, "sonar.tests", "src")
+	SonarPropertiesUtils.addToList(properties, "sonar.exclusions", "**/*.test.ts")
+	SonarPropertiesUtils.addToList(properties, "sonar.test.inclusions", "**/*.test.ts")
+	property("sonar.javascript.lcov.reportPaths", "${layout.buildDirectory.get()}/coverage/lcov.info")
 }
