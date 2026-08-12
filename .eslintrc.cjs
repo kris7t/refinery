@@ -171,6 +171,7 @@ module.exports = {
         'subprojects/*/esbuild.mjs',
         'subprojects/*/vite.config.ts',
         'subprojects/*/vitest.config.ts',
+        'subprojects/*/vitest.e2e.config.ts',
         'subprojects/*/vitest.workspace.ts',
       ],
       env: {

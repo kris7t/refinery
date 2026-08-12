@@ -59,7 +59,8 @@ val lintingFiles: FileCollection = assembleFiles + files(
 	rootProject.file(".eslintrc.cjs"),
 	rootProject.file("prettier.config.cjs"),
 	"vitest.config.ts",
-)
+	"vitest.e2e.config.ts",
+) + fileTree("e2e")
 
 tasks {
 	val jlink = register<JLinkTask>("jlink") {
@@ -133,6 +134,19 @@ tasks {
 	checkFrontend {
 		inputs.files("vitest.config.ts")
 		outputs.dir(layout.buildDirectory.dir("coverage"))
+	}
+
+	val e2eTest = register<RunYarnTaskType>("e2eTest") {
+		dependsOn(assembleFrontend)
+		inputs.dir(distDir)
+		inputs.files("vitest.e2e.config.ts")
+		inputs.dir("e2e")
+		args.set(if (project.hasProperty("ci")) "run test:e2e:ci" else "run test:e2e")
+		description = "Run end-to-end tests against the packaged Electron CLI"
+	}
+
+	named("check") {
+		dependsOn(e2eTest)
 	}
 
 	typeCheckFrontend {
