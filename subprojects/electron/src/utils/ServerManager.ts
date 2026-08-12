@@ -14,16 +14,16 @@ import type { Logger } from 'pino';
 import getLogger from './getLogger';
 
 /** Delay between successive health-check polls while starting. */
-const HEALTH_POLL_INTERVAL = ms('100ms');
+export const HEALTH_POLL_INTERVAL = ms('100ms');
 /** Delay before respawning after an unexpected termination. */
-const RESTART_DELAY = ms('1s');
+export const RESTART_DELAY = ms('1s');
 /** Grace period between `SIGTERM` and `SIGKILL` when stopping. */
-const KILL_TIMEOUT = ms('1s');
+export const KILL_TIMEOUT = ms('1s');
 /**
  * Upper bound on how long we wait for a freshly spawned server to become
  * healthy before giving up.
  */
-const STARTUP_TIMEOUT = ms('5m');
+export const STARTUP_TIMEOUT = ms('5m');
 
 /** A value that may be available synchronously or via a promise. */
 type Awaitable<T> = T | PromiseLike<T>;
@@ -101,7 +101,6 @@ export type ServerStatus = State['name'];
 interface ServerManagerEvents {
   'health-changed': [healthy: boolean];
 }
-
 
 export default abstract class ServerManager extends EventEmitter<ServerManagerEvents> {
   private internalState: State = { name: 'stopped' };
