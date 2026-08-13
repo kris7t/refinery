@@ -13,7 +13,9 @@ import { createInterface } from 'node:readline';
 import ServerManager from '../utils/ServerManager';
 import { destination } from '../utils/logger';
 
-import getElectronSpawnCommand from './getElectronSpawnCommand';
+import getElectronSpawnCommand, {
+  getXvfbRunMissingMessage,
+} from './getElectronSpawnCommand';
 
 export default class HeadlessServerManager extends ServerManager {
   constructor(public readonly endpoint: string) {
@@ -40,17 +42,12 @@ export default class HeadlessServerManager extends ServerManager {
       detached: false,
     });
 
-    if (command === 'xvfb-run') {
-      child.once('error', (error) => {
-        if ('code' in error && error.code === 'ENOENT') {
-          this.logger.error(
-            'No DISPLAY or WAYLAND_DISPLAY is set and `xvfb-run` was not ' +
-              'found. Install Xvfb, or run with a display, to use headless ' +
-              'rendering.',
-          );
-        }
-      });
-    }
+    child.once('error', (error) => {
+      const message = getXvfbRunMissingMessage(command, error);
+      if (message) {
+        this.logger.error(message);
+      }
+    });
 
     const readlines: ReturnType<typeof createInterface>[] = [];
 

@@ -10,9 +10,9 @@ export interface ElectronSpawnCommand {
 }
 
 /**
- * Determines how to launch `electronPath` (the current Electron binary) as a
- * headless process. On Linux, without a display, Chromium fails to start
- * so we wrap the launch in `xvfb-run`.
+ * Determines how to launch `electronPath` (the current Electron binary). On
+ * Linux, without a display, Chromium fails to start so we wrap the launch
+ * in `xvfb-run`.
  */
 export default function getElectronSpawnCommand(
   electronPath: string,
@@ -45,4 +45,28 @@ export default function getElectronSpawnCommand(
     };
   }
   return { command: electronPath, args: electronArgs };
+}
+
+/**
+ * If `error` is `command` (as returned by {@link getElectronSpawnCommand})
+ * failing to spawn because `xvfb-run` isn't installed, returns a message
+ * explaining how to fix that -- otherwise returns `undefined`.
+ */
+export function getXvfbRunMissingMessage(
+  command: string,
+  error: unknown,
+): string | undefined {
+  if (
+    command !== 'xvfb-run' ||
+    error === null ||
+    typeof error !== 'object' ||
+    !('code' in error) ||
+    error.code !== 'ENOENT'
+  ) {
+    return undefined;
+  }
+  return (
+    'No DISPLAY or WAYLAND_DISPLAY is set and `xvfb-run` was not found. ' +
+    'Install Xvfb, or run with a display, to launch Electron.'
+  );
 }
