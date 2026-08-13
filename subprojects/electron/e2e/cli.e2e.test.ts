@@ -120,4 +120,20 @@ describe('render', () => {
     const contents = await readFile(outputPath);
     expect(contents.subarray(0, 5).toString('ascii')).toBe('%PDF-');
   });
+
+  test('rejects embedding fonts with the auto theme', async () => {
+    const outputPath = path.join(tempDir, 'out.svg');
+    const result = await runCli(cliPath, [
+      'render',
+      minimalProblem,
+      '-output',
+      outputPath,
+      '-theme',
+      'auto',
+      '-embed-fonts',
+      'true',
+    ]);
+    expect(result.exitCode).toBe(2);
+    expect(result.stderr).not.toBe('');
+  });
 });

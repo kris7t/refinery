@@ -24,6 +24,7 @@
     "test:run:ci": "CI=true yarn run test:run",
     "test:e2e": "vitest run --config vitest.e2e.config.ts",
     "test:e2e:ci": "CI=true yarn run test:e2e",
+    "test:e2e:update": "yarn run test:e2e --update",
     "lint": "yarn run g:lint subprojects/electron",
     "lint:fix": "yarn run lint --fix"
   },
