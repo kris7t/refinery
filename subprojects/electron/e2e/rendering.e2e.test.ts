@@ -9,6 +9,7 @@ import { mkdtemp, readFile, rm } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import path from 'node:path';
 
+import { PNG } from 'pngjs';
 import {
   afterEach,
   beforeAll,
@@ -18,9 +19,12 @@ import {
   test,
 } from 'vitest';
 
-import expectPngSnapshot from './expectPngSnapshot';
+import comparePNG from './comparePNG';
+import expectPNGSnapshot from './expectPNGSnapshot';
+import isUpdatingSnapshots from './isUpdatingSnapshots';
 import normalizeSvg from './normalizeSvg';
 import getPackagedCliPath from './packagedCli';
+import renderPDFToPNG from './renderPDFToPNG';
 import runCli from './runCli';
 
 const renderingFixturesDir = path.join(
@@ -85,6 +89,45 @@ describe('png rendering', () => {
     expect(result.exitCode).toBe(0);
     const contents = await readFile(outputPath);
     const snapshotName = fixtureName.replace(/\.problem$/, '.png');
-    await expectPngSnapshot(contents, path.join(snapshotsDir, snapshotName));
+    await expectPNGSnapshot(contents, path.join(snapshotsDir, snapshotName));
+  });
+});
+
+describe.skipIf(isUpdatingSnapshots())('pdf rendering', () => {
+  // Only the embedded-fonts case is covered: rendering without embedded
+  // fonts to a canvas would need to load system fonts by hand, and
+  // wouldn't tell us whether the font was actually omitted from the PDF
+  // anyway (that's better checked by inspecting the PDF's own font
+  // resources, not by rasterizing it).
+  test.each(renderingFixtures)('renders %s', async (fixtureName) => {
+    const inputPath = path.join(renderingFixturesDir, fixtureName);
+    const outputPath = path.join(tempDir, 'out.pdf');
+    const result = await runCli(cliPath, [
+      'render',
+      inputPath,
+      '-output',
+      outputPath,
+      '-transparent',
+      'false',
+      '-embed-fonts',
+      'true',
+    ]);
+    expect(result.exitCode).toBe(0);
+    const pdf = await readFile(outputPath);
+    const pngSnapshotName = fixtureName.replace(/\.problem$/, '.png');
+    const referencePng = await readFile(
+      path.join(snapshotsDir, pngSnapshotName),
+    );
+    const { width } = PNG.sync.read(referencePng);
+    const rasterized = await renderPDFToPNG(pdf, width);
+    // The independent PDF and PNG rendering pipelines round fractional page
+    // dimensions slightly differently, and pdf.js's own rasterizer produces
+    // different anti-aliasing than the PNG export's, so this is a looser,
+    // approximate comparison rather than an exact pixel match.
+    comparePNG(rasterized, referencePng, {
+      label: `${fixtureName} (pdf vs png)`,
+      maxSizeDiff: 1,
+      maxDiffRatio: 0.03,
+    });
   });
 });

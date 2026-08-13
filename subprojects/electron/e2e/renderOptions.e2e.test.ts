@@ -8,6 +8,7 @@ import { mkdtemp, readFile, rm } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import path from 'node:path';
 
+import { PNG } from 'pngjs';
 import {
   afterEach,
   beforeAll,
@@ -17,9 +18,16 @@ import {
   test,
 } from 'vitest';
 
-import expectPngSnapshot from './expectPngSnapshot';
+import comparePNG from './comparePNG';
+import expectPNGSnapshot from './expectPNGSnapshot';
+import isUpdatingSnapshots from './isUpdatingSnapshots';
+import loadPDF from './loadPDF';
 import normalizeSvg from './normalizeSvg';
 import getPackagedCliPath from './packagedCli';
+import pdfHasEmbeddedFont, {
+  pdfDocumentHasEmbeddedFont,
+} from './pdfHasEmbeddedFont';
+import { renderPDFDocumentToPNG } from './renderPDFToPNG';
 import runCli from './runCli';
 
 const inputPath = path.join(import.meta.dirname, 'fixtures', 'theme.problem');
@@ -112,10 +120,83 @@ describe('png render options', () => {
       ]);
       expect(result.exitCode).toBe(0);
       const contents = await readFile(outputPath);
-      await expectPngSnapshot(
+      await expectPNGSnapshot(
         contents,
         path.join(snapshotsDir, `${snapshotName}.png`),
       );
+    },
+  );
+});
+
+// pdf.js always rasterizes onto an opaque canvas, so only the
+// solid-background cases have a matching PNG snapshot.
+const pdfCases = [
+  {
+    snapshotName: 'theme-light-solid',
+    args: ['-theme', 'light', '-transparent', 'false'],
+  },
+  {
+    snapshotName: 'theme-dark-solid',
+    args: ['-theme', 'dark', '-transparent', 'false'],
+  },
+];
+
+describe.skipIf(isUpdatingSnapshots())('pdf render options', () => {
+  test.each(pdfCases)(
+    'renders with $snapshotName',
+    async ({ snapshotName, args }) => {
+      const outputPath = path.join(tempDir, 'out.pdf');
+      const result = await runCli(cliPath, [
+        'render',
+        inputPath,
+        '-output',
+        outputPath,
+        '-embed-fonts',
+        'true',
+        ...args,
+      ]);
+      expect(result.exitCode).toBe(0);
+      const referencePng = await readFile(
+        path.join(snapshotsDir, `${snapshotName}.png`),
+      );
+      const pdf = await readFile(outputPath);
+      const document = await loadPDF(pdf);
+      let rasterized;
+      try {
+        expect(await pdfDocumentHasEmbeddedFont(document)).toBe(true);
+        const { width } = PNG.sync.read(referencePng);
+        rasterized = await renderPDFDocumentToPNG(document, width);
+      } finally {
+        await document.destroy();
+      }
+      comparePNG(rasterized, referencePng, {
+        label: `${snapshotName} (pdf vs png)`,
+        maxSizeDiff: 1,
+        maxDiffRatio: 0.03,
+      });
+    },
+  );
+
+  // Rendering without embedded fonts to a canvas would need to load system
+  // fonts by hand, and wouldn't tell us anything more than this already
+  // does, so we only check that no font got embedded here.
+  test.each(['light', 'dark'])(
+    'does not embed fonts with -theme %s -embed-fonts false',
+    async (theme) => {
+      const outputPath = path.join(tempDir, 'out.pdf');
+      const result = await runCli(cliPath, [
+        'render',
+        inputPath,
+        '-output',
+        outputPath,
+        '-theme',
+        theme,
+        '-embed-fonts',
+        'false',
+      ]);
+      expect(result.exitCode).toBe(0);
+      const pdf = await readFile(outputPath);
+      expect(await pdfHasEmbeddedFont(pdf)).toBe(false);
     },
   );
 });

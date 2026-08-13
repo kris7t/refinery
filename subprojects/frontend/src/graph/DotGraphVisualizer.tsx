@@ -14,6 +14,7 @@ import { observer } from 'mobx-react-lite';
 import { useCallback, useRef, useState } from 'react';
 
 import getLogger from '../utils/getLogger';
+import ptToPX from '../utils/ptToPX';
 
 import type GraphStore from './GraphStore';
 import GraphTheme from './GraphTheme';
@@ -22,10 +23,6 @@ import dotSource from './dotSource';
 import postProcessSvg, { addSVGIcons } from './postProcessSVG';
 
 const LOG = getLogger('graph.DotGraphVisualizer');
-
-function ptToPx(pt: number): number {
-  return (pt * 4) / 3;
-}
 
 function DotGraphVisualizer({
   graph,
@@ -105,8 +102,8 @@ function DotGraphVisualizer({
           if (svg !== null) {
             postProcessSvg(svg);
             newViewBox = {
-              width: ptToPx(svg.viewBox.baseVal.width),
-              height: ptToPx(svg.viewBox.baseVal.height),
+              width: ptToPX(svg.viewBox.baseVal.width),
+              height: ptToPX(svg.viewBox.baseVal.height),
             };
           } else {
             // Do not trigger fit zoom.
