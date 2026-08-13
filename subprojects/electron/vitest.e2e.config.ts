@@ -13,6 +13,11 @@ export default defineConfig({
     // Real JVM and Electron cold starts are much slower than the mocked unit suite.
     testTimeout: 60_000,
     hookTimeout: 60_000,
+    // Every test here is "slow" by the default reporter's 300ms threshold,
+    // which shows per-test lines without their `describe` names (those are
+    // only shown for single-file runs). `verbose` always prints the full
+    // `describe > test` path instead.
+    reporters: ['verbose'],
     env: {
       // `runCli` inherits the environment, so these propagate all the way
       // down to `HeadlessServerManager`.
