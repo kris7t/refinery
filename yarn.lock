@@ -5907,6 +5907,7 @@ __metadata:
     "@types/d3-color": "npm:^3.1.3"
     "@types/ms": "npm:^2.1.0"
     "@types/node": "npm:^24.13.3"
+    "@types/pngjs": "npm:^6.0.5"
     "@types/yauzl": "npm:^3"
     "@types/yazl": "npm:^3"
     "@vitest/coverage-istanbul": "npm:^4.1.10"
@@ -5922,6 +5923,8 @@ __metadata:
     nanoid: "npm:^6.0.0"
     pino: "npm:^10.3.1"
     pino-pretty: "npm:^13.1.3"
+    pixelmatch: "npm:^7.2.0"
+    pngjs: "npm:^7.0.0"
     tar: "npm:^7.5.20"
     vitest: "npm:^4.1.10"
     yauzl: "npm:^3.4.0"
@@ -6893,6 +6896,15 @@ __metadata:
   version: 4.0.2
   resolution: "@types/parse-json@npm:4.0.2"
   checksum: 10c0/b1b863ac34a2c2172fbe0807a1ec4d5cb684e48d422d15ec95980b81475fac4fdb3768a8b13eef39130203a7c04340fc167bae057c7ebcafd7dec9fe6c36aeb1
+  languageName: node
+  linkType: hard
+
+"@types/pngjs@npm:^6.0.5":
+  version: 6.0.5
+  resolution: "@types/pngjs@npm:6.0.5"
+  dependencies:
+    "@types/node": "npm:*"
+  checksum: 10c0/11979d0690e774046d3a1e8cfc613a6b53a613909d81c93831cf253800e93ba1a2d47950979b523aebd4fc023351b644d7f4aa2dfcc027c70816a2968420e7da
   languageName: node
   linkType: hard
 
@@ -16857,6 +16869,17 @@ __metadata:
   bin:
     pino: bin.js
   checksum: 10c0/ae1c57f2baac85dd5d63a3500746d5ea1cfc4bfcbf356eaec94d42a782eeb80caa4d4614de43a036cf48e2aed46d855a7ff21b126f55a63811def52a894ef937
+  languageName: node
+  linkType: hard
+
+"pixelmatch@npm:^7.2.0":
+  version: 7.2.0
+  resolution: "pixelmatch@npm:7.2.0"
+  dependencies:
+    pngjs: "npm:^7.0.0"
+  bin:
+    pixelmatch: bin/pixelmatch
+  checksum: 10c0/d8a2454ecf3a977738d6050ed087effa0a9f1b53a0da92d37381a74bb04db5c21e14cfcd41965fbdac4a5967aa5ff2525e2afe9826a77eae043b8339dafc53b6
   languageName: node
   linkType: hard
 

@@ -18,6 +18,7 @@ import {
   test,
 } from 'vitest';
 
+import expectPngSnapshot from './expectPngSnapshot';
 import normalizeSvg from './normalizeSvg';
 import getPackagedCliPath from './packagedCli';
 import runCli from './runCli';
@@ -66,5 +67,24 @@ describe('svg rendering', () => {
     await expect(normalizeSvg(contents)).toMatchFileSnapshot(
       path.join(snapshotsDir, snapshotName),
     );
+  });
+});
+
+describe('png rendering', () => {
+  test.each(renderingFixtures)('renders %s', async (fixtureName) => {
+    const inputPath = path.join(renderingFixturesDir, fixtureName);
+    const outputPath = path.join(tempDir, 'out.png');
+    const result = await runCli(cliPath, [
+      'render',
+      inputPath,
+      '-output',
+      outputPath,
+      '-transparent',
+      'false',
+    ]);
+    expect(result.exitCode).toBe(0);
+    const contents = await readFile(outputPath);
+    const snapshotName = fixtureName.replace(/\.problem$/, '.png');
+    await expectPngSnapshot(contents, path.join(snapshotsDir, snapshotName));
   });
 });
