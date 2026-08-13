@@ -4,6 +4,7 @@
  * SPDX-License-Identifier: EPL-2.0
  */
 
+import ms from 'ms';
 import { defineConfig } from 'vitest/config';
 
 export default defineConfig({
@@ -11,8 +12,8 @@ export default defineConfig({
     environment: 'node',
     include: ['e2e/**/*.test.ts'],
     // Real JVM and Electron cold starts are much slower than the mocked unit suite.
-    testTimeout: 60_000,
-    hookTimeout: 60_000,
+    testTimeout: ms('1m'),
+    hookTimeout: ms('1m'),
     // Every test here is "slow" by the default reporter's 300ms threshold,
     // which shows per-test lines without their `describe` names (those are
     // only shown for single-file runs). `verbose` always prints the full

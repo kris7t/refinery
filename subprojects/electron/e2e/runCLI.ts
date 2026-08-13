@@ -5,22 +5,13 @@
  */
 
 import { spawn } from 'node:child_process';
-import { existsSync } from 'node:fs';
-import path from 'node:path';
+
+import { getArchSuffix, resolvePackagedPath } from './packagedPaths';
 
 export interface CliResult {
   readonly exitCode: number | null;
   readonly stdout: string;
   readonly stderr: string;
-}
-
-const root = path.join(import.meta.dirname, '..');
-
-// `electron-builder` only omits the arch suffix from the unpacked directory
-// name when building for its default arch, which is `x64` unless a
-// `<platform>.defaultArch` is configured (it isn't here, for any platform).
-function getArchSuffix(): string {
-  return process.arch === 'x64' ? '' : `-${process.arch}`;
 }
 
 /**
@@ -41,13 +32,7 @@ function getRelativeCLIPath(): string {
 }
 
 export function getPackagedCLIPath(): string {
-  const cliPath = path.join(root, getRelativeCLIPath());
-  if (!existsSync(cliPath)) {
-    throw new Error(
-      `Packaged CLI not found at ${cliPath}. Run \`yarn run build\` first.`,
-    );
-  }
-  return cliPath;
+  return resolvePackagedPath(getRelativeCLIPath(), 'Packaged CLI');
 }
 
 /** Spawns the packaged CLI shim and collects its output. */

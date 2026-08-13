@@ -65,6 +65,7 @@
     "java-properties": "^1.0.2",
     "pdfjs-dist": "5.4.296",
     "pixelmatch": "^7.2.0",
+    "playwright": "^1.61.1",
     "pngjs": "^7.0.0",
     "tar": "^7.5.20",
     "vitest": "^4.1.10",
