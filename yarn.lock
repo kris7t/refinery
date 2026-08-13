@@ -5912,6 +5912,7 @@ __metadata:
     "@types/yauzl": "npm:^3"
     "@types/yazl": "npm:^3"
     "@vitest/coverage-istanbul": "npm:^4.1.10"
+    cheerio: "npm:^1.2.0"
     d3-color: "npm:^3.1.0"
     date-fns: "npm:^4.4.0"
     dmg-builder: "npm:26.15.7"

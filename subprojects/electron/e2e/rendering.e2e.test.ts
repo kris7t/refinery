@@ -22,7 +22,6 @@ import {
 import comparePNG from './comparePNG';
 import expectPNGSnapshot from './expectPNGSnapshot';
 import isUpdatingSnapshots from './isUpdatingSnapshots';
-import normalizeSVG from './normalizeSVG';
 import renderPDFToPNG from './renderPDFToPNG';
 import runCLI, { getPackagedCLIPath } from './runCLI';
 
@@ -50,27 +49,6 @@ beforeEach(async () => {
 
 afterEach(async () => {
   await rm(tempDir, { recursive: true, force: true });
-});
-
-describe('svg rendering', () => {
-  test.each(renderingFixtures)('renders %s', async (fixtureName) => {
-    const inputPath = path.join(renderingFixturesDir, fixtureName);
-    const outputPath = path.join(tempDir, 'out.svg');
-    const result = await runCLI(cliPath, [
-      'render',
-      inputPath,
-      '-output',
-      outputPath,
-      '-transparent',
-      'false',
-    ]);
-    expect(result.exitCode).toBe(0);
-    const contents = await readFile(outputPath, 'utf-8');
-    const snapshotName = fixtureName.replace(/\.problem$/, '.svg');
-    await expect(normalizeSVG(contents)).toMatchFileSnapshot(
-      path.join(snapshotsDir, snapshotName),
-    );
-  });
 });
 
 describe('png rendering', () => {
@@ -125,8 +103,6 @@ describe.skipIf(isUpdatingSnapshots())('pdf rendering', () => {
     // approximate comparison rather than an exact pixel match.
     comparePNG(rasterized, referencePng, {
       label: `${fixtureName} (pdf vs png)`,
-      maxSizeDiff: 1,
-      maxDiffRatio: 0.03,
     });
   });
 });

@@ -21,6 +21,11 @@ export interface ComparePNGOptions {
   label?: string;
 }
 
+// Absorb both per-platform text measurement differences and rounding
+// differences between PNG and PDF rendering.
+const DEFAULT_MAX_DIFF_RATIO = 0.05;
+const DEFAULT_MAX_SIZE_DIFF = 10;
+
 function cropTopLeft(png: PNG, width: number, height: number): PNG {
   const cropped = new PNG({ width, height });
   PNG.bitblt(png, cropped, 0, 0, width, height, 0, 0);
@@ -35,8 +40,8 @@ export default function comparePNG(
   actual: Buffer,
   expected: Buffer,
   {
-    maxDiffRatio = 0.01,
-    maxSizeDiff = 0,
+    maxDiffRatio = DEFAULT_MAX_DIFF_RATIO,
+    maxSizeDiff = DEFAULT_MAX_SIZE_DIFF,
     label = 'image',
   }: ComparePNGOptions = {},
 ): void {

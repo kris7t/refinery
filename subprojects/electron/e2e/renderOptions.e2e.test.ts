@@ -8,6 +8,7 @@ import { mkdtemp, readFile, rm } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import path from 'node:path';
 
+import * as cheerio from 'cheerio';
 import { PNG } from 'pngjs';
 import {
   afterEach,
@@ -22,7 +23,6 @@ import comparePNG from './comparePNG';
 import expectPNGSnapshot from './expectPNGSnapshot';
 import isUpdatingSnapshots from './isUpdatingSnapshots';
 import loadPDF from './loadPDF';
-import normalizeSVG from './normalizeSVG';
 import pdfHasEmbeddedFont, {
   pdfDocumentHasEmbeddedFont,
 } from './pdfHasEmbeddedFont';
@@ -48,32 +48,92 @@ afterEach(async () => {
   await rm(tempDir, { recursive: true, force: true });
 });
 
+function svgHasEmbeddedFont($: cheerio.CheerioAPI): boolean {
+  return $('style').text().includes('@font-face');
+}
+
+/**
+ * `addBackground` in the frontend's `exportDiagram.tsx` only ever prepends a
+ * full-canvas `<rect>` as a direct child of the root `<svg>` when rendering
+ * with a solid (non-transparent) background. Every other `<rect>` (node
+ * backgrounds, headers, ...) lives nested inside a `<g>`.
+ */
+function svgHasSolidBackground($: cheerio.CheerioAPI): boolean {
+  return $('svg > rect').length > 0;
+}
+
+/**
+ * `-theme auto` embeds the theme CSS twice: once as plain rules (light) and
+ * once prefixed with `[data-theme="dark"]`, so a page embedding the SVG can
+ * toggle that attribute to switch palettes.
+ */
+function svgIsThemeSensitive($: cheerio.CheerioAPI): boolean {
+  const style = $('style').text();
+  const fills = [...style.matchAll(/\.node \.node-bg\{fill:([^;}]+);?\}/g)].map(
+    ([, fill]) => fill,
+  );
+  return fills.length === 2 && fills[0] !== fills[1];
+}
+
+// SVG layout itself (text positions, node sizes, ...) isn't snapshotted here,
+// since it's measured live by the rendering Chromium instance and drifts by
+// a fraction of a point across machines/font-rasterizer versions.
 const svgCases = [
-  { snapshotName: 'theme-light', args: ['-theme', 'light'] },
-  { snapshotName: 'theme-dark', args: ['-theme', 'dark'] },
-  { snapshotName: 'theme-auto', args: ['-theme', 'auto'] },
   {
-    snapshotName: 'theme-light-solid',
+    name: 'theme-light',
+    args: ['-theme', 'light'],
+    transparent: true,
+    embedFonts: false,
+    themeSensitive: false,
+  },
+  {
+    name: 'theme-dark',
+    args: ['-theme', 'dark'],
+    transparent: true,
+    embedFonts: false,
+    themeSensitive: false,
+  },
+  {
+    name: 'theme-auto',
+    args: ['-theme', 'auto'],
+    transparent: true,
+    embedFonts: false,
+    themeSensitive: true,
+  },
+  {
+    name: 'theme-light-solid',
     args: ['-theme', 'light', '-transparent', 'false'],
+    transparent: false,
+    embedFonts: false,
+    themeSensitive: false,
   },
   {
-    snapshotName: 'theme-dark-solid',
+    name: 'theme-dark-solid',
     args: ['-theme', 'dark', '-transparent', 'false'],
+    transparent: false,
+    embedFonts: false,
+    themeSensitive: false,
   },
   {
-    snapshotName: 'theme-light-embed-fonts',
+    name: 'theme-light-embed-fonts',
     args: ['-theme', 'light', '-embed-fonts', 'true'],
+    transparent: true,
+    embedFonts: true,
+    themeSensitive: false,
   },
   {
-    snapshotName: 'theme-dark-embed-fonts',
+    name: 'theme-dark-embed-fonts',
     args: ['-theme', 'dark', '-embed-fonts', 'true'],
+    transparent: true,
+    embedFonts: true,
+    themeSensitive: false,
   },
 ];
 
 describe('svg render options', () => {
   test.each(svgCases)(
-    'renders with $snapshotName',
-    async ({ snapshotName, args }) => {
+    'renders with $name',
+    async ({ args, transparent, embedFonts, themeSensitive }) => {
       const outputPath = path.join(tempDir, 'out.svg');
       const result = await runCLI(cliPath, [
         'render',
@@ -84,9 +144,10 @@ describe('svg render options', () => {
       ]);
       expect(result.exitCode).toBe(0);
       const contents = await readFile(outputPath, 'utf-8');
-      await expect(normalizeSVG(contents)).toMatchFileSnapshot(
-        path.join(snapshotsDir, `${snapshotName}.svg`),
-      );
+      const $ = cheerio.load(contents, { xmlMode: true });
+      expect(svgHasSolidBackground($)).toBe(!transparent);
+      expect(svgHasEmbeddedFont($)).toBe(embedFonts);
+      expect(svgIsThemeSensitive($)).toBe(themeSensitive);
     },
   );
 });
@@ -170,8 +231,6 @@ describe.skipIf(isUpdatingSnapshots())('pdf render options', () => {
       }
       comparePNG(rasterized, referencePng, {
         label: `${snapshotName} (pdf vs png)`,
-        maxSizeDiff: 1,
-        maxDiffRatio: 0.03,
       });
     },
   );

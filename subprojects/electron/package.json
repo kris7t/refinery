@@ -55,6 +55,7 @@
     "@types/yauzl": "^3",
     "@types/yazl": "^3",
     "@vitest/coverage-istanbul": "^4.1.10",
+    "cheerio": "^1.2.0",
     "d3-color": "^3.1.0",
     "date-fns": "^4.4.0",
     "dmg-builder": "26.15.7",
