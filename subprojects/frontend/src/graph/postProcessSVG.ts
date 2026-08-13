@@ -247,12 +247,16 @@ export default function postProcessSvg(svg: SVGSVGElement) {
   });
   replaceImages(svg);
   // Increase padding to fit box shadows for multi-objects.
+  const width = svg.viewBox.baseVal.width + 12;
+  const height = svg.viewBox.baseVal.height + 12;
   const viewBox = [
     svg.viewBox.baseVal.x - 6,
     svg.viewBox.baseVal.y - 6,
-    svg.viewBox.baseVal.width + 12,
-    svg.viewBox.baseVal.height + 12,
+    width,
+    height,
   ];
   svg.setAttribute('viewBox', viewBox.join(' '));
+  svg.setAttribute('width', `${width}pt`);
+  svg.setAttribute('height', `${height}pt`);
   markerColorToClass(svg);
 }
