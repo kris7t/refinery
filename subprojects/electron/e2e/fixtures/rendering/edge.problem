@@ -9,3 +9,5 @@ class Node {
 Node(a).
 Node(b).
 next(a, b).
+next(a, c): error.
+

@@ -1,0 +1,143 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="187pt" height="239pt" viewBox="-6 -6 187 239" class="refinery-ID"><style>.refinery-ID .node text{font-family:"Open Sans Variable","Open Sans","Roboto","Helvetica","Arial",sans-serif;fill:#19202b;font-optical-sizing:none;letter-spacing:0;text-rendering:geometricPrecision;}.refinery-ID .node .node-outline{stroke:#19202b;}.refinery-ID .node .node-header{fill:rgb(53, 161, 173);}.refinery-ID .node .node-bg{fill:#fff;}.refinery-ID .node-atom .node-outline{stroke-width:2;}.refinery-ID .node-shadow.node-bg{fill:#19202b;opacity:0.24;}.refinery-ID .node-exists-unknown .node-outline{stroke-dasharray:5 2;}.refinery-ID .node-typeHash-g .node-header{fill:#e5c07b;}.refinery-ID .node-typeHash-h .node-header{fill:#e06c75;}.refinery-ID .node-typeHash-i .node-header{fill:#98c379;}.refinery-ID .node-typeHash-j .node-header{fill:#c678dd;}.refinery-ID .node-typeHash-k .node-header{fill:#80a7f4;}.refinery-ID .node-typeHash-l .node-header{fill:#e3d1b2;}.refinery-ID .node-typeHash-m .node-header{fill:#e78b8f;}.refinery-ID .node-typeHash-n .node-header{fill:#abcc94;}.refinery-ID .node-typeHash-o .node-header{fill:#dbb2e8;}.refinery-ID .node-typeHash-p .node-header{fill:#92c0e9;}.refinery-ID .edge text{font-family:"Open Sans Variable","Open Sans","Roboto","Helvetica","Arial",sans-serif;fill:#19202b;font-optical-sizing:none;letter-spacing:0;text-rendering:geometricPrecision;}.refinery-ID .edge .edge-line{stroke:#19202b;}.refinery-ID .edge .edge-arrow{fill:#19202b;}.refinery-ID .edge-unknown text{fill:#696c77;}.refinery-ID .edge-unknown .edge-line{stroke:#696c77;}.refinery-ID .edge-unknown .edge-arrow{fill:none;}.refinery-ID .edge-error text{fill:#4078f2;}.refinery-ID .edge-error .edge-line{stroke:#4078f2;}.refinery-ID .edge-error .edge-arrow{fill:#4078f2;}.refinery-ID .icon-true{fill:#19202b;}.refinery-ID .icon-unknown{fill:#696c77;}.refinery-ID .icon-error{fill:#4078f2;}.refinery-ID text.label-unknown{fill:#696c77;}.refinery-ID text.label-error{fill:#4078f2;}.refinery-ID .node-exists-false text:not(.label-error){fill:#696c77;}.refinery-ID .node-exists-false .node-outline{stroke:#696c77;stroke-dasharray:2 4;}.refinery-ID .node-exists-false .node-header{fill:#fff!important;}.refinery-ID .node-exists-false .icon-true{fill:#696c77;}.refinery-ID .node-exists-error .node-outline{stroke:#4078f2;}.refinery-ID .node-exists-error .node-header{fill:#fff!important;}</style><defs><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" id="refinery-ID-icon-true" class="icon-true"><path d="M17.63 5.84C17.27 5.33 16.67 5 16 5L5 5.01C3.9 5.01 3 5.9 3 7v10c0 1.1.9 1.99 2 1.99L16 19c.67 0 1.27-.33 1.63-.84L22 12l-4.37-6.16z"/></svg><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" id="refinery-ID-icon-unknown" class="icon-unknown"><path d="M17.63 5.84C17.27 5.33 16.67 5 16 5L5 5.01C3.9 5.01 3 5.9 3 7v10c0 1.1.9 1.99 2 1.99L16 19c.67 0 1.27-.33 1.63-.84L22 12l-4.37-6.16zM16 17H5V7h11l3.55 5L16 17z"/></svg><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" id="refinery-ID-icon-error" class="icon-error"><path d="M12 2C6.47 2 2 6.47 2 12s4.47 10 10 10s10-4.47 10-10S17.53 2 12 2zm5 13.59L15.59 17L12 13.41L8.41 17L7 15.59L10.59 12L7 8.41L8.41 7L12 10.59L15.59 7L17 8.41L13.41 12L17 15.59z"/></svg><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" id="refinery-ID-icon-attribute-true" class="icon-attribute-true"><path d="M12 7c-2.76 0-5 2.24-5 5s2.24 5 5 5 5-2.24 5-5-2.24-5-5-5"/></svg><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" id="refinery-ID-icon-attribute-unknown" class="icon-attribute-unknown"><path d="M12 9c1.65 0 3 1.35 3 3s-1.35 3-3 3-3-1.35-3-3 1.35-3 3-3m0-2c-2.76 0-5 2.24-5 5s2.24 5 5 5 5-2.24 5-5-2.24-5-5-5"/></svg></defs><rect x="-6" y="-6" width="187" height="239" fill="#fff"/>
+<g class="graph" transform="scale(1 1) rotate(0) translate(4 223.34)">
+<!-- n0 -->
+<g class="node node-multi node-exists-unknown node-equalsSelf-unknown node-typeHash-m"><rect stroke="none" x="53" y="-210.5" width="79" height="49" rx="12.5" ry="12.5" class="node-shadow node-bg"/>
+
+<rect stroke="none" x="47.5" y="-216" width="78" height="48" rx="12" ry="12" class="node-bg"/>
+<rect stroke="none" x="43.5" y="-220" width="86" height="27" clip-path="url(#refinery-ID-clip-0)" class="node-header"/>
+<text xml:space="preserve" text-anchor="middle" x="86.5" y="-204" font-size="12.00" dominant-baseline="middle">Person::new</text>
+<use x="53.5" y="-187" width="12" height="12" href="#refinery-ID-icon-true" class="icon icon-true"/>
+<g><text xml:space="preserve" text-anchor="start" x="69.5" y="-181" font-size="12.00" class="label label-true" dominant-baseline="middle">Person</text>
+</g>
+<polyline points="47.5,-193 125.5,-193" class="node-outline"/>
+<rect fill="none" x="47.5" y="-216" width="78" height="48" rx="12" ry="12" class="node-outline"/>
+<clipPath id="refinery-ID-clip-0"><rect stroke="none" x="47.5" y="-216" width="78" height="48" rx="12" ry="12" class="node-bg"/></clipPath></g>
+<!-- n0&#45;&gt;n0 -->
+<g class="edge edge-unknown">
+
+<path fill="none" stroke-dasharray="5,2" d="M125.4,-199.81C135.7,-199.36 143.5,-196.76 143.5,-192 143.5,-189.25 140.89,-187.22 136.7,-185.91" class="edge-line"/>
+<polygon points="137.3,-182.46 126.89,-184.42 136.25,-189.38 137.3,-182.46" class="edge-line edge-arrow"/>
+<text xml:space="preserve" text-anchor="start" x="125.88" y="-201.28" font-size="10.50">friends</text>
+</g>
+<!-- n0&#45;&gt;n0 -->
+<g class="edge edge-unknown">
+
+<path fill="none" stroke-dasharray="5,2" d="M125.47,-207.33C144.56,-209.33 161.5,-204.22 161.5,-192 161.5,-182.26 150.74,-177.04 136.72,-176.33" class="edge-line"/>
+<polygon points="136.88,-172.83 126.99,-176.63 137.09,-179.82 136.88,-172.83" class="edge-line edge-arrow"/>
+<text xml:space="preserve" text-anchor="start" x="125.59" y="-208.84" font-size="10.50">friendOf</text>
+</g>
+<!-- n1 -->
+<g class="node node-default node-exists-true node-equalsSelf-true node-typeHash-m">
+
+<rect stroke="none" x="0" y="-132" width="67" height="48" rx="12" ry="12" class="node-bg"/>
+<rect stroke="none" x="-4" y="-136" width="75" height="27" clip-path="url(#refinery-ID-clip-1)" class="node-header"/>
+<text xml:space="preserve" text-anchor="middle" x="33.5" y="-120" font-size="12.00" dominant-baseline="middle">alice</text>
+<use x="6" y="-103" width="12" height="12" href="#refinery-ID-icon-true" class="icon icon-true"/>
+<g><text xml:space="preserve" text-anchor="start" x="22" y="-97" font-size="12.00" class="label label-true" dominant-baseline="middle">Person</text>
+</g>
+<polyline points="0,-109 67,-109" class="node-outline"/>
+<rect fill="none" x="0" y="-132" width="67" height="48" rx="12" ry="12" class="node-outline"/>
+<clipPath id="refinery-ID-clip-1"><rect stroke="none" x="0" y="-132" width="67" height="48" rx="12" ry="12" class="node-bg"/></clipPath></g>
+<!-- n0&#45;&gt;n1 -->
+<g class="edge edge-unknown">
+
+<path fill="none" stroke-dasharray="5,2" d="M59.2,-158.98C55.24,-153.14 51.3,-147.06 47.71,-141.22" class="edge-line"/>
+<polygon points="56.15,-160.73 64.75,-166.92 61.89,-156.72 56.15,-160.73" class="edge-line edge-arrow"/>
+<polygon points="50.96,-139.83 42.84,-133.02 44.94,-143.41 50.96,-139.83" class="edge-line edge-arrow"/>
+<text xml:space="preserve" text-anchor="start" x="19.5" y="-151.88" font-size="10.50">friends</text>
+</g>
+<!-- n0&#45;&gt;n1 -->
+<g class="edge edge-unknown">
+
+<path fill="none" stroke-dasharray="5,2" d="M72.05,-158.4C68.53,-152.68 64.67,-146.72 60.79,-141.01" class="edge-line"/>
+<polygon points="68.96,-160.05 77.09,-166.86 74.98,-156.47 68.96,-160.05" class="edge-line edge-arrow"/>
+<polygon points="63.76,-139.15 55.17,-132.96 58.03,-143.16 63.76,-139.15" class="edge-line edge-arrow"/>
+<text xml:space="preserve" text-anchor="start" x="25.56" y="-139.2" font-size="10.50">friendOf</text>
+</g>
+<!-- n2 -->
+<g class="node node-default node-exists-true node-equalsSelf-true node-typeHash-m">
+
+<rect stroke="none" x="53" y="-48" width="67" height="48" rx="12" ry="12" class="node-bg"/>
+<rect stroke="none" x="49" y="-52" width="75" height="27" clip-path="url(#refinery-ID-clip-2)" class="node-header"/>
+<text xml:space="preserve" text-anchor="middle" x="86.5" y="-36" font-size="12.00" dominant-baseline="middle">bob</text>
+<use x="59" y="-19" width="12" height="12" href="#refinery-ID-icon-true" class="icon icon-true"/>
+<g><text xml:space="preserve" text-anchor="start" x="75" y="-13" font-size="12.00" class="label label-true" dominant-baseline="middle">Person</text>
+</g>
+<polyline points="53,-25 120,-25" class="node-outline"/>
+<rect fill="none" x="53" y="-48" width="67" height="48" rx="12" ry="12" class="node-outline"/>
+<clipPath id="refinery-ID-clip-2"><rect stroke="none" x="53" y="-48" width="67" height="48" rx="12" ry="12" class="node-bg"/></clipPath></g>
+<!-- n0&#45;&gt;n2 -->
+<g class="edge edge-unknown">
+
+<path fill="none" stroke-dasharray="5,2" d="M95.33,-157.6C98.55,-149.44 101.69,-140.58 103.5,-132 107.9,-111.12 107.9,-104.88 103.5,-84 101.69,-75.42 98.55,-66.56 95.33,-58.4" class="edge-line"/>
+<polygon points="92.11,-156.22 91.57,-166.8 98.59,-158.87 92.11,-156.22" class="edge-line edge-arrow"/>
+<polygon points="98.59,-57.13 91.57,-49.2 92.11,-59.78 98.59,-57.13" class="edge-line edge-arrow"/>
+<text xml:space="preserve" text-anchor="start" x="72.8" y="-109.5" font-size="10.50">friends</text>
+</g>
+<!-- n0&#45;&gt;n2 -->
+<g class="edge edge-unknown">
+
+<path fill="none" stroke-dasharray="5,2" d="M112.56,-158.16C116.41,-149.85 119.65,-140.78 121.5,-132 125.9,-111.12 125.9,-104.88 121.5,-84 119.65,-75.22 116.41,-66.15 112.56,-57.84" class="edge-line"/>
+<polygon points="109.54,-156.36 108.09,-166.86 115.77,-159.56 109.54,-156.36" class="edge-line edge-arrow"/>
+<polygon points="115.77,-56.44 108.09,-49.14 109.54,-59.64 115.77,-56.44" class="edge-line edge-arrow"/>
+<text xml:space="preserve" text-anchor="start" x="83.8" y="-97.5" font-size="10.50">friendOf</text>
+</g>
+<!-- n1&#45;&gt;n1 -->
+<g class="edge edge-unknown">
+
+<path fill="none" stroke-dasharray="5,2" d="M66.69,-115.87C76.94,-115.71 85,-113.09 85,-108 85,-105.06 82.31,-102.94 78.05,-101.65" class="edge-line"/>
+<polygon points="78.56,-98.19 68.19,-100.33 77.64,-105.12 78.56,-98.19" class="edge-line edge-arrow"/>
+<text xml:space="preserve" text-anchor="start" x="67.17" y="-117.36" font-size="10.50">friends</text>
+</g>
+<!-- n1&#45;&gt;n1 -->
+<g class="edge edge-unknown">
+
+<path fill="none" stroke-dasharray="5,2" d="M66.75,-122.94C85.57,-125.86 103,-120.88 103,-108 103,-97.74 91.93,-92.49 77.91,-92.26" class="edge-line"/>
+<polygon points="77.98,-88.74 68.26,-92.95 78.49,-95.73 77.98,-88.74" class="edge-line edge-arrow"/>
+<text xml:space="preserve" text-anchor="start" x="66.81" y="-124.45" font-size="10.50">friendOf</text>
+</g>
+<!-- n1&#45;&gt;n2 -->
+<g class="edge edge-true">
+
+<path fill="none" d="M29.89,-84.16C33.52,-75.63 39.42,-65.78 46.3,-56.6" class="edge-line"/>
+<polygon points="48.97,-58.88 52.52,-48.9 43.52,-54.48 48.97,-58.88" class="edge-line edge-arrow"/>
+<text xml:space="preserve" text-anchor="start" x="6.46" y="-66.4" font-size="10.50">friends</text>
+</g>
+<!-- n1&#45;&gt;n2 -->
+<g class="edge edge-unknown">
+
+<path fill="none" stroke-dasharray="5,2" d="M54.39,-84.16C60.34,-75.89 66.64,-66.4 72.13,-57.47" class="edge-line"/>
+<polygon points="75.05,-59.4 77.16,-49.02 69.04,-55.83 75.05,-59.4" class="edge-line edge-arrow"/>
+<text xml:space="preserve" text-anchor="start" x="66.51" y="-55.88" font-size="10.50">friendOf</text>
+</g>
+<!-- n2&#45;&gt;n1 -->
+<g class="edge edge-unknown">
+
+<path fill="none" stroke-dasharray="5,2" d="M65.7,-47.72C59.75,-55.97 53.45,-65.46 47.95,-74.4" class="edge-line"/>
+<polygon points="45.02,-72.47 42.91,-82.86 51.04,-76.05 45.02,-72.47" class="edge-line edge-arrow"/>
+<text xml:space="preserve" text-anchor="start" x="19.58" y="-54.99" font-size="10.50">friends</text>
+</g>
+<!-- n2&#45;&gt;n1 -->
+<g class="edge edge-true">
+
+<path fill="none" d="M90.16,-47.72C86.55,-56.24 80.67,-66.08 73.8,-75.26" class="edge-line"/>
+<polygon points="71.13,-73 67.58,-82.98 76.58,-77.39 71.13,-73" class="edge-line edge-arrow"/>
+<text xml:space="preserve" text-anchor="start" x="79.62" y="-68.46" font-size="10.50">friendOf</text>
+</g>
+<!-- n2&#45;&gt;n2 -->
+<g class="edge edge-unknown">
+
+<path fill="none" stroke-dasharray="5,2" d="M119.69,-31.87C129.94,-31.71 138,-29.09 138,-24 138,-21.06 135.31,-18.94 131.05,-17.65" class="edge-line"/>
+<polygon points="131.56,-14.19 121.19,-16.33 130.64,-21.12 131.56,-14.19" class="edge-line edge-arrow"/>
+<text xml:space="preserve" text-anchor="start" x="120.17" y="-33.36" font-size="10.50">friends</text>
+</g>
+<!-- n2&#45;&gt;n2 -->
+<g class="edge edge-unknown">
+
+<path fill="none" stroke-dasharray="5,2" d="M119.75,-38.94C138.57,-41.86 156,-36.88 156,-24 156,-13.74 144.93,-8.49 130.91,-8.26" class="edge-line"/>
+<polygon points="130.98,-4.74 121.26,-8.95 131.49,-11.73 130.98,-4.74" class="edge-line edge-arrow"/>
+<text xml:space="preserve" text-anchor="start" x="119.81" y="-40.45" font-size="10.50">friendOf</text>
+</g>
+</g>
+</svg>

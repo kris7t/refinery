@@ -1,0 +1,101 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="500pt" height="100pt" viewBox="-6 -6 500 100" class="refinery-ID"><style>.refinery-ID .node text{font-family:"Open Sans Variable","Open Sans","Roboto","Helvetica","Arial",sans-serif;fill:#19202b;font-optical-sizing:none;letter-spacing:0;text-rendering:geometricPrecision;}.refinery-ID .node .node-outline{stroke:#19202b;}.refinery-ID .node .node-header{fill:rgb(53, 161, 173);}.refinery-ID .node .node-bg{fill:#fff;}.refinery-ID .node-atom .node-outline{stroke-width:2;}.refinery-ID .node-shadow.node-bg{fill:#19202b;opacity:0.24;}.refinery-ID .node-exists-unknown .node-outline{stroke-dasharray:5 2;}.refinery-ID .node-typeHash-g .node-header{fill:#e5c07b;}.refinery-ID .node-typeHash-h .node-header{fill:#e06c75;}.refinery-ID .node-typeHash-i .node-header{fill:#98c379;}.refinery-ID .node-typeHash-j .node-header{fill:#c678dd;}.refinery-ID .node-typeHash-k .node-header{fill:#80a7f4;}.refinery-ID .node-typeHash-l .node-header{fill:#e3d1b2;}.refinery-ID .node-typeHash-m .node-header{fill:#e78b8f;}.refinery-ID .node-typeHash-n .node-header{fill:#abcc94;}.refinery-ID .node-typeHash-o .node-header{fill:#dbb2e8;}.refinery-ID .node-typeHash-p .node-header{fill:#92c0e9;}.refinery-ID .edge text{font-family:"Open Sans Variable","Open Sans","Roboto","Helvetica","Arial",sans-serif;fill:#19202b;font-optical-sizing:none;letter-spacing:0;text-rendering:geometricPrecision;}.refinery-ID .edge .edge-line{stroke:#19202b;}.refinery-ID .edge .edge-arrow{fill:#19202b;}.refinery-ID .edge-unknown text{fill:#696c77;}.refinery-ID .edge-unknown .edge-line{stroke:#696c77;}.refinery-ID .edge-unknown .edge-arrow{fill:none;}.refinery-ID .edge-error text{fill:#4078f2;}.refinery-ID .edge-error .edge-line{stroke:#4078f2;}.refinery-ID .edge-error .edge-arrow{fill:#4078f2;}.refinery-ID .icon-true{fill:#19202b;}.refinery-ID .icon-unknown{fill:#696c77;}.refinery-ID .icon-error{fill:#4078f2;}.refinery-ID text.label-unknown{fill:#696c77;}.refinery-ID text.label-error{fill:#4078f2;}.refinery-ID .node-exists-false text:not(.label-error){fill:#696c77;}.refinery-ID .node-exists-false .node-outline{stroke:#696c77;stroke-dasharray:2 4;}.refinery-ID .node-exists-false .node-header{fill:#fff!important;}.refinery-ID .node-exists-false .icon-true{fill:#696c77;}.refinery-ID .node-exists-error .node-outline{stroke:#4078f2;}.refinery-ID .node-exists-error .node-header{fill:#fff!important;}</style><defs><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" id="refinery-ID-icon-true" class="icon-true"><path d="M17.63 5.84C17.27 5.33 16.67 5 16 5L5 5.01C3.9 5.01 3 5.9 3 7v10c0 1.1.9 1.99 2 1.99L16 19c.67 0 1.27-.33 1.63-.84L22 12l-4.37-6.16z"/></svg><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" id="refinery-ID-icon-unknown" class="icon-unknown"><path d="M17.63 5.84C17.27 5.33 16.67 5 16 5L5 5.01C3.9 5.01 3 5.9 3 7v10c0 1.1.9 1.99 2 1.99L16 19c.67 0 1.27-.33 1.63-.84L22 12l-4.37-6.16zM16 17H5V7h11l3.55 5L16 17z"/></svg><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" id="refinery-ID-icon-error" class="icon-error"><path d="M12 2C6.47 2 2 6.47 2 12s4.47 10 10 10s10-4.47 10-10S17.53 2 12 2zm5 13.59L15.59 17L12 13.41L8.41 17L7 15.59L10.59 12L7 8.41L8.41 7L12 10.59L15.59 7L17 8.41L13.41 12L17 15.59z"/></svg><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" id="refinery-ID-icon-attribute-true" class="icon-attribute-true"><path d="M12 7c-2.76 0-5 2.24-5 5s2.24 5 5 5 5-2.24 5-5-2.24-5-5-5"/></svg><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" id="refinery-ID-icon-attribute-unknown" class="icon-attribute-unknown"><path d="M12 9c1.65 0 3 1.35 3 3s-1.35 3-3 3-3-1.35-3-3 1.35-3 3-3m0-2c-2.76 0-5 2.24-5 5s2.24 5 5 5 5-2.24 5-5-2.24-5-5-5"/></svg></defs><rect x="-6" y="-6" width="500" height="100" fill="#fff"/>
+<g class="graph" transform="scale(1 1) rotate(0) translate(4 84)">
+<!-- n0 -->
+<g class="node node-multi node-exists-unknown node-equalsSelf-unknown node-typeHash-o"><rect stroke="none" x="5.5" y="-66.5" width="66" height="65" rx="12.5" ry="12.5" class="node-shadow node-bg"/>
+
+<rect stroke="none" x="0" y="-72" width="65" height="64" rx="12" ry="12" class="node-bg"/>
+<rect stroke="none" x="-4" y="-76" width="73" height="27" clip-path="url(#refinery-ID-clip-0)" class="node-header"/>
+<text xml:space="preserve" text-anchor="middle" x="32.5" y="-60" font-size="12.00" dominant-baseline="middle">Dog::new</text>
+<use x="6" y="-43" width="12" height="12" href="#refinery-ID-icon-true" class="icon icon-true"/>
+<g><text xml:space="preserve" text-anchor="start" x="22" y="-37" font-style="italic" font-size="12.00" class="label label-true" dominant-baseline="middle">Animal</text>
+</g>
+<use x="6" y="-27" width="12" height="12" href="#refinery-ID-icon-true" class="icon icon-true"/>
+<g><text xml:space="preserve" text-anchor="start" x="22" y="-21" font-size="12.00" class="label label-true" dominant-baseline="middle">Dog</text>
+</g>
+<polyline points="0,-49 65,-49" class="node-outline"/>
+<rect fill="none" x="0" y="-72" width="65" height="64" rx="12" ry="12" class="node-outline"/>
+<clipPath id="refinery-ID-clip-0"><rect stroke="none" x="0" y="-72" width="65" height="64" rx="12" ry="12" class="node-bg"/></clipPath></g>
+<!-- n1 -->
+<g class="node node-multi node-exists-unknown node-equalsSelf-unknown node-typeHash-i"><rect stroke="none" x="88.5" y="-66.5" width="66" height="65" rx="12.5" ry="12.5" class="node-shadow node-bg"/>
+
+<rect stroke="none" x="83" y="-72" width="65" height="64" rx="12" ry="12" class="node-bg"/>
+<rect stroke="none" x="79" y="-76" width="73" height="27" clip-path="url(#refinery-ID-clip-1)" class="node-header"/>
+<text xml:space="preserve" text-anchor="middle" x="115.5" y="-60" font-size="12.00" dominant-baseline="middle">Cat::new</text>
+<use x="89" y="-43" width="12" height="12" href="#refinery-ID-icon-true" class="icon icon-true"/>
+<g><text xml:space="preserve" text-anchor="start" x="105" y="-37" font-style="italic" font-size="12.00" class="label label-true" dominant-baseline="middle">Animal</text>
+</g>
+<use x="89" y="-27" width="12" height="12" href="#refinery-ID-icon-true" class="icon icon-true"/>
+<g><text xml:space="preserve" text-anchor="start" x="105" y="-21" font-size="12.00" class="label label-true" dominant-baseline="middle">Cat</text>
+</g>
+<polyline points="83,-49 148,-49" class="node-outline"/>
+<rect fill="none" x="83" y="-72" width="65" height="64" rx="12" ry="12" class="node-outline"/>
+<clipPath id="refinery-ID-clip-1"><rect stroke="none" x="83" y="-72" width="65" height="64" rx="12" ry="12" class="node-bg"/></clipPath></g>
+<!-- n2 -->
+<g class="node node-default node-exists-true node-equalsSelf-true node-typeHash-o">
+
+<rect stroke="none" x="166" y="-72" width="65" height="64" rx="12" ry="12" class="node-bg"/>
+<rect stroke="none" x="162" y="-76" width="73" height="27" clip-path="url(#refinery-ID-clip-2)" class="node-header"/>
+<text xml:space="preserve" text-anchor="middle" x="198.5" y="-60" font-size="12.00" dominant-baseline="middle">rex</text>
+<use x="172" y="-43" width="12" height="12" href="#refinery-ID-icon-true" class="icon icon-true"/>
+<g><text xml:space="preserve" text-anchor="start" x="188" y="-37" font-style="italic" font-size="12.00" class="label label-true" dominant-baseline="middle">Animal</text>
+</g>
+<use x="172" y="-27" width="12" height="12" href="#refinery-ID-icon-true" class="icon icon-true"/>
+<g><text xml:space="preserve" text-anchor="start" x="188" y="-21" font-size="12.00" class="label label-true" dominant-baseline="middle">Dog</text>
+</g>
+<polyline points="166,-49 231,-49" class="node-outline"/>
+<rect fill="none" x="166" y="-72" width="65" height="64" rx="12" ry="12" class="node-outline"/>
+<clipPath id="refinery-ID-clip-2"><rect stroke="none" x="166" y="-72" width="65" height="64" rx="12" ry="12" class="node-bg"/></clipPath></g>
+<!-- n3 -->
+<g class="node node-default node-exists-true node-equalsSelf-true node-typeHash-i">
+
+<rect stroke="none" x="249" y="-72" width="65" height="64" rx="12" ry="12" class="node-bg"/>
+<rect stroke="none" x="245" y="-76" width="73" height="27" clip-path="url(#refinery-ID-clip-3)" class="node-header"/>
+<text xml:space="preserve" text-anchor="middle" x="281.5" y="-60" font-size="12.00" dominant-baseline="middle">felix</text>
+<use x="255" y="-43" width="12" height="12" href="#refinery-ID-icon-true" class="icon icon-true"/>
+<g><text xml:space="preserve" text-anchor="start" x="271" y="-37" font-style="italic" font-size="12.00" class="label label-true" dominant-baseline="middle">Animal</text>
+</g>
+<use x="255" y="-27" width="12" height="12" href="#refinery-ID-icon-true" class="icon icon-true"/>
+<g><text xml:space="preserve" text-anchor="start" x="271" y="-21" font-size="12.00" class="label label-true" dominant-baseline="middle">Cat</text>
+</g>
+<polyline points="249,-49 314,-49" class="node-outline"/>
+<rect fill="none" x="249" y="-72" width="65" height="64" rx="12" ry="12" class="node-outline"/>
+<clipPath id="refinery-ID-clip-3"><rect stroke="none" x="249" y="-72" width="65" height="64" rx="12" ry="12" class="node-bg"/></clipPath></g>
+<!-- n4 -->
+<g class="node node-default node-exists-true node-equalsSelf-true node-typeHash-n">
+
+<rect stroke="none" x="332" y="-80" width="65" height="80" rx="12" ry="12" class="node-bg"/>
+<rect stroke="none" x="328" y="-84" width="73" height="27" clip-path="url(#refinery-ID-clip-4)" class="node-header"/>
+<text xml:space="preserve" text-anchor="middle" x="364.5" y="-68" font-size="12.00" dominant-baseline="middle">chase</text>
+<use x="338" y="-51" width="12" height="12" href="#refinery-ID-icon-true" class="icon icon-true"/>
+<g><text xml:space="preserve" text-anchor="start" x="354" y="-45" font-style="italic" font-size="12.00" class="label label-true" dominant-baseline="middle">Animal</text>
+</g>
+<use x="338" y="-35" width="12" height="12" href="#refinery-ID-icon-unknown" class="icon icon-unknown"/>
+<g><text xml:space="preserve" text-anchor="start" x="354" y="-29" font-size="12.00" class="label label-unknown" dominant-baseline="middle">Dog</text>
+</g>
+<use x="338" y="-19" width="12" height="12" href="#refinery-ID-icon-unknown" class="icon icon-unknown"/>
+<g><text xml:space="preserve" text-anchor="start" x="354" y="-13" font-size="12.00" class="label label-unknown" dominant-baseline="middle">Cat</text>
+</g>
+<polyline points="332,-57 397,-57" class="node-outline"/>
+<rect fill="none" x="332" y="-80" width="65" height="80" rx="12" ry="12" class="node-outline"/>
+<clipPath id="refinery-ID-clip-4"><rect stroke="none" x="332" y="-80" width="65" height="80" rx="12" ry="12" class="node-bg"/></clipPath></g>
+<!-- n5 -->
+<g class="node node-default node-exists-true node-equalsSelf-true node-typeHash-o">
+
+<rect stroke="none" x="415" y="-80" width="65" height="80" rx="12" ry="12" class="node-bg"/>
+<rect stroke="none" x="411" y="-84" width="73" height="27" clip-path="url(#refinery-ID-clip-5)" class="node-header"/>
+<text xml:space="preserve" text-anchor="middle" x="447.5" y="-68" font-size="12.00" dominant-baseline="middle">lucky</text>
+<use x="421" y="-51" width="12" height="12" href="#refinery-ID-icon-error" class="icon icon-error"/>
+<g><text xml:space="preserve" text-anchor="start" x="437" y="-45" font-style="italic" font-size="12.00" class="label label-error" dominant-baseline="middle">Animal</text>
+</g>
+<use x="421" y="-35" width="12" height="12" href="#refinery-ID-icon-error" class="icon icon-error"/>
+<g><text xml:space="preserve" text-anchor="start" x="437" y="-29" font-size="12.00" class="label label-error" dominant-baseline="middle">Dog</text>
+</g>
+<use x="421" y="-19" width="12" height="12" href="#refinery-ID-icon-error" class="icon icon-error"/>
+<g><text xml:space="preserve" text-anchor="start" x="437" y="-13" font-size="12.00" class="label label-error" dominant-baseline="middle">Cat</text>
+</g>
+<polyline points="415,-57 480,-57" class="node-outline"/>
+<rect fill="none" x="415" y="-80" width="65" height="80" rx="12" ry="12" class="node-outline"/>
+<clipPath id="refinery-ID-clip-5"><rect stroke="none" x="415" y="-80" width="65" height="80" rx="12" ry="12" class="node-bg"/></clipPath></g>
+</g>
+</svg>

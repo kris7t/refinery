@@ -4,4 +4,12 @@
 
 class Node.
 
+!exists(Node::new).
 Node(a).
+Node(b).
+Node(c).
+Node(d).
+?exists(a).
+?exists(b).
+?equals(a, a).
+?equals(c, c).
