@@ -365,6 +365,14 @@ class OutputOptionsTest {
 			assertThat(message, containsString("cannot embed fonts"));
 		}
 
+		@Test
+		void solidBackgroundNotAllowedForAutoThemeTest() {
+			var message = parseFailure(new OutputOptions.Refinery(), "-o", "output.txt", "-f", "svg", "-theme",
+					"auto", "-transparent", "false");
+			// The selected output configuration cannot have a solid background.
+			assertThat(message, containsString("cannot have a solid background"));
+		}
+
 		@ParameterizedTest
 		@ValueSource(strings = {"refinery", "json", "png"})
 		void disablingEmbedFontsIsAlwaysAllowedTest(String format) {

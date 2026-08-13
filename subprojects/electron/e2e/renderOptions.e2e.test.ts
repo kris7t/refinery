@@ -21,9 +21,6 @@ import normalizeSvg from './normalizeSvg';
 import getPackagedCliPath from './packagedCli';
 import runCli from './runCli';
 
-// Theme selection and font embedding are render *options*, not properties of
-// the input model, so unlike `rendering.e2e.test.ts` this deliberately uses a
-// single fixed input and parametrizes over CLI flags instead.
 const inputPath = path.join(import.meta.dirname, 'fixtures', 'theme.problem');
 const snapshotsDir = path.join(import.meta.dirname, '__snapshots__');
 
@@ -43,8 +40,6 @@ afterEach(async () => {
   await rm(tempDir, { recursive: true, force: true });
 });
 
-// `-embed-fonts true` is not combined with `-theme auto` here: the CLI
-// rejects that combination outright (see cli.e2e.test.ts).
 const cases = [
   { snapshotName: 'theme-light', args: ['-theme', 'light'] },
   { snapshotName: 'theme-dark', args: ['-theme', 'dark'] },
@@ -56,10 +51,6 @@ const cases = [
   {
     snapshotName: 'theme-dark-solid',
     args: ['-theme', 'dark', '-transparent', 'false'],
-  },
-  {
-    snapshotName: 'theme-auto-solid',
-    args: ['-theme', 'auto', '-transparent', 'false'],
   },
   {
     snapshotName: 'theme-light-embed-fonts',

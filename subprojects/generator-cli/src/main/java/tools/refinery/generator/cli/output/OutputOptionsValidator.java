@@ -56,6 +56,10 @@ public sealed abstract class OutputOptionsValidator implements IParametersValida
 		if (!canEmbedFonts && Boolean.TRUE.equals(embedFonts)) {
 			throw new ParameterException("The selected output configuration cannot embed fonts.");
 		}
+		boolean canHaveSolidBackground = theme == null || theme.supportsSolidBackground();
+		if (!canHaveSolidBackground && Boolean.FALSE.equals(transparent)) {
+			throw new ParameterException("The selected output configuration cannot have a solid background.");
+		}
 		if (!isGraphical && theme != null) {
 			throw new ParameterException("Output format %s cannot set an output theme.".formatted(format));
 		}

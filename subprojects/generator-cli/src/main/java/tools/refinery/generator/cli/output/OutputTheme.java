@@ -20,6 +20,10 @@ public enum OutputTheme {
 		return isStatic();
 	}
 
+	public boolean supportsSolidBackground() {
+		return isStatic();
+	}
+
 	public OutputTheme asStaticTheme() {
 		return isStatic() ? this : LIGHT;
 	}
