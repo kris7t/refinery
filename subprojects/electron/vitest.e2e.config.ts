@@ -14,6 +14,7 @@ export default defineConfig({
     // Real JVM and Electron cold starts are much slower than the mocked unit suite.
     testTimeout: ms('1m'),
     hookTimeout: ms('1m'),
+    fileParallelism: false,
     // Every test here is "slow" by the default reporter's 300ms threshold,
     // which shows per-test lines without their `describe` names (those are
     // only shown for single-file runs). `verbose` always prints the full

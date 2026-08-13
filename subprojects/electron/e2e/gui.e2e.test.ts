@@ -39,6 +39,9 @@ describe.skipIf(process.env['CI'] !== 'true')(
         !process.env['WAYLAND_DISPLAY'];
       const env = toStringEnv(process.env);
       delete env['ELECTRON_RUN_AS_NODE'];
+      const semanticsTimeout = String(ms('1m'));
+      env['REFINERY_SEMANTICS_TIMEOUT_MS'] = semanticsTimeout;
+      env['REFINERY_SEMANTICS_WARMUP_TIMEOUT_MS'] = semanticsTimeout;
       if (needsXvfb) {
         xvfb = await startXvfb();
         env['DISPLAY'] = xvfb.display;
