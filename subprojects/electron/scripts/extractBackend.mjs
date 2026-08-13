@@ -4,6 +4,7 @@
  * SPDX-License-Identifier: EPL-2.0
  */
 
+import { createWriteStream } from 'node:fs';
 import { rm, mkdir, unlink, utimes } from 'node:fs/promises';
 import path from 'node:path';
 import { pipeline } from 'stream/promises';
@@ -13,7 +14,6 @@ import yauzl from 'yauzl';
 
 import version from './version.mjs';
 import writeManifestJar from './writeManifestJar.mjs';
-import { createWriteStream } from 'node:fs';
 
 const targetDir = path.join(import.meta.dirname, '../build/backend');
 
@@ -143,14 +143,22 @@ async function extractNativeJar(nativesDir, jar) {
       continue;
     }
     const [dirName, baseName] = components;
-    if (!dirName || !dirName.endsWith(currentTargetSuffix) || !baseName || baseName === '') {
+    if (
+      !dirName ||
+      !dirName.endsWith(currentTargetSuffix) ||
+      !baseName ||
+      baseName === ''
+    ) {
       continue;
     }
     const extractPath = path.join(nativesDir, baseName);
     const readStream = await zipFile.openReadStreamPromise(entry);
-    await pipeline(readStream, createWriteStream(extractPath, {
-      mode: 0o755,
-    }));
+    await pipeline(
+      readStream,
+      createWriteStream(extractPath, {
+        mode: 0o755,
+      }),
+    );
     const lastModDate = entry.getLastModDate();
     await utimes(extractPath, lastModDate, lastModDate);
   }

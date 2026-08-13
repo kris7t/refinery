@@ -6,9 +6,9 @@
 
 import path from 'node:path';
 
-import { app, BrowserWindow } from "electron";
+import { app, BrowserWindow } from 'electron';
 
-import startServer from "../server/startServer";
+import startServer from '../server/startServer';
 import { onCleanup } from '../utils/cleanup';
 import getLogger from '../utils/getLogger';
 import { isMac } from '../utils/platform';

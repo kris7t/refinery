@@ -5,7 +5,11 @@
  */
 
 import type RefineryContextBridge from '@tools.refinery/frontend/RefineryContextBridge';
-import type { ServerStateChangeCallback, ThemeSource, ThemeSourceChangeCallback } from '@tools.refinery/frontend/RefineryContextBridge';
+import type {
+  ServerStateChangeCallback,
+  ThemeSource,
+  ThemeSourceChangeCallback,
+} from '@tools.refinery/frontend/RefineryContextBridge';
 import type BackendConfig from '@tools.refinery/frontend/xtext/BackendConfig';
 import { contextBridge, ipcRenderer } from 'electron';
 
@@ -15,17 +19,23 @@ const themeSourceCallbacks: ThemeSourceChangeCallback[] = [];
 
 const openDialogs = new Set<string>();
 
-ipcRenderer.on('refinery:serverStateChanged', (_event, serverState: boolean) => {
-  for (const callback of serverStateCallbacks) {
-    callback(serverState);
-  }
-});
+ipcRenderer.on(
+  'refinery:serverStateChanged',
+  (_event, serverState: boolean) => {
+    for (const callback of serverStateCallbacks) {
+      callback(serverState);
+    }
+  },
+);
 
-ipcRenderer.on('refinery:themeSourceChanged', (_event, themeSource: ThemeSource) => {
-  for (const callback of themeSourceCallbacks) {
-    callback(themeSource);
-  }
-});
+ipcRenderer.on(
+  'refinery:themeSourceChanged',
+  (_event, themeSource: ThemeSource) => {
+    for (const callback of themeSourceCallbacks) {
+      callback(themeSource);
+    }
+  },
+);
 
 function updateDialogCount() {
   ipcRenderer.send('refinery:setModalDialogCount', openDialogs.size);
@@ -33,7 +43,9 @@ function updateDialogCount() {
 
 contextBridge.exposeInMainWorld('refinery', {
   async getBackendConfig() {
-    return ipcRenderer.invoke('refinery:getBackendConfig') as Promise<BackendConfig>;
+    return ipcRenderer.invoke(
+      'refinery:getBackendConfig',
+    ) as Promise<BackendConfig>;
   },
   onServerStateChange(callback) {
     if (typeof callback !== 'function') {
@@ -70,7 +82,7 @@ contextBridge.exposeInMainWorld('refinery', {
     } else {
       console.error('Unknown dialog', id);
     }
-  }
+  },
 } satisfies RefineryContextBridge);
 
 // Clear the previous dialog count on page reload.

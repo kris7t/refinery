@@ -44,7 +44,7 @@ val configFiles: FileCollection = files(
 	"tsconfig.json",
 )
 
-val lintingFiles: FileCollection= configFiles + files(
+val lintingFiles: FileCollection = configFiles + files(
 		rootProject.file(".eslintrc.cjs"), rootProject.file("prettier.config.cjs"))
 
 tasks {

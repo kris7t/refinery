@@ -29,7 +29,8 @@ class FrameDecoder {
   private buf: Buffer | undefined;
 
   *push(chunk: Buffer): Generator<Buffer, void> {
-    this.buf = this.buf === undefined ? chunk : Buffer.concat([this.buf, chunk]);
+    this.buf =
+      this.buf === undefined ? chunk : Buffer.concat([this.buf, chunk]);
     while (this.buf.length >= 4) {
       const length = this.buf.readUInt32BE(0);
       if (length > MAX_FRAME) {

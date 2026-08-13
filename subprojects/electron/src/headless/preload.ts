@@ -10,32 +10,35 @@ import { contextBridge, ipcRenderer } from 'electron';
 
 let savedCallback: RequestCallback | undefined;
 
-ipcRenderer.on('refineryHeadless:request', (_event, id: string, buffer: Uint8Array) => {
-  (async () => {
-    if (!savedCallback) {
-      ipcRenderer.send(
-        'refineryHeadless:response',
-        id,
-        new Error('Headless page not started yet'),
-      );
-      return;
-    }
-    let response;
-    try {
-      response = await savedCallback(buffer);
-    } catch (error) {
-      ipcRenderer.send(
-        'refineryHeadless:response',
-        id,
-        error instanceof Error ? error : new Error(String(error)),
-      );
-      return;
-    }
-    ipcRenderer.send('refineryHeadless:response', id, response);
-  })().catch((error) =>
-    console.log('Unexpected error when processing request', id, error),
-  );
-});
+ipcRenderer.on(
+  'refineryHeadless:request',
+  (_event, id: string, buffer: Uint8Array) => {
+    (async () => {
+      if (!savedCallback) {
+        ipcRenderer.send(
+          'refineryHeadless:response',
+          id,
+          new Error('Headless page not started yet'),
+        );
+        return;
+      }
+      let response;
+      try {
+        response = await savedCallback(buffer);
+      } catch (error) {
+        ipcRenderer.send(
+          'refineryHeadless:response',
+          id,
+          error instanceof Error ? error : new Error(String(error)),
+        );
+        return;
+      }
+      ipcRenderer.send('refineryHeadless:response', id, response);
+    })().catch((error) =>
+      console.log('Unexpected error when processing request', id, error),
+    );
+  },
+);
 
 contextBridge.exposeInMainWorld('refineryHeadless', {
   onRequest(callback) {

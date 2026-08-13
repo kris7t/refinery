@@ -107,7 +107,10 @@ export default abstract class ServerManager extends EventEmitter<ServerManagerEv
 
   protected readonly logger: Logger;
 
-  constructor(name: string, private readonly treeKill = true) {
+  constructor(
+    name: string,
+    private readonly treeKill = true,
+  ) {
     super();
     this.logger = getLogger(name);
   }
@@ -400,7 +403,6 @@ export default abstract class ServerManager extends EventEmitter<ServerManagerEv
     this.state = { name: 'stopping', child, killTimer };
     this.sendSignal(child, 'SIGTERM');
   }
-
 
   /** Best-effort tree kill that tolerates an already-dead process. */
   private sendSignal(child: ChildProcess, signal: NodeJS.Signals): void {

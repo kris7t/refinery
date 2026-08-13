@@ -68,17 +68,20 @@ export default async function runGUI() {
   await new Promise<void>((resolve, reject) => {
     const window = createWindow(pageURL);
     window.once('ready-to-show', () => {
-        app.on('activate', () => {
-          if (BrowserWindow.getAllWindows().length === 0) {
-            createWindow(pageURL);
-          }
-        });
+      app.on('activate', () => {
+        if (BrowserWindow.getAllWindows().length === 0) {
+          createWindow(pageURL);
+        }
+      });
 
       resolve();
     });
-    window.webContents.on('did-fail-load', (_event, _errorCode, errorDescription) => {
-      reject(new Error(errorDescription));
-    });
+    window.webContents.on(
+      'did-fail-load',
+      (_event, _errorCode, errorDescription) => {
+        reject(new Error(errorDescription));
+      },
+    );
   });
 
   await backend.start();

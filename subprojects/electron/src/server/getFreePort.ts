@@ -21,7 +21,7 @@ export default function getFreePort(): Promise<number> {
           } else {
             resolve(address.port);
           }
-        })
+        });
       }
     });
   });

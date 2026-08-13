@@ -57,7 +57,9 @@ function createContext(entryPoints, outputFormat, extension) {
           build.onEnd((result) => {
             if (result.errors.length === 0) {
               const time = format(new Date(), `HH:mm:ss.sss`);
-              console.log(`[${time}] ${entryPoints.join(', ')} ${mode} ${success}`);
+              console.log(
+                `[${time}] ${entryPoints.join(', ')} ${mode} ${success}`,
+              );
             }
           });
         },
@@ -78,8 +80,10 @@ const contexts = await Promise.all([
 if (watch) {
   await Promise.all(contexts.map((ctx) => ctx.watch()));
 } else {
-  await Promise.all(contexts.map(async (ctx) => {
-    await ctx.rebuild();
-    await ctx.dispose();
-  }));
+  await Promise.all(
+    contexts.map(async (ctx) => {
+      await ctx.rebuild();
+      await ctx.dispose();
+    }),
+  );
 }

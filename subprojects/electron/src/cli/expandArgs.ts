@@ -54,7 +54,9 @@ function trimQuotes(arg: string): string {
  * @returns An async iterator over the expanded argument list.
  * @see https://github.com/boost-mw-poc/cbeust_jcommander/blob/e9599fed58fdf5251abb8ad08226e96ae951d302/src/main/java/com/beust/jcommander/JCommander.java#L572-L589
  */
-export default async function* expandArgs(args: string[]): AsyncGenerator<string, void> {
+export default async function* expandArgs(
+  args: string[],
+): AsyncGenerator<string, void> {
   for (const arg of args) {
     if (arg.startsWith('@')) {
       let contents;

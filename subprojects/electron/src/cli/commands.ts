@@ -19,4 +19,4 @@ const commands = [
 
 export default commands;
 
-export type Command = typeof commands[number];
+export type Command = (typeof commands)[number];

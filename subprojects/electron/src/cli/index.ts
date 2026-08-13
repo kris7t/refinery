@@ -4,7 +4,7 @@
  * SPDX-License-Identifier: EPL-2.0
  */
 
-import child_process from "node:child_process";
+import child_process from 'node:child_process';
 import { once } from 'node:events';
 import { rmSync } from 'node:fs';
 import { chmod, mkdtemp } from 'node:fs/promises';
@@ -20,7 +20,7 @@ import spawnJava from '../utils/spawnJava';
 
 import HeadlessServerManager from './HeadlessServerManager';
 import isHeadlessNeeded from './isHeadlessNeeded';
-import shouldLaunchGUI from "./shouldLaunchGUI";
+import shouldLaunchGUI from './shouldLaunchGUI';
 
 const log = getLogger('cli');
 

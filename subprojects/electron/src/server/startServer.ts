@@ -20,7 +20,9 @@ const logger = getLogger('server.startServer');
 export default function startServer(
   withBackend?: true,
 ): Promise<{ root: string; backend: BackendManager }>;
-export default function startServer(withBackend: false): Promise<{ root: string }>;
+export default function startServer(
+  withBackend: false,
+): Promise<{ root: string }>;
 export default async function startServer(
   withBackend = true,
 ): Promise<{ root: string; backend?: BackendManager }> {
@@ -103,7 +105,10 @@ export default async function startServer(
         try {
           response = await net.fetch(pathToFileURL(pathToServe).toString());
         } catch (error) {
-          logger.error({ pathToServe, err: error }, 'Error while serving request');
+          logger.error(
+            { pathToServe, err: error },
+            'Error while serving request',
+          );
           return new Response('<h1>500 Internal Server Error</h1>', {
             status: 500,
             statusText: 'Internal Server Error',
