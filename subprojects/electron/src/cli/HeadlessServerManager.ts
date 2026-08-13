@@ -13,6 +13,8 @@ import { createInterface } from 'node:readline';
 import ServerManager from '../utils/ServerManager';
 import { destination } from '../utils/logger';
 
+import getElectronSpawnCommand from './getElectronSpawnCommand';
+
 export default class HeadlessServerManager extends ServerManager {
   constructor(public readonly endpoint: string) {
     // Chromium is well-behaved and only the main process needs killing.
@@ -26,21 +28,58 @@ export default class HeadlessServerManager extends ServerManager {
       REFINERY_LOG_DESTINATION: 'stdout',
     };
     delete newEnv['ELECTRON_RUN_AS_NODE'];
-    const child = child_process.spawn(process.argv0, [], {
+
+    // Chromium is chatty on stderr even in normal operation, so this is
+    // opt-in (e.g. for the e2e tests) rather than always on.
+    const logChromium = process.env['REFINERY_LOG_CHROMIUM'] === '1';
+
+    const { command, args } = getElectronSpawnCommand(process.argv0);
+    const child = child_process.spawn(command, args, {
       env: newEnv,
-      // Ignore Chromium log noise written to stderr.
-      stdio: ['ignore', 'pipe', 'ignore'],
+      stdio: ['ignore', 'pipe', logChromium ? 'pipe' : 'ignore'],
       detached: false,
     });
-    const readline = createInterface({
-      input: child.stdout,
-      crlfDelay: Infinity,
-    });
-    readline.on('line', (line) => {
-      destination.write(`${line}${EOL}`);
-    });
+
+    if (command === 'xvfb-run') {
+      child.once('error', (error) => {
+        if ('code' in error && error.code === 'ENOENT') {
+          this.logger.error(
+            'No DISPLAY or WAYLAND_DISPLAY is set and `xvfb-run` was not ' +
+              'found. Install Xvfb, or run with a display, to use headless ' +
+              'rendering.',
+          );
+        }
+      });
+    }
+
+    const readlines: ReturnType<typeof createInterface>[] = [];
+
+    if (child.stdout) {
+      const stdoutReadline = createInterface({
+        input: child.stdout,
+        crlfDelay: Infinity,
+      });
+      stdoutReadline.on('line', (line) => {
+        destination.write(`${line}${EOL}`);
+      });
+      readlines.push(stdoutReadline);
+    }
+
+    if (logChromium && child.stderr) {
+      const stderrReadline = createInterface({
+        input: child.stderr,
+        crlfDelay: Infinity,
+      });
+      stderrReadline.on('line', (line) => {
+        destination.write(`[stderr] ${line}${EOL}`);
+      });
+      readlines.push(stderrReadline);
+    }
+
     for (const event of ['error', 'exit'] as const) {
-      child.on(event, () => readline.close());
+      child.on(event, () => {
+        readlines.forEach((readline) => readline.close());
+      });
     }
     return child;
   }

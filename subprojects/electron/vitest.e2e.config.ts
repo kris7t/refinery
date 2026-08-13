@@ -13,5 +13,14 @@ export default defineConfig({
     // Real JVM and Electron cold starts are much slower than the mocked unit suite.
     testTimeout: 60_000,
     hookTimeout: 60_000,
+    env: {
+      // `runCli` inherits the environment, so these propagate all the way
+      // down to `HeadlessServerManager`.
+      REFINERY_LOG_CHROMIUM: '1',
+      // An unpacked `electron-builder` output doesn't have `chrome-sandbox`
+      // configured the way an installed package does, so Chromium's SUID
+      // sandbox aborts on startup unless it's disabled here.
+      REFINERY_NO_SANDBOX: '1',
+    },
   },
 });

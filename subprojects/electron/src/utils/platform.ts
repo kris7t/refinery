@@ -6,4 +6,4 @@
 
 export const isMac = process.platform === 'darwin';
 export const isWindows = process.platform === 'win32';
-export const isLinux = !isMac || !isWindows;
+export const isLinux = !isMac && !isWindows;

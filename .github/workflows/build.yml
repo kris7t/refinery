@@ -84,7 +84,18 @@ jobs:
           path: |
            .playwright
           key: ${{ matrix.os }}-playwright-${{ hashFiles('yarn.lock') }}
+      - name: Install Xvfb
+        if: ${{ matrix.os == env.RUNNER_UBUNTU || matrix.os == env.RUNNER_UBUNTU_ARM }}
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends xvfb
       - name: Gradle build
+        env:
+          # Deterministically exercise the Xvfb fallback in the electron
+          # e2e tests on Linux, instead of relying on the runner happening
+          # not to have a display. Harmless no-op on macOS/Windows.
+          DISPLAY: ''
+          WAYLAND_DISPLAY: ''
         run: |
           ./gradlew build -Pci --info --stacktrace --max-workers 4 --no-daemon
       - name: Sonar analyze

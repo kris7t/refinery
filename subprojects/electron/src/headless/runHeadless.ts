@@ -38,7 +38,6 @@ export default async function runHeadless(endpoint: string) {
       devTools: process.isDev,
       // We never show this window, so it would get throttled unless we disable throttling.
       backgroundThrottling: false,
-      offscreen: true,
     },
     show: false,
     title: 'Refinery',
