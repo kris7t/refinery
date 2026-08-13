@@ -97,7 +97,7 @@ jobs:
           DISPLAY: ''
           WAYLAND_DISPLAY: ''
         run: |
-          ./gradlew build -Pci --info --stacktrace --max-workers 4 --no-daemon
+          ./gradlew build -Pci --info --stacktrace --no-parallel --no-daemon
       - name: Sonar analyze
         if: ${{ steps.check-secret.outputs.is_SONAR_TOKEN_set }}
         env:
@@ -123,11 +123,11 @@ jobs:
           PGP_KEY_ID: ${{ secrets.PGP_KEY_ID }}
           PGP_PASSWORD: ${{ secrets.PGP_PASSWORD }}
         run: |
-          ./gradlew mavenRepository -Pci -PforceSign --info --stacktrace --max-workers 4 --no-daemon
+          ./gradlew mavenRepository -Pci -PforceSign --info --stacktrace --no-parallel --no-daemon
       - name: Build unsigned Maven repository
         if: ${{ matrix.os == env.RUNNER_UBUNTU && (github.event_name != 'push' || github.repository_owner != 'graphs4value') }}
         run: |
-          ./gradlew mavenRepository -Pci --info --stacktrace --max-workers 4 --no-daemon
+          ./gradlew mavenRepository -Pci --info --stacktrace --no-parallel --no-daemon
       - name: Merge Maven repository with site
         if: ${{ matrix.os == env.RUNNER_UBUNTU }}
         run: |

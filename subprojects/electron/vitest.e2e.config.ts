@@ -12,8 +12,8 @@ export default defineConfig({
     environment: 'node',
     include: ['e2e/**/*.test.ts'],
     // Real JVM and Electron cold starts are much slower than the mocked unit suite.
-    testTimeout: ms('1m'),
-    hookTimeout: ms('1m'),
+    testTimeout: ms('30s'),
+    hookTimeout: ms('30s'),
     fileParallelism: false,
     // Every test here is "slow" by the default reporter's 300ms threshold,
     // which shows per-test lines without their `describe` names (those are
@@ -21,8 +21,6 @@ export default defineConfig({
     // `describe > test` path instead.
     reporters: ['verbose'],
     env: {
-      // `runCli` inherits the environment, so these propagate all the way
-      // down to `HeadlessServerManager`.
       REFINERY_LOG_CHROMIUM: '1',
       // An unpacked `electron-builder` output doesn't have `chrome-sandbox`
       // configured the way an installed package does, so Chromium's SUID

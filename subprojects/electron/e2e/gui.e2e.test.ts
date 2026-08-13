@@ -4,6 +4,10 @@
  * SPDX-License-Identifier: EPL-2.0
  */
 
+import { mkdtemp, rm } from 'node:fs/promises';
+import { tmpdir } from 'node:os';
+import path from 'node:path';
+
 import ms from 'ms';
 import {
   _electron as electron,
@@ -12,7 +16,7 @@ import {
 } from 'playwright';
 import { afterAll, beforeAll, describe, test } from 'vitest';
 
-import getPackagedElectronPath from './getPackagedElectronPath';
+import getPackagedResourcesPath from './getPackagedResourcesPath';
 import startXvfb, { type Xvfb } from './startXvfb';
 
 function toStringEnv(env: NodeJS.ProcessEnv): Record<string, string> {
@@ -23,12 +27,15 @@ function toStringEnv(env: NodeJS.ProcessEnv): Record<string, string> {
   );
 }
 
+const timeout = ms('1m');
+
 // Launches a real window, so we don't want it popping up during local runs.
 describe.skipIf(process.env['CI'] !== 'true')(
   'gui smoke test',
-  { timeout: ms('5m') },
+  { timeout },
   () => {
     let xvfb: Xvfb | undefined;
+    let userDataDir: string | undefined;
     let app: ElectronApplication;
     let window: Page;
 
@@ -39,7 +46,7 @@ describe.skipIf(process.env['CI'] !== 'true')(
         !process.env['WAYLAND_DISPLAY'];
       const env = toStringEnv(process.env);
       delete env['ELECTRON_RUN_AS_NODE'];
-      const semanticsTimeout = String(ms('1m'));
+      const semanticsTimeout = String(timeout);
       env['REFINERY_SEMANTICS_TIMEOUT_MS'] = semanticsTimeout;
       env['REFINERY_SEMANTICS_WARMUP_TIMEOUT_MS'] = semanticsTimeout;
       if (needsXvfb) {
@@ -47,24 +54,37 @@ describe.skipIf(process.env['CI'] !== 'true')(
         env['DISPLAY'] = xvfb.display;
         delete env['WAYLAND_DISPLAY'];
       }
+      // Use a fresh user data dir to avoid interferring with CLI tests.
+      userDataDir = await mkdtemp(path.join(tmpdir(), 'refinery-gui-e2e-'));
+      // Playwright can get stuck if we launch our own packed binary,
+      // because it can't inject its own `loader.js` to detect app initialization.
+      // Therefore, we use the unbranded `electron` binary, but point it to our
+      // own entrypoint and resources.
+      const resourcesPath = getPackagedResourcesPath();
+      env['REFINERY_ELECTRON_RESOURCES_PATH'] = resourcesPath;
       app = await electron.launch({
-        executablePath: getPackagedElectronPath(),
-        args:
-          process.env['REFINERY_NO_SANDBOX'] === '1' ? ['--no-sandbox'] : [],
+        args: [
+          path.join(resourcesPath, 'app.asar'),
+          `--user-data-dir=${userDataDir}`,
+        ],
+        chromiumSandbox: process.env['REFINERY_NO_SANDBOX'] !== '1',
         env,
       });
       window = await app.firstWindow();
-    }, ms('3m'));
+    }, timeout);
 
     afterAll(async () => {
       await app?.close();
       xvfb?.stop();
+      if (userDataDir !== undefined) {
+        await rm(userDataDir, { recursive: true, force: true });
+      }
     });
 
     test('shows the editor', async () => {
       await window.locator('.cm-editor').waitFor({
         state: 'visible',
-        timeout: ms('1m'),
+        timeout,
       });
     });
 
@@ -74,7 +94,7 @@ describe.skipIf(process.env['CI'] !== 'true')(
         .first()
         .waitFor({
           state: 'visible',
-          timeout: ms('2m'),
+          timeout,
         });
     });
   },

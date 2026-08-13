@@ -21,8 +21,16 @@ export default function spawnJava(
     ...options
   }: SpawnOptionsWithoutStdio & { interactive?: boolean },
 ): ChildProcess {
-  const libDir = path.resolve(process.resourcesPath, 'lib');
-  const javaDir = path.resolve(process.resourcesPath, 'jre');
+  // Sometimes we spawn the stock `electron` binary instead of our own
+  // packaged executable (e.g. to run the packaged app under Playwright,
+  // which only reliably detects readiness when Electron is launched this
+  // way). In that case `process.resourcesPath` points at the stock
+  // binary's own resources, not our packaged ones, so this lets
+  // the caller override it explicitly.
+  const resourcesPath =
+    process.env['REFINERY_ELECTRON_RESOURCES_PATH'] ?? process.resourcesPath;
+  const libDir = path.resolve(resourcesPath, 'lib');
+  const javaDir = path.resolve(resourcesPath, 'jre');
   const javaBinDir = path.join(javaDir, 'bin');
   const javaBinary = path.join(javaBinDir, isWindows ? 'java.exe' : 'java');
   const pathingJar = path.join(libDir, `${packageName}-all.jar`);
