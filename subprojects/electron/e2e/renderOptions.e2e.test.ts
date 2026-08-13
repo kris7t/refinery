@@ -22,13 +22,12 @@ import comparePNG from './comparePNG';
 import expectPNGSnapshot from './expectPNGSnapshot';
 import isUpdatingSnapshots from './isUpdatingSnapshots';
 import loadPDF from './loadPDF';
-import normalizeSvg from './normalizeSvg';
-import getPackagedCliPath from './packagedCli';
+import normalizeSVG from './normalizeSVG';
 import pdfHasEmbeddedFont, {
   pdfDocumentHasEmbeddedFont,
 } from './pdfHasEmbeddedFont';
 import { renderPDFDocumentToPNG } from './renderPDFToPNG';
-import runCli from './runCli';
+import runCLI, { getPackagedCLIPath } from './runCLI';
 
 const inputPath = path.join(import.meta.dirname, 'fixtures', 'theme.problem');
 const snapshotsDir = path.join(import.meta.dirname, '__snapshots__');
@@ -36,7 +35,7 @@ const snapshotsDir = path.join(import.meta.dirname, '__snapshots__');
 let cliPath: string;
 
 beforeAll(() => {
-  cliPath = getPackagedCliPath();
+  cliPath = getPackagedCLIPath();
 });
 
 let tempDir: string;
@@ -76,7 +75,7 @@ describe('svg render options', () => {
     'renders with $snapshotName',
     async ({ snapshotName, args }) => {
       const outputPath = path.join(tempDir, 'out.svg');
-      const result = await runCli(cliPath, [
+      const result = await runCLI(cliPath, [
         'render',
         inputPath,
         '-output',
@@ -85,7 +84,7 @@ describe('svg render options', () => {
       ]);
       expect(result.exitCode).toBe(0);
       const contents = await readFile(outputPath, 'utf-8');
-      await expect(normalizeSvg(contents)).toMatchFileSnapshot(
+      await expect(normalizeSVG(contents)).toMatchFileSnapshot(
         path.join(snapshotsDir, `${snapshotName}.svg`),
       );
     },
@@ -111,7 +110,7 @@ describe('png render options', () => {
     'renders with $snapshotName',
     async ({ snapshotName, args }) => {
       const outputPath = path.join(tempDir, 'out.png');
-      const result = await runCli(cliPath, [
+      const result = await runCLI(cliPath, [
         'render',
         inputPath,
         '-output',
@@ -146,7 +145,7 @@ describe.skipIf(isUpdatingSnapshots())('pdf render options', () => {
     'renders with $snapshotName',
     async ({ snapshotName, args }) => {
       const outputPath = path.join(tempDir, 'out.pdf');
-      const result = await runCli(cliPath, [
+      const result = await runCLI(cliPath, [
         'render',
         inputPath,
         '-output',
@@ -184,7 +183,7 @@ describe.skipIf(isUpdatingSnapshots())('pdf render options', () => {
     'does not embed fonts with -theme %s -embed-fonts false',
     async (theme) => {
       const outputPath = path.join(tempDir, 'out.pdf');
-      const result = await runCli(cliPath, [
+      const result = await runCLI(cliPath, [
         'render',
         inputPath,
         '-output',

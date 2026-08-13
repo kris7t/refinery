@@ -4,8 +4,15 @@
  * SPDX-License-Identifier: EPL-2.0
  */
 
+import { spawn } from 'node:child_process';
 import { existsSync } from 'node:fs';
 import path from 'node:path';
+
+export interface CliResult {
+  readonly exitCode: number | null;
+  readonly stdout: string;
+  readonly stderr: string;
+}
 
 const root = path.join(import.meta.dirname, '..');
 
@@ -19,7 +26,7 @@ function getArchSuffix(): string {
 /**
  * Path to the `electron-builder` unpacked CLI shim, relative to the subproject root.
  */
-function getRelativeCliPath(): string {
+function getRelativeCLIPath(): string {
   const archSuffix = getArchSuffix();
   switch (process.platform) {
     case 'linux':
@@ -33,12 +40,34 @@ function getRelativeCliPath(): string {
   }
 }
 
-export default function getPackagedCliPath(): string {
-  const cliPath = path.join(root, getRelativeCliPath());
+export function getPackagedCLIPath(): string {
+  const cliPath = path.join(root, getRelativeCLIPath());
   if (!existsSync(cliPath)) {
     throw new Error(
       `Packaged CLI not found at ${cliPath}. Run \`yarn run build\` first.`,
     );
   }
   return cliPath;
+}
+
+/** Spawns the packaged CLI shim and collects its output. */
+export default function runCLI(
+  cliPath: string,
+  args: string[],
+): Promise<CliResult> {
+  return new Promise((resolve, reject) => {
+    const child = spawn(cliPath, args, { stdio: ['ignore', 'pipe', 'pipe'] });
+    let stdout = '';
+    let stderr = '';
+    child.stdout.on('data', (chunk: Buffer) => {
+      stdout += chunk.toString('utf-8');
+    });
+    child.stderr.on('data', (chunk: Buffer) => {
+      stderr += chunk.toString('utf-8');
+    });
+    child.once('error', reject);
+    child.once('exit', (exitCode) => {
+      resolve({ exitCode, stdout, stderr });
+    });
+  });
 }

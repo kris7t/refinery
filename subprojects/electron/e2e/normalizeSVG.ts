@@ -15,7 +15,7 @@ const ROOT_CLASS_PATTERN = /class="refinery-([A-Za-z0-9_-]{21})"/;
 
 /** Replaces the per-render random ID with a fixed placeholder so that
  * otherwise-deterministic SVG output can be snapshotted. */
-export default function normalizeSvg(svg: string): string {
+export default function normalizeSVG(svg: string): string {
   const match = ROOT_CLASS_PATTERN.exec(svg);
   if (!match) {
     return svg;

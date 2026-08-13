@@ -17,8 +17,7 @@ import {
   test,
 } from 'vitest';
 
-import getPackagedCliPath from './packagedCli';
-import runCli from './runCli';
+import runCLI, { getPackagedCLIPath } from './runCLI';
 
 const fixturesDir = path.join(import.meta.dirname, 'fixtures');
 const minimalProblem = path.join(fixturesDir, 'minimal.problem');
@@ -29,7 +28,7 @@ let cliPath: string;
 beforeAll(() => {
   // Fails fast with a clear message if the app hasn't been packaged yet,
   // instead of every test timing out trying to spawn a missing binary.
-  cliPath = getPackagedCliPath();
+  cliPath = getPackagedCLIPath();
 });
 
 let tempDir: string;
@@ -44,20 +43,20 @@ afterEach(async () => {
 
 describe('check', () => {
   test('exits successfully and reports consistency for a consistent model', async () => {
-    const result = await runCli(cliPath, ['check', minimalProblem]);
+    const result = await runCLI(cliPath, ['check', minimalProblem]);
     expect(result.exitCode).toBe(0);
     expect(result.stdout).toContain('Model is consistent');
   });
 
   test('exits with a failure code and reports inconsistencies for an inconsistent model', async () => {
-    const result = await runCli(cliPath, ['check', inconsistentProblem]);
+    const result = await runCLI(cliPath, ['check', inconsistentProblem]);
     expect(result.exitCode).toBe(1);
     expect(result.stdout).toContain('Inconsistencies found in model');
   });
 
   test('reports a missing input file on standard error', async () => {
     const missingPath = path.join(tempDir, 'does-not-exist.problem');
-    const result = await runCli(cliPath, ['check', missingPath]);
+    const result = await runCLI(cliPath, ['check', missingPath]);
     expect(result.exitCode).toBe(1);
     expect(result.stdout).toBe('');
     expect(result.stderr).not.toBe('');
@@ -67,7 +66,7 @@ describe('check', () => {
 describe('semantics', () => {
   test('produces graphical output for a command other than render', async () => {
     const outputPath = path.join(tempDir, 'out.svg');
-    const result = await runCli(cliPath, [
+    const result = await runCLI(cliPath, [
       'semantics',
       minimalProblem,
       '-output',
@@ -82,7 +81,7 @@ describe('semantics', () => {
 describe('render', () => {
   test('produces an SVG file', async () => {
     const outputPath = path.join(tempDir, 'out.svg');
-    const result = await runCli(cliPath, [
+    const result = await runCLI(cliPath, [
       'render',
       minimalProblem,
       '-output',
@@ -95,7 +94,7 @@ describe('render', () => {
 
   test('produces a PNG file', async () => {
     const outputPath = path.join(tempDir, 'out.png');
-    const result = await runCli(cliPath, [
+    const result = await runCLI(cliPath, [
       'render',
       minimalProblem,
       '-output',
@@ -110,7 +109,7 @@ describe('render', () => {
 
   test('produces a PDF file', async () => {
     const outputPath = path.join(tempDir, 'out.pdf');
-    const result = await runCli(cliPath, [
+    const result = await runCLI(cliPath, [
       'render',
       minimalProblem,
       '-output',
@@ -123,7 +122,7 @@ describe('render', () => {
 
   test('rejects embedding fonts with the auto theme', async () => {
     const outputPath = path.join(tempDir, 'out.svg');
-    const result = await runCli(cliPath, [
+    const result = await runCLI(cliPath, [
       'render',
       minimalProblem,
       '-output',
