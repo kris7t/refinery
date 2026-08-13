@@ -16,14 +16,6 @@ export interface Xvfb {
 /**
  * Starts a headless X server on a free display number and resolves once it's
  * ready to accept connections.
- *
- * We can't reuse `xvfb-run` (as `getElectronSpawnCommand` does for the CLI)
- * here: Playwright's `_electron.launch` always spawns `executablePath`
- * directly and inserts its own `--inspect`/`--remote-debugging-port` flags
- * right after it, so wrapping the command in `xvfb-run` would hand those
- * flags to `xvfb-run` itself instead of Electron. `-displayfd` is the
- * building block `xvfb-run` itself uses to pick a free display, so we drive
- * it directly instead and pass the resulting `DISPLAY` to Playwright.
  */
 export default async function startXvfb(): Promise<Xvfb> {
   const xvfb = spawn(

@@ -9,24 +9,23 @@ import { once } from 'node:events';
 
 import getLogger from '../utils/getLogger';
 
-import getElectronSpawnCommand, {
-  getXvfbRunMissingMessage,
-} from './getElectronSpawnCommand';
-
 const log = getLogger('cli.launchGUI');
 
 /**
  * Launches the GUI in a detached process and waits for it to spawn
- * successfully, since a failure (e.g. `xvfb-run` missing) is otherwise
- * reported asynchronously, after we'd already have exited.
+ * successfully, since a failure is otherwise reported asynchronously, after
+ * we'd already have exited.
  */
 export default async function launchGUI(args: string[]): Promise<boolean> {
   const newEnv = { ...process.env };
   delete newEnv['ELECTRON_RUN_AS_NODE'];
-  const { command, args: electronArgs } = getElectronSpawnCommand(
-    process.argv0,
-  );
-  const child = child_process.spawn(command, [...electronArgs, ...args], {
+  // Chromium's SUID sandbox needs `chrome-sandbox` to be owned by root with
+  // mode 4755 (or user namespaces to be available and permitted), which is
+  // only set up by the installers for packaged builds (see
+  // `after-install.tpl`), not by an unpacked `electron-builder` output.
+  const electronArgs =
+    process.env['REFINERY_NO_SANDBOX'] === '1' ? ['--no-sandbox'] : [];
+  const child = child_process.spawn(process.argv0, [...electronArgs, ...args], {
     env: newEnv,
     stdio: ['ignore', 'ignore', 'ignore'],
     detached: true,
@@ -35,12 +34,7 @@ export default async function launchGUI(args: string[]): Promise<boolean> {
     await once(child, 'spawn');
     return true;
   } catch (error) {
-    const message = getXvfbRunMissingMessage(command, error);
-    if (message) {
-      log.error(message);
-    } else {
-      log.error({ err: error }, 'Failed to launch Electron');
-    }
+    log.error({ err: error }, 'Failed to launch Electron');
     return false;
   } finally {
     child.unref();

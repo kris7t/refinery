@@ -52,17 +52,14 @@ afterEach(async () => {
 });
 
 describe('png rendering', () => {
-  test.each(renderingFixtures)('renders %s', async (fixtureName) => {
+  test.for(renderingFixtures)('renders %s', async (fixtureName, { signal }) => {
     const inputPath = path.join(renderingFixturesDir, fixtureName);
     const outputPath = path.join(tempDir, 'out.png');
-    const result = await runCLI(cliPath, [
-      'render',
-      inputPath,
-      '-output',
-      outputPath,
-      '-transparent',
-      'false',
-    ]);
+    const result = await runCLI(
+      cliPath,
+      ['render', inputPath, '-output', outputPath, '-transparent', 'false'],
+      signal,
+    );
     expect(result.exitCode).toBe(0);
     const contents = await readFile(outputPath);
     const snapshotName = fixtureName.replace(/\.problem$/, '.png');
@@ -76,19 +73,23 @@ describe.skipIf(isUpdatingSnapshots())('pdf rendering', () => {
   // wouldn't tell us whether the font was actually omitted from the PDF
   // anyway (that's better checked by inspecting the PDF's own font
   // resources, not by rasterizing it).
-  test.each(renderingFixtures)('renders %s', async (fixtureName) => {
+  test.for(renderingFixtures)('renders %s', async (fixtureName, { signal }) => {
     const inputPath = path.join(renderingFixturesDir, fixtureName);
     const outputPath = path.join(tempDir, 'out.pdf');
-    const result = await runCLI(cliPath, [
-      'render',
-      inputPath,
-      '-output',
-      outputPath,
-      '-transparent',
-      'false',
-      '-embed-fonts',
-      'true',
-    ]);
+    const result = await runCLI(
+      cliPath,
+      [
+        'render',
+        inputPath,
+        '-output',
+        outputPath,
+        '-transparent',
+        'false',
+        '-embed-fonts',
+        'true',
+      ],
+      signal,
+    );
     expect(result.exitCode).toBe(0);
     const pdf = await readFile(outputPath);
     const pngSnapshotName = fixtureName.replace(/\.problem$/, '.png');

@@ -35,10 +35,17 @@ export function getPackagedCLIPath(): string {
   return resolvePackagedPath(getRelativeCLIPath(), 'Packaged CLI');
 }
 
-/** Spawns the packaged CLI shim and collects its output. */
+/**
+ * Spawns the packaged CLI shim and collects its output.
+ *
+ * `signal` should be the running test's abort signal (aborted on timeout or
+ * cancellation), so we don't leave the CLI (and the JVM/Electron it spawns)
+ * running once the test that started it has given up on it.
+ */
 export default function runCLI(
   cliPath: string,
   args: string[],
+  signal?: AbortSignal,
 ): Promise<CliResult> {
   return new Promise((resolve, reject) => {
     const child = spawn(cliPath, args, { stdio: ['ignore', 'pipe', 'pipe'] });
@@ -50,8 +57,16 @@ export default function runCLI(
     child.stderr.on('data', (chunk: Buffer) => {
       stderr += chunk.toString('utf-8');
     });
-    child.once('error', reject);
+
+    const onAbort = () => child.kill();
+    signal?.addEventListener('abort', onAbort, { once: true });
+
+    child.once('error', (error) => {
+      signal?.removeEventListener('abort', onAbort);
+      reject(error);
+    });
     child.once('exit', (exitCode) => {
+      signal?.removeEventListener('abort', onAbort);
       resolve({ exitCode, stdout, stderr });
     });
   });

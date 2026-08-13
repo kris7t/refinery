@@ -131,17 +131,15 @@ const svgCases = [
 ];
 
 describe('svg render options', () => {
-  test.each(svgCases)(
+  test.for(svgCases)(
     'renders with $name',
-    async ({ args, transparent, embedFonts, themeSensitive }) => {
+    async ({ args, transparent, embedFonts, themeSensitive }, { signal }) => {
       const outputPath = path.join(tempDir, 'out.svg');
-      const result = await runCLI(cliPath, [
-        'render',
-        inputPath,
-        '-output',
-        outputPath,
-        ...args,
-      ]);
+      const result = await runCLI(
+        cliPath,
+        ['render', inputPath, '-output', outputPath, ...args],
+        signal,
+      );
       expect(result.exitCode).toBe(0);
       const contents = await readFile(outputPath, 'utf-8');
       const $ = cheerio.load(contents, { xmlMode: true });
@@ -167,17 +165,15 @@ const pngCases = [
 ];
 
 describe('png render options', () => {
-  test.each(pngCases)(
+  test.for(pngCases)(
     'renders with $snapshotName',
-    async ({ snapshotName, args }) => {
+    async ({ snapshotName, args }, { signal }) => {
       const outputPath = path.join(tempDir, 'out.png');
-      const result = await runCLI(cliPath, [
-        'render',
-        inputPath,
-        '-output',
-        outputPath,
-        ...args,
-      ]);
+      const result = await runCLI(
+        cliPath,
+        ['render', inputPath, '-output', outputPath, ...args],
+        signal,
+      );
       expect(result.exitCode).toBe(0);
       const contents = await readFile(outputPath);
       await expectPNGSnapshot(
@@ -202,19 +198,23 @@ const pdfCases = [
 ];
 
 describe.skipIf(isUpdatingSnapshots())('pdf render options', () => {
-  test.each(pdfCases)(
+  test.for(pdfCases)(
     'renders with $snapshotName',
-    async ({ snapshotName, args }) => {
+    async ({ snapshotName, args }, { signal }) => {
       const outputPath = path.join(tempDir, 'out.pdf');
-      const result = await runCLI(cliPath, [
-        'render',
-        inputPath,
-        '-output',
-        outputPath,
-        '-embed-fonts',
-        'true',
-        ...args,
-      ]);
+      const result = await runCLI(
+        cliPath,
+        [
+          'render',
+          inputPath,
+          '-output',
+          outputPath,
+          '-embed-fonts',
+          'true',
+          ...args,
+        ],
+        signal,
+      );
       expect(result.exitCode).toBe(0);
       const referencePng = await readFile(
         path.join(snapshotsDir, `${snapshotName}.png`),
@@ -238,20 +238,24 @@ describe.skipIf(isUpdatingSnapshots())('pdf render options', () => {
   // Rendering without embedded fonts to a canvas would need to load system
   // fonts by hand, and wouldn't tell us anything more than this already
   // does, so we only check that no font got embedded here.
-  test.each(['light', 'dark'])(
+  test.for(['light', 'dark'])(
     'does not embed fonts with -theme %s -embed-fonts false',
-    async (theme) => {
+    async (theme, { signal }) => {
       const outputPath = path.join(tempDir, 'out.pdf');
-      const result = await runCLI(cliPath, [
-        'render',
-        inputPath,
-        '-output',
-        outputPath,
-        '-theme',
-        theme,
-        '-embed-fonts',
-        'false',
-      ]);
+      const result = await runCLI(
+        cliPath,
+        [
+          'render',
+          inputPath,
+          '-output',
+          outputPath,
+          '-theme',
+          theme,
+          '-embed-fonts',
+          'false',
+        ],
+        signal,
+      );
       expect(result.exitCode).toBe(0);
       const pdf = await readFile(outputPath);
       expect(await pdfHasEmbeddedFont(pdf)).toBe(false);

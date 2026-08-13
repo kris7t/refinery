@@ -42,21 +42,29 @@ afterEach(async () => {
 });
 
 describe('check', () => {
-  test('exits successfully and reports consistency for a consistent model', async () => {
-    const result = await runCLI(cliPath, ['check', minimalProblem]);
+  test('exits successfully and reports consistency for a consistent model', async ({
+    signal,
+  }) => {
+    const result = await runCLI(cliPath, ['check', minimalProblem], signal);
     expect(result.exitCode).toBe(0);
     expect(result.stdout).toContain('Model is consistent');
   });
 
-  test('exits with a failure code and reports inconsistencies for an inconsistent model', async () => {
-    const result = await runCLI(cliPath, ['check', inconsistentProblem]);
+  test('exits with a failure code and reports inconsistencies for an inconsistent model', async ({
+    signal,
+  }) => {
+    const result = await runCLI(
+      cliPath,
+      ['check', inconsistentProblem],
+      signal,
+    );
     expect(result.exitCode).toBe(1);
     expect(result.stdout).toContain('Inconsistencies found in model');
   });
 
-  test('reports a missing input file on standard error', async () => {
+  test('reports a missing input file on standard error', async ({ signal }) => {
     const missingPath = path.join(tempDir, 'does-not-exist.problem');
-    const result = await runCLI(cliPath, ['check', missingPath]);
+    const result = await runCLI(cliPath, ['check', missingPath], signal);
     expect(result.exitCode).toBe(1);
     expect(result.stdout).toBe('');
     expect(result.stderr).not.toBe('');
@@ -64,14 +72,15 @@ describe('check', () => {
 });
 
 describe('semantics', () => {
-  test('produces graphical output for a command other than render', async () => {
+  test('produces graphical output for a command other than render', async ({
+    signal,
+  }) => {
     const outputPath = path.join(tempDir, 'out.svg');
-    const result = await runCLI(cliPath, [
-      'semantics',
-      minimalProblem,
-      '-output',
-      outputPath,
-    ]);
+    const result = await runCLI(
+      cliPath,
+      ['semantics', minimalProblem, '-output', outputPath],
+      signal,
+    );
     expect(result.exitCode, result.stderr).toBe(0);
     const contents = await readFile(outputPath, 'utf-8');
     expect(contents).toMatch(/<svg[\s>]/i);
@@ -79,27 +88,25 @@ describe('semantics', () => {
 });
 
 describe('render', () => {
-  test('produces an SVG file', async () => {
+  test('produces an SVG file', async ({ signal }) => {
     const outputPath = path.join(tempDir, 'out.svg');
-    const result = await runCLI(cliPath, [
-      'render',
-      minimalProblem,
-      '-output',
-      outputPath,
-    ]);
+    const result = await runCLI(
+      cliPath,
+      ['render', minimalProblem, '-output', outputPath],
+      signal,
+    );
     expect(result.exitCode, result.stderr).toBe(0);
     const contents = await readFile(outputPath, 'utf-8');
     expect(contents).toMatch(/<svg[\s>]/i);
   });
 
-  test('produces a PNG file', async () => {
+  test('produces a PNG file', async ({ signal }) => {
     const outputPath = path.join(tempDir, 'out.png');
-    const result = await runCLI(cliPath, [
-      'render',
-      minimalProblem,
-      '-output',
-      outputPath,
-    ]);
+    const result = await runCLI(
+      cliPath,
+      ['render', minimalProblem, '-output', outputPath],
+      signal,
+    );
     expect(result.exitCode, result.stderr).toBe(0);
     const contents = await readFile(outputPath);
     expect(contents.subarray(0, 8)).toEqual(
@@ -107,14 +114,13 @@ describe('render', () => {
     );
   });
 
-  test('produces a PDF file', async () => {
+  test('produces a PDF file', async ({ signal }) => {
     const outputPath = path.join(tempDir, 'out.pdf');
-    const result = await runCLI(cliPath, [
-      'render',
-      minimalProblem,
-      '-output',
-      outputPath,
-    ]);
+    const result = await runCLI(
+      cliPath,
+      ['render', minimalProblem, '-output', outputPath],
+      signal,
+    );
     expect(result.exitCode, result.stderr).toBe(0);
     const contents = await readFile(outputPath);
     expect(contents.subarray(0, 5).toString('ascii')).toBe('%PDF-');
