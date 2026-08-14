@@ -19,7 +19,7 @@ import {
   test,
 } from 'vitest';
 
-import comparePNG from './comparePNG';
+import comparePNG, { COMPARE_PDF_OPTIONS } from './comparePNG';
 import expectPNGSnapshot from './expectPNGSnapshot';
 import isUpdatingSnapshots from './isUpdatingSnapshots';
 import renderPDFToPNG from './renderPDFToPNG';
@@ -103,6 +103,7 @@ describe.skipIf(isUpdatingSnapshots())('pdf rendering', () => {
     // different anti-aliasing than the PNG export's, so this is a looser,
     // approximate comparison rather than an exact pixel match.
     comparePNG(rasterized, referencePng, {
+      ...COMPARE_PDF_OPTIONS,
       label: `${fixtureName} (pdf vs png)`,
     });
   });

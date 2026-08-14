@@ -19,7 +19,7 @@ import {
   test,
 } from 'vitest';
 
-import comparePNG from './comparePNG';
+import comparePNG, { COMPARE_PDF_OPTIONS } from './comparePNG';
 import expectPNGSnapshot from './expectPNGSnapshot';
 import isUpdatingSnapshots from './isUpdatingSnapshots';
 import loadPDF from './loadPDF';
@@ -230,6 +230,7 @@ describe.skipIf(isUpdatingSnapshots())('pdf render options', () => {
         await document.destroy();
       }
       comparePNG(rasterized, referencePng, {
+        ...COMPARE_PDF_OPTIONS,
         label: `${snapshotName} (pdf vs png)`,
       });
     },
