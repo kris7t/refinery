@@ -33,5 +33,5 @@ export default async function expectPNGSnapshot(
     return;
   }
 
-  comparePNG(actual, expected, { label: snapshotPath, ...options });
+  await comparePNG(actual, expected, { label: snapshotPath, ...options });
 }

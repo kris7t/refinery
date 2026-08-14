@@ -98,6 +98,14 @@ jobs:
           WAYLAND_DISPLAY: ''
         run: |
           ./gradlew build -Pci --info --stacktrace --max-workers 2 --no-daemon
+      - name: Upload snapshot diff artifacts
+        if: ${{ always() }}
+        uses: actions/upload-artifact@v7
+        with:
+          name: snapshot-diffs-${{ matrix.os }}
+          path: subprojects/electron/e2e/__diffs__/
+          if-no-files-found: ignore
+          retention-days: 5
       - name: Sonar analyze
         if: ${{ steps.check-secret.outputs.is_SONAR_TOKEN_set }}
         env:

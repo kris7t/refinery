@@ -229,7 +229,7 @@ describe.skipIf(isUpdatingSnapshots())('pdf render options', () => {
       } finally {
         await document.destroy();
       }
-      comparePNG(rasterized, referencePng, {
+      await comparePNG(rasterized, referencePng, {
         ...COMPARE_PDF_OPTIONS,
         label: `${snapshotName} (pdf vs png)`,
       });

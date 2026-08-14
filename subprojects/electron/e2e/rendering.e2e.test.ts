@@ -102,7 +102,7 @@ describe.skipIf(isUpdatingSnapshots())('pdf rendering', () => {
     // dimensions slightly differently, and pdf.js's own rasterizer produces
     // different anti-aliasing than the PNG export's, so this is a looser,
     // approximate comparison rather than an exact pixel match.
-    comparePNG(rasterized, referencePng, {
+    await comparePNG(rasterized, referencePng, {
       ...COMPARE_PDF_OPTIONS,
       label: `${fixtureName} (pdf vs png)`,
     });
