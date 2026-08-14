@@ -16,8 +16,9 @@ import {
 } from 'playwright';
 import { afterAll, beforeAll, describe, test } from 'vitest';
 
+import startXvfb, { needsXvfb, type Xvfb } from '../src/utils/startXvfb';
+
 import getPackagedResourcesPath from './getPackagedResourcesPath';
-import startXvfb, { type Xvfb } from './startXvfb';
 
 function toStringEnv(env: NodeJS.ProcessEnv): Record<string, string> {
   return Object.fromEntries(
@@ -40,19 +41,16 @@ describe.skipIf(process.env['CI'] !== 'true')(
     let window: Page;
 
     beforeAll(async () => {
-      const needsXvfb =
-        process.platform === 'linux' &&
-        !process.env['DISPLAY'] &&
-        !process.env['WAYLAND_DISPLAY'];
       const env = toStringEnv(process.env);
       delete env['ELECTRON_RUN_AS_NODE'];
       const semanticsTimeout = String(timeout);
       env['REFINERY_SEMANTICS_TIMEOUT_MS'] = semanticsTimeout;
       env['REFINERY_SEMANTICS_WARMUP_TIMEOUT_MS'] = semanticsTimeout;
-      if (needsXvfb) {
+      if (needsXvfb()) {
         xvfb = await startXvfb();
         env['DISPLAY'] = xvfb.display;
         delete env['WAYLAND_DISPLAY'];
+        delete env['XDG_SESSION_TYPE'];
       }
       // Use a fresh user data dir to avoid interferring with CLI tests.
       userDataDir = await mkdtemp(path.join(tmpdir(), 'refinery-gui-e2e-'));

@@ -8,18 +8,21 @@ import getLogger from './getLogger';
 
 const logger = getLogger('utils.cleanup');
 
-const cleanupFunctions: (() => void)[] = [];
+const cleanupFunctions: (() => void | Promise<void>)[] = [];
 
-export default function cleanup(): void {
+// Cleanup functions are awaited in turn (registration order reversed, i.e.
+// the most recently registered one runs first) so that a callback which
+// depends on another having fully finished.
+export default async function cleanup(): Promise<void> {
   for (const cleanupFunction of cleanupFunctions) {
     try {
-      cleanupFunction();
+      await cleanupFunction();
     } catch (error) {
       logger.error({ err: error }, 'Error while cleaning up');
     }
   }
 }
 
-export function onCleanup(callback: () => void): void {
+export function onCleanup(callback: () => void | Promise<void>): void {
   cleanupFunctions.unshift(callback);
 }

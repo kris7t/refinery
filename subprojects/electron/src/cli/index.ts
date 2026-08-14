@@ -16,6 +16,10 @@ import cleanup, { onCleanup } from '../utils/cleanup';
 import getLogger from '../utils/getLogger';
 import { isWindows } from '../utils/platform';
 import spawnJava from '../utils/spawnJava';
+import startXvfb, {
+  getXvfbMissingMessage,
+  needsXvfb,
+} from '../utils/startXvfb';
 
 import HeadlessServerManager from './HeadlessServerManager';
 import isHeadlessNeeded from './isHeadlessNeeded';
@@ -54,7 +58,27 @@ async function runCLI(): Promise<number | null> {
   let headless: HeadlessServerManager | undefined;
   if (await isHeadlessNeeded(args)) {
     const endpoint = await getEndpoint();
-    headless = new HeadlessServerManager(endpoint);
+
+    let display: string | undefined;
+    if (needsXvfb()) {
+      try {
+        const xvfb = await startXvfb();
+        display = xvfb.display;
+        // Registered before `headless`'s below, so it runs *after* that one
+        // on cleanup (most-recently-registered runs first): killing Xvfb
+        // out from under a still-running headless Electron process would be
+        // premature, so we must wait for that child to actually exit first.
+        onCleanup(() => xvfb.stop());
+      } catch (error) {
+        const message = getXvfbMissingMessage(error);
+        if (message) {
+          log.error(message);
+        }
+        throw error;
+      }
+    }
+
+    headless = new HeadlessServerManager(endpoint, display);
     onCleanup(() => headless?.stop());
     newEnv['REFINERY_IPC_ENDPOINT'] = endpoint;
   }

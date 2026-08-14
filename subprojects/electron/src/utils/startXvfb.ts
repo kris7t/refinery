@@ -4,26 +4,29 @@
  * SPDX-License-Identifier: EPL-2.0
  */
 
-import { type ChildProcess, spawn } from 'node:child_process';
+import { spawn } from 'node:child_process';
 import { once } from 'node:events';
 import { Readable } from 'node:stream';
 
 export interface Xvfb {
   readonly display: string;
-  readonly process: ChildProcess;
+  stop(): void;
+}
+
+export function needsXvfb(): boolean {
+  return (
+    process.platform === 'linux' &&
+    !process.env['DISPLAY'] &&
+    !process.env['WAYLAND_DISPLAY']
+  );
 }
 
 /**
  * Starts a headless X server on a free display number and resolves once
  * it's ready to accept connections.
  *
- * We drive `-displayfd` (the building block `xvfb-run` itself uses to pick a
- * free display) directly instead of shelling out to `xvfb-run`, so that Xvfb
- * ends up as our own direct child rather than a grandchild hidden behind a
- * bash wrapper. `xvfb-run`'s shell-script cleanup doesn't reliably run when
- * the wrapper is killed externally (e.g. because a caller timed out), which
- * was leaving orphan `Xvfb` (and, transitively, Electron) processes behind
- * in CI. Owning the process ourselves means we can kill it directly instead.
+ * Owning the process ourselves means we can kill it directly once it is
+ * no longer needed.
  */
 export default async function startXvfb(): Promise<Xvfb> {
   const xvfbProcess = spawn(
@@ -45,13 +48,16 @@ export default async function startXvfb(): Promise<Xvfb> {
       throw error;
     }),
   ]);
-  return { display: `:${output.trim()}`, process: xvfbProcess };
+  return {
+    display: `:${output.trim()}`,
+    stop: () => xvfbProcess.kill(),
+  };
 }
 
 /**
  * If `error` is Xvfb (as spawned by {@link startXvfb}) failing to spawn
- * because it isn't installed, returns a message explaining how to fix that
- * -- otherwise returns `undefined`.
+ * because it isn't installed, returns a message explaining how to fix that.
+ * Otherwise returns `undefined`.
  */
 export function getXvfbMissingMessage(error: unknown): string | undefined {
   if (

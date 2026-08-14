@@ -15,6 +15,7 @@ import ServerManager, {
   KILL_TIMEOUT,
   RESTART_DELAY,
   STARTUP_TIMEOUT,
+  STOP_TIMEOUT,
 } from './ServerManager';
 
 vi.mock('@alloc/tree-kill', () => ({
@@ -255,7 +256,8 @@ describe('stop()', () => {
     const manager = new TestServerManager();
     const child = await startServer(manager);
 
-    manager.stop();
+    const onStopped = vi.fn();
+    void manager.stop().then(onStopped);
     expect(manager.status).toBe('stopping');
     expect(mockedTreeKillSync).toHaveBeenCalledExactlyOnceWith(
       asChildProcess(child),
@@ -263,24 +265,41 @@ describe('stop()', () => {
     );
 
     child.emit('exit', 0, null);
+    await flush();
     expect(manager.status).toBe('stopped');
     expect(mockedTreeKillSync).not.toHaveBeenCalledWith(
       asChildProcess(child),
       'SIGKILL',
     );
+    expect(onStopped).toHaveBeenCalledOnce();
   });
 
   test('escalates to SIGKILL if the child does not exit in time', async () => {
     const manager = new TestServerManager();
     const child = await startServer(manager);
 
-    manager.stop();
+    void manager.stop();
     await vi.advanceTimersByTimeAsync(KILL_TIMEOUT);
 
     expect(mockedTreeKillSync).toHaveBeenCalledWith(
       asChildProcess(child),
       'SIGKILL',
     );
+  });
+
+  test('gives up waiting and settles anyway if the child never reports exiting', async () => {
+    const manager = new TestServerManager();
+    await startServer(manager);
+
+    const onStopped = vi.fn();
+    void manager.stop().then(onStopped);
+
+    // Even the `SIGKILL` escalation is ignored here, so `exit` never fires.
+    await vi.advanceTimersByTimeAsync(STOP_TIMEOUT - 1);
+    expect(onStopped).not.toHaveBeenCalled();
+
+    await vi.advanceTimersByTimeAsync(1);
+    expect(onStopped).toHaveBeenCalledOnce();
   });
 
   test('is a no-op when the server is already stopped', () => {
@@ -293,8 +312,8 @@ describe('stop()', () => {
     const manager = new TestServerManager();
     const child = await startServer(manager);
 
-    manager.stop();
-    manager.stop();
+    void manager.stop();
+    void manager.stop();
 
     expect(mockedTreeKillSync).toHaveBeenCalledExactlyOnceWith(
       asChildProcess(child),
@@ -309,7 +328,7 @@ describe('stop()', () => {
     child.emit('exit', 1, null);
     expect(manager.status).toBe('restarting');
 
-    manager.stop();
+    void manager.stop();
     expect(manager.status).toBe('stopped');
 
     await vi.advanceTimersByTimeAsync(RESTART_DELAY);
@@ -327,7 +346,7 @@ describe('stop()', () => {
     await flush();
     expect(manager.status).toBe('starting');
 
-    manager.stop();
+    void manager.stop();
 
     await expect(startPromise).rejects.toThrow('Server startup aborted');
     expect(manager.status).toBe('stopping');
@@ -353,7 +372,7 @@ describe('stop()', () => {
 
     const startPromise = manager.start();
     await flush();
-    manager.stop();
+    void manager.stop();
 
     await expect(startPromise).rejects.toThrow('Server startup aborted');
     expect(manager.status).toBe('stopped');
@@ -374,7 +393,7 @@ describe('treeKill flag', () => {
     const manager = new TestServerManager(true);
     const child = await startServer(manager);
 
-    manager.stop();
+    void manager.stop();
 
     expect(mockedTreeKillSync).toHaveBeenCalledExactlyOnceWith(
       asChildProcess(child),
@@ -387,7 +406,7 @@ describe('treeKill flag', () => {
     const manager = new TestServerManager(false);
     const child = await startServer(manager);
 
-    manager.stop();
+    void manager.stop();
 
     expect(child.kill).toHaveBeenCalledExactlyOnceWith('SIGTERM');
     expect(mockedTreeKillSync).not.toHaveBeenCalled();

@@ -22,8 +22,21 @@ if (isWindows) {
   app.setAppUserModelId(appName);
 }
 
-app.on('will-quit', () => {
-  cleanup();
+let quitting = false;
+app.on('will-quit', (event) => {
+  if (quitting) {
+    return;
+  }
+  // Wait for cleanup handlers to settle before quitting.
+  event.preventDefault();
+  cleanup()
+    .finally(() => {
+      quitting = true;
+      app.quit();
+    })
+    .catch((error) =>
+      logger.error({ err: error }, 'Fatal error during shutdown'),
+    );
 });
 
 protocol.registerSchemesAsPrivileged([
@@ -52,6 +65,9 @@ async function run() {
 
 run().catch((error) => {
   logger.error({ err: error }, 'Fatal error during startup');
-  cleanup();
-  process.exit(-1);
+  cleanup()
+    .finally(() => process.exit(-1))
+    .catch((error) =>
+      logger.error({ err: error }, 'Fatal error during process exit'),
+    );
 });

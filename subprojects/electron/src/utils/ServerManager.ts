@@ -24,6 +24,15 @@ export const KILL_TIMEOUT = ms('1s');
  * healthy before giving up.
  */
 export const STARTUP_TIMEOUT = ms('5m');
+/**
+ * Upper bound on how long {@link ServerManager.stop}'s returned promise waits
+ * for the child to actually exit before giving up on it, well past the
+ * `SIGTERM`-to-`SIGKILL` escalation via {@link KILL_TIMEOUT}. Without this, a
+ * child that somehow never reports `exit` (the promise has no way to reject)
+ * would leave any awaiting caller -- e.g. a dependent cleanup step, or
+ * Electron's own quit sequence -- hanging forever.
+ */
+export const STOP_TIMEOUT = ms('5s');
 
 /** A value that may be available synchronously or via a promise. */
 type Awaitable<T> = T | PromiseLike<T>;
@@ -105,6 +114,9 @@ interface ServerManagerEvents {
 export default abstract class ServerManager extends EventEmitter<ServerManagerEvents> {
   private internalState: State = { name: 'stopped' };
 
+  /** Resolvers for pending {@link stop} calls, flushed once `stopped` is reached. */
+  private stopWaiters: (() => void)[] = [];
+
   protected readonly logger: Logger;
 
   constructor(
@@ -126,6 +138,11 @@ export default abstract class ServerManager extends EventEmitter<ServerManagerEv
     if (this.healthy !== wasHealthy) {
       this.emit('health-changed', this.healthy);
     }
+    if (state.name === 'stopped' && this.stopWaiters.length > 0) {
+      const waiters = this.stopWaiters;
+      this.stopWaiters = [];
+      waiters.forEach((resolve) => resolve());
+    }
   }
 
   /**
@@ -145,9 +162,10 @@ export default abstract class ServerManager extends EventEmitter<ServerManagerEv
 
   /**
    * Requests a graceful shutdown (`SIGTERM`, escalating to `SIGKILL`) and
-   * cancels any pending restart. Idempotent and safe from any state.
+   * cancels any pending restart. Idempotent and safe from any state. The
+   * returned promise resolves once the child has actually exited.
    */
-  stop(): void {
+  stop(): Promise<void> {
     const { state } = this;
     switch (state.name) {
       case 'stopped':
@@ -174,6 +192,21 @@ export default abstract class ServerManager extends EventEmitter<ServerManagerEv
       default:
         break;
     }
+    if (this.state.name === 'stopped') {
+      return Promise.resolve();
+    }
+    return new Promise((resolve) => {
+      const timer = setTimeout(() => {
+        this.logger.error(
+          'Server did not report exiting within the timeout, giving up waiting for it',
+        );
+        resolve();
+      }, STOP_TIMEOUT);
+      this.stopWaiters.push(() => {
+        clearTimeout(timer);
+        resolve();
+      });
+    });
   }
 
   get status(): ServerStatus {
