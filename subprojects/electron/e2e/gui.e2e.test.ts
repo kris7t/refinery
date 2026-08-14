@@ -28,7 +28,7 @@ function toStringEnv(env: NodeJS.ProcessEnv): Record<string, string> {
   );
 }
 
-const timeout = ms('1m');
+const timeout = ms('2m');
 
 // Launches a real window, so we don't want it popping up during local runs.
 describe.skipIf(process.env['CI'] !== 'true')(

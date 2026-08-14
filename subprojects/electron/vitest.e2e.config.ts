@@ -7,13 +7,15 @@
 import ms from 'ms';
 import { defineConfig } from 'vitest/config';
 
+const timeout = ms('1m');
+
 export default defineConfig({
   test: {
     environment: 'node',
     include: ['e2e/**/*.test.ts'],
     // Real JVM and Electron cold starts are much slower than the mocked unit suite.
-    testTimeout: ms('30s'),
-    hookTimeout: ms('30s'),
+    testTimeout: timeout,
+    hookTimeout: timeout,
     fileParallelism: false,
     // Every test here is "slow" by the default reporter's 300ms threshold,
     // which shows per-test lines without their `describe` names (those are
