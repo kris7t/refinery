@@ -77,11 +77,19 @@ public class NodeMetadataFactory {
 		}
 		var typeHierarchy = problemTrace.getMetamodel().typeHierarchy();
 		var mustTypes = inferredType.mustTypes();
-		return mustTypes.stream()
-				.filter(mustType -> typeHierarchy.getAnalysisResult(mustType).getDirectSubtypes().stream()
-						.noneMatch(mustTypes::contains))
-				.findFirst()
-				.orElse(null);
+		PartialRelation bestType = null;
+		int bestWeight = Integer.MAX_VALUE;
+		for (var mustType : mustTypes) {
+			if (typeHierarchy.getAnalysisResult(mustType).getDirectSubtypes().stream()
+					.noneMatch(mustTypes::contains)) {
+				int weight = typeHierarchy.getWeight(mustType);
+				if (weight < bestWeight) {
+					bestType = mustType;
+					bestWeight = weight;
+				}
+			}
+		}
+		return bestType;
 	}
 
 	private String getName(PartialRelation type, int nodeId) {

@@ -29,15 +29,15 @@ export interface ComparePNGOptions {
 }
 
 // Absorb per-platform text rendering differences only.
-const DEFAULT_MAX_DIFF_RATIO = 0.03;
+const DEFAULT_MAX_DIFF_RATIO = process.platform === 'win32' ? 0.015 : 0.005;
 const DEFAULT_MAX_SIZE_DIFF = 0;
 const DEFAULT_DIFF_GROUP = 'png';
 
 // Absorb both per-platform text measurement differences and rounding
 // differences between PNG and PDF rendering.
 export const COMPARE_PDF_OPTIONS: ComparePNGOptions = {
-  maxDiffRatio: 0.05,
-  maxSizeDiff: 3,
+  maxDiffRatio: 0.03,
+  maxSizeDiff: 1,
   diffGroup: 'pdf',
 };
 
