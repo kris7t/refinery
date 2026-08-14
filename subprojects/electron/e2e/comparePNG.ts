@@ -111,6 +111,15 @@ export default async function comparePNG(
   );
   const diffRatio = diffPixels / (width * height);
 
+  // Logged unconditionally (not just on failure) so CI logs can be used to
+  // tune `maxDiffRatio`/`maxSizeDiff` from comparisons that currently pass.
+  // eslint-disable-next-line no-console
+  console.info(
+    `[comparePNG] ${label}: ${diffPixels}/${width * height} px differ ` +
+      `(${(diffRatio * 100).toFixed(2)}%, max ${(maxDiffRatio * 100).toFixed(2)}%); ` +
+      `size diff ${widthDiff}x${heightDiff} (max ${maxSizeDiff})`,
+  );
+
   // Saved (in CI) before asserting, so a failed assertion still leaves the
   // artifacts on disk for the upload step to pick up.
   await saveDiffArtifacts(label, diffGroup, actual, expected, diffPng);

@@ -132,6 +132,38 @@ async function fetchFontCSS(): Promise<string> {
   return fontCSS;
 }
 
+let openSansFontFacesReady: Promise<void> | undefined;
+
+// `svg2pdf` (used by `serializePDF`) measures text with a scratch
+// `<canvas>`/hidden `<svg>` of its own against the live `document`, not
+// `copyOfSVG` (which is never attached to the page, so its own `<style>`
+// with `fontsCSS` is inert as far as the browser's font resolution is
+// concerned). Unless 'Open Sans' is actually loaded here, that measurement
+// silently falls back to the system's default sans-serif font while the PDF
+// still embeds the real glyphs, drifting long labels out of position.
+function loadOpenSansFontFaces(): Promise<void> {
+  openSansFontFacesReady ??= Promise.all(
+    [
+      new FontFace('Open Sans', `url(${normalFontURL})`, {
+        weight: '400',
+        style: 'normal',
+      }),
+      new FontFace('Open Sans', `url(${boldFontURL})`, {
+        weight: '700',
+        style: 'normal',
+      }),
+      new FontFace('Open Sans', `url(${italicFontURL})`, {
+        weight: '400',
+        style: 'italic',
+      }),
+    ].map(async (face) => {
+      await face.load();
+      document.fonts.add(face);
+    }),
+  ).then(() => undefined);
+  return openSansFontFacesReady;
+}
+
 async function fetchVariableFontCSS(): Promise<string> {
   if (variableFontCSS !== undefined) {
     return variableFontCSS;
@@ -463,6 +495,9 @@ export async function exportBlob(
   );
 
   if (settings.format === 'pdf') {
+    if (settings.embedFonts) {
+      await loadOpenSansFontFaces();
+    }
     fixTextBaseline(svg, copyOfSVG);
     return serializePDF(copyOfSVG, settings);
   }
