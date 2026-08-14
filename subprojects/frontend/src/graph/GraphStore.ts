@@ -360,7 +360,7 @@ export default class GraphStore {
   }
 
   get concretize(): boolean {
-    return this.generated || (this.editorStore?.concretize ?? false);
+    return this.editorStore?.concretize ?? false;
   }
 
   get upToDate(): boolean {
