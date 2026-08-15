@@ -4,16 +4,16 @@
 
 import builtin::view.
 
-class Node.
+class Node {
+  @show
+  Node[] shown
 
-@show
-pred shown(Node a, Node b).
+  @hide
+  Node[] hidden
 
-@hide
-pred hidden(Node a, Node b).
-
-@show(true)
-pred onlyTrue(Node a, Node b).
+  @show(true)
+  Node[] onlyTrue
+}
 
 Node(a).
 Node(b).
