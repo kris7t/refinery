@@ -263,3 +263,27 @@ describe.skipIf(isUpdatingSnapshots())('pdf render options', () => {
     },
   );
 });
+
+test('concretization uses the concrete model color palette', async ({
+  signal,
+}) => {
+  const outputPath = path.join(tempDir, 'out.png');
+  const result = await runCLI(
+    cliPath,
+    [
+      'concretize',
+      path.join(import.meta.dirname, 'fixtures', 'rendering', 'errors.problem'),
+      '-output',
+      outputPath,
+      '-transparent',
+      'false',
+    ],
+    signal,
+  );
+  expect(result.exitCode).toBe(0);
+  const contents = await readFile(outputPath);
+  await expectPNGSnapshot(
+    contents,
+    path.join(snapshotsDir, `errors-concretize.png`),
+  );
+});

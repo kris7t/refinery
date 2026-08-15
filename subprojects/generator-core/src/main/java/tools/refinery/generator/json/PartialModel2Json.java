@@ -26,6 +26,6 @@ public class PartialModel2Json {
 		var relations = facade.getRelationsMetadata();
 		cancellationToken.checkCancelled();
 		var partialInterpretation = partialInterpretation2Json.getPartialInterpretation(facade, cancellationToken);
-		return new PartialModelJson(nodes, relations, partialInterpretation);
+		return new PartialModelJson(facade.getConcreteness(), nodes, relations, partialInterpretation);
 	}
 }

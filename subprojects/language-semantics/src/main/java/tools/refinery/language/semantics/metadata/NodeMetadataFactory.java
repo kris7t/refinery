@@ -73,7 +73,11 @@ public class NodeMetadataFactory {
 			return null;
 		}
 		if (concreteness == Concreteness.CANDIDATE) {
-			return inferredType.candidateType();
+			var candidateType = inferredType.candidateType();
+			if (candidateType != null) {
+				// Only select a most specific must type for nodes with an error type.
+				return candidateType;
+			}
 		}
 		var typeHierarchy = problemTrace.getMetamodel().typeHierarchy();
 		var mustTypes = inferredType.mustTypes();

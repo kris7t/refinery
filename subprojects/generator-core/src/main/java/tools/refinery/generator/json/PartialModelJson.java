@@ -9,10 +9,11 @@ import com.google.gson.GsonBuilder;
 import com.google.gson.JsonObject;
 import tools.refinery.language.semantics.metadata.*;
 import tools.refinery.language.utils.Visibility;
+import tools.refinery.store.reasoning.literal.Concreteness;
 
 import java.util.List;
 
-public record PartialModelJson(List<NodeMetadata> nodes, List<RelationMetadata> relations,
+public record PartialModelJson(Concreteness concreteness, List<NodeMetadata> nodes, List<RelationMetadata> relations,
                                JsonObject partialInterpretation) {
 
 	/**
@@ -31,6 +32,7 @@ public record PartialModelJson(List<NodeMetadata> nodes, List<RelationMetadata> 
 						.registerSubtype(RelationDetail.Predicate.class, "pred")
 						.registerSubtype(RelationDetail.Function.class, "function")
 						.registerSubtype(RelationDetail.Domain.class, "domain"))
+				.registerTypeAdapter(Concreteness.class, new LowercaseTypeAdapter<>(Concreteness.class))
 				.registerTypeAdapter(NodeKind.class, new LowercaseTypeAdapter<>(NodeKind.class))
 				.registerTypeAdapter(PredicateDetailKind.class, new LowercaseTypeAdapter<>(PredicateDetailKind.class))
 				.registerTypeAdapter(FunctionDetailKind.class, new LowercaseTypeAdapter<>(FunctionDetailKind.class))

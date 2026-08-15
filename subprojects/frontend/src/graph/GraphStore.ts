@@ -97,6 +97,7 @@ const TYPE_HASH_HEX_PREFFIX = '_';
 
 export default class GraphStore {
   semantics: ModelResultWithSource = {
+    concreteness: 'partial',
     nodes: [],
     relations: [],
     partialInterpretation: {},
@@ -360,7 +361,7 @@ export default class GraphStore {
   }
 
   get concretize(): boolean {
-    return this.editorStore?.concretize ?? false;
+    return this.semantics.concreteness === 'candidate';
   }
 
   get upToDate(): boolean {
