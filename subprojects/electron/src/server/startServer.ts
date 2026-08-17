@@ -8,9 +8,9 @@ import { pathToFileURL } from 'node:url';
 
 import { app, BrowserWindow, ipcMain, net, protocol } from 'electron';
 
+import getLogger from '../logger/getLogger';
 import getPathToServe from '../server/getPathToServe';
 import { onCleanup } from '../utils/cleanup';
-import getLogger from '../utils/getLogger';
 
 import BackendManager from './BackendManager';
 import getFreePort from './getFreePort';

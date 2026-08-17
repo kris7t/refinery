@@ -8,9 +8,10 @@ import path from 'node:path';
 
 import { app, BrowserWindow } from 'electron';
 
+import enableWebContentsLogger from '../logger/enableWebContentsLogger';
+import getLogger from '../logger/getLogger';
 import startServer from '../server/startServer';
 import { onCleanup } from '../utils/cleanup';
-import getLogger from '../utils/getLogger';
 import { isMac } from '../utils/platform';
 
 import IPCServer from './IPCServer';
@@ -51,6 +52,8 @@ export default async function runHeadless(endpoint: string) {
   }
 
   const { webContents } = window;
+
+  enableWebContentsLogger(webContents);
 
   const ipcServer = new IPCServer(endpoint, {
     onRequest: (id, buffer) =>

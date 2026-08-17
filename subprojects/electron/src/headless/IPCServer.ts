@@ -9,7 +9,7 @@ import { createServer, type Server, type Socket } from 'node:net';
 
 import { nanoid } from 'nanoid';
 
-import getLogger from '../utils/getLogger';
+import getLogger from '../logger/getLogger';
 import { isWindows } from '../utils/platform';
 
 const MAX_FRAME = 16 * 1024 * 1024;

@@ -25,9 +25,10 @@ const success = watch ? 'watch build succeeded' : 'build succeeded';
  * @param {string[]} entryPoints
  * @param {import('esbuild').Format} outputFormat
  * @param {string} extension
+ * @param {import('esbuild').Platform} platform
  * @returns {Promise<import('esbuild').BuildContext>}
  */
-function createContext(entryPoints, outputFormat, extension) {
+function createContext(entryPoints, outputFormat, extension, platform) {
   return esbuild.context({
     entryPoints,
     outdir: `build/esbuild/${mode}`,
@@ -47,7 +48,7 @@ function createContext(entryPoints, outputFormat, extension) {
       '.ts': 'ts',
     },
     external: ['electron'],
-    platform: 'node',
+    platform,
     sourcemap: !minify,
     minify,
     plugins: [
@@ -69,11 +70,12 @@ function createContext(entryPoints, outputFormat, extension) {
 }
 
 const contexts = await Promise.all([
-  createContext(['src/index.ts', 'src/cli/index.ts'], 'cjs', '.cjs'),
+  createContext(['src/index.ts', 'src/cli/index.ts'], 'cjs', '.cjs', 'node'),
   createContext(
     ['src/gui/preload.ts', 'src/headless/preload.ts'],
     'iife',
     '.js',
+    'browser',
   ),
 ]);
 

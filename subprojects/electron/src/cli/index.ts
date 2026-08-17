@@ -12,8 +12,8 @@ import path from 'node:path';
 
 import { nanoid } from 'nanoid';
 
+import getLogger from '../logger/getLogger';
 import cleanup, { onCleanup } from '../utils/cleanup';
-import getLogger from '../utils/getLogger';
 import { isWindows } from '../utils/platform';
 import spawnJava from '../utils/spawnJava';
 import startXvfb, {

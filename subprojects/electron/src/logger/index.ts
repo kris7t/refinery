@@ -7,7 +7,7 @@
 import pino, { type DestinationStream } from 'pino';
 import pretty from 'pino-pretty';
 
-const logLevel =
+export const logLevel =
   process.env['REFINERY_LOG_LEVEL']?.toLowerCase() ??
   (process.isDev ? 'debug' : 'warn');
 

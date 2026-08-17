@@ -4,7 +4,7 @@
  * SPDX-License-Identifier: EPL-2.0
  */
 
-import getLogger from './getLogger';
+import getLogger from '../logger/getLogger';
 
 const logger = getLogger('utils.cleanup');
 

@@ -11,7 +11,7 @@ import { type ProcessLike, treeKillSync } from '@alloc/tree-kill';
 import ms from 'ms';
 import type { Logger } from 'pino';
 
-import getLogger from './getLogger';
+import getLogger from '../logger/getLogger';
 
 /** Delay between successive health-check polls while starting. */
 export const HEALTH_POLL_INTERVAL = ms('100ms');

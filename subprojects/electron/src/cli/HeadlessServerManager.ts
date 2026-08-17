@@ -10,8 +10,8 @@ import { access } from 'node:fs/promises';
 import { EOL } from 'node:os';
 import { createInterface } from 'node:readline';
 
+import { destination } from '../logger';
 import ServerManager from '../utils/ServerManager';
-import { destination } from '../utils/logger';
 
 export default class HeadlessServerManager extends ServerManager {
   constructor(

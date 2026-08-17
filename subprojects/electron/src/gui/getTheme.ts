@@ -17,10 +17,10 @@ import {
 } from 'electron';
 import z from 'zod';
 
-import getLogger from '../utils/getLogger';
+import getLogger from '../logger/getLogger';
 import { isMac, isWindows } from '../utils/platform';
 
-const logger = getLogger('getTheme');
+const logger = getLogger('gui.getTheme');
 
 interface Theme {
   backgroundColor: string;

@@ -17,6 +17,8 @@ export type ThemeSource = z.infer<typeof ThemeSource>;
 export type ThemeSourceChangeCallback = (themeSource: ThemeSource) => void;
 
 export default interface RefineryContextBridge {
+  logLevel: string;
+  log(obj: object): void;
   getBackendConfig(): Promise<BackendConfig>;
   onServerStateChange(callback: ServerStateChangeCallback): void;
   setThemeSource(themeSource: ThemeSource): void;

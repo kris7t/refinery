@@ -6,7 +6,7 @@
 
 import type { Logger } from 'pino';
 
-import logger from './logger';
+import logger from '.';
 
 export default function getLogger(name: string): Logger {
   return logger.child({ name });

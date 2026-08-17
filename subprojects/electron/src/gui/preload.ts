@@ -13,6 +13,10 @@ import type {
 import type BackendConfig from '@tools.refinery/frontend/xtext/BackendConfig';
 import { contextBridge, ipcRenderer } from 'electron';
 
+import { loggerContextBridge, getLogger } from '../logger/preloadLogger';
+
+const logger = getLogger('gui.preload');
+
 const serverStateCallbacks: ServerStateChangeCallback[] = [];
 
 const themeSourceCallbacks: ThemeSourceChangeCallback[] = [];
@@ -42,6 +46,7 @@ function updateDialogCount() {
 }
 
 contextBridge.exposeInMainWorld('refinery', {
+  ...loggerContextBridge,
   async getBackendConfig() {
     return ipcRenderer.invoke(
       'refinery:getBackendConfig',
@@ -54,9 +59,12 @@ contextBridge.exposeInMainWorld('refinery', {
     serverStateCallbacks.push(callback);
     (ipcRenderer.invoke('refinery:getServerState') as Promise<boolean>)
       .then(callback)
-      .catch((error) => console.log(error));
+      .catch((error) =>
+        logger.error({ err: error }, 'Failed to get server state'),
+      );
   },
   setThemeSource(themeSource) {
+    logger.info({ themeSource }, 'Setting theme source');
     ipcRenderer.send('refinery:setThemeSource', themeSource);
   },
   onThemeSourceChange(callback) {
@@ -66,21 +74,25 @@ contextBridge.exposeInMainWorld('refinery', {
     themeSourceCallbacks.push(callback);
     (ipcRenderer.invoke('refinery:getThemeSource') as Promise<ThemeSource>)
       .then(callback)
-      .catch((error) => console.log(error));
+      .catch((error) =>
+        logger.error({ err: error }, 'Failed to get theme source'),
+      );
   },
   openDialog(id) {
+    logger.info({ dialogID: id }, 'Opening dialog');
     if (openDialogs.has(id)) {
-      console.error('Duplicate dialog', id);
+      logger.error({ dialogID: id }, 'Duplicate dialog');
     } else {
       openDialogs.add(id);
       updateDialogCount();
     }
   },
   closeDialog(id) {
+    logger.info({ dialogID: id }, 'Closing dialog');
     if (openDialogs.delete(id)) {
       updateDialogCount();
     } else {
-      console.error('Unknown dialog', id);
+      logger.error({ dialogID: id }, 'Unknown dialog');
     }
   },
 } satisfies RefineryContextBridge);

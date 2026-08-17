@@ -8,11 +8,16 @@ import type RefineryHeadlessContextBridge from '@tools.refinery/frontend/headles
 import type { RequestCallback } from '@tools.refinery/frontend/headless/RefineryHeadlessContextBridge';
 import { contextBridge, ipcRenderer } from 'electron';
 
+import { loggerContextBridge, getLogger } from '../logger/preloadLogger';
+
+const logger = getLogger('headless.preload');
+
 let savedCallback: RequestCallback | undefined;
 
 ipcRenderer.on(
   'refineryHeadless:request',
   (_event, id: string, buffer: Uint8Array) => {
+    logger.info({ requestID: id }, 'Incoming request');
     (async () => {
       if (!savedCallback) {
         ipcRenderer.send(
@@ -24,8 +29,12 @@ ipcRenderer.on(
       }
       let response;
       try {
-        response = await savedCallback(buffer);
+        response = await savedCallback(id, buffer);
       } catch (error) {
+        logger.error(
+          { err: error, requestID: id },
+          'Request completed with error',
+        );
         ipcRenderer.send(
           'refineryHeadless:response',
           id,
@@ -33,17 +42,22 @@ ipcRenderer.on(
         );
         return;
       }
+      logger.info({ requestID: id }, 'Request completed');
       ipcRenderer.send('refineryHeadless:response', id, response);
     })().catch((error) =>
-      console.log('Unexpected error when processing request', id, error),
+      logger.error(
+        { err: error, requestID: id },
+        'Unexpected error when processing request',
+      ),
     );
   },
 );
 
 contextBridge.exposeInMainWorld('refineryHeadless', {
+  ...loggerContextBridge,
   onRequest(callback) {
     if (savedCallback) {
-      console.error('onRequest callback already set');
+      logger.error('onRequest callback already set');
       return;
     }
     savedCallback = callback;

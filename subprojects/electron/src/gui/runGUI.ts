@@ -8,8 +8,9 @@ import path from 'node:path';
 
 import { app, BrowserWindow, nativeTheme } from 'electron';
 
+import enableWebContentsLogger from '../logger/enableWebContentsLogger';
+import getLogger from '../logger/getLogger';
 import startServer from '../server/startServer';
-import getLogger from '../utils/getLogger';
 import { isMac, isWindows } from '../utils/platform';
 
 import getTheme, { attachNativeThemeHandler } from './getTheme';
@@ -43,6 +44,8 @@ function createWindow(pageURL: string): BrowserWindow {
       window.webContents.openDevTools();
     }
   });
+
+  enableWebContentsLogger(window.webContents);
 
   window
     .loadURL(pageURL)

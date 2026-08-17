@@ -7,8 +7,8 @@ import { app, protocol } from 'electron';
 
 import runGUI from './gui/runGUI';
 import runHeadless from './headless/runHeadless';
+import logger from './logger';
 import cleanup from './utils/cleanup';
-import logger from './utils/logger';
 import { isLinux, isWindows } from './utils/platform';
 
 const appName = process.isDev

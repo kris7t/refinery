@@ -5,7 +5,6 @@
  */
 
 import { JsonOutput } from '@tools.refinery/client';
-import { nanoid } from 'nanoid';
 
 import GraphStore from '../graph/GraphStore';
 import ExportSettingsStore from '../graph/export/ExportSettingsStore';
@@ -13,8 +12,8 @@ import ExportSettingsStore from '../graph/export/ExportSettingsStore';
 import { ExportRequest } from './ExportRequest';
 import type HeadlessStore from './HeadlessStore';
 
-function createGraph(json: JsonOutput): GraphStore {
-  const graph = new GraphStore(undefined, nanoid());
+function createGraph(id: string, json: JsonOutput): GraphStore {
+  const graph = new GraphStore(undefined, id);
   graph.setSemantics(json);
   return graph;
 }
@@ -36,7 +35,7 @@ export default function serveIPCRequests(store: HeadlessStore): void {
   if (!('refineryHeadless' in window)) {
     return;
   }
-  window.refineryHeadless.onRequest(async (request) => {
+  window.refineryHeadless.onRequest(async (id, request) => {
     const [a1, a2, a3, a4] = request;
     if (
       a1 === undefined ||
@@ -54,9 +53,9 @@ export default function serveIPCRequests(store: HeadlessStore): void {
     const body = JsonOutput.parse(
       JSON.parse(decoder.decode(request.slice(4 + headerLength))),
     );
-    const graph = createGraph(body);
+    const graph = createGraph(id, body);
     const exportSettings = createExportSettings(header);
-    const responseBody = await store.exportGraph(graph, exportSettings);
+    const responseBody = await store.exportGraph(id, graph, exportSettings);
     const encoder = new TextEncoder();
     const responseHeader = encoder.encode(
       JSON.stringify({ result: 'success' }),

@@ -7,7 +7,7 @@
 import child_process from 'node:child_process';
 import { once } from 'node:events';
 
-import getLogger from '../utils/getLogger';
+import getLogger from '../logger/getLogger';
 
 const log = getLogger('cli.launchGUI');
 

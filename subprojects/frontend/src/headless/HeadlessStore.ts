@@ -5,7 +5,6 @@
  */
 
 import { makeAutoObservable, runInAction } from 'mobx';
-import { nanoid } from 'nanoid';
 
 import type GraphStore from '../graph/GraphStore';
 import type ExportSettingsStore from '../graph/export/ExportSettingsStore';
@@ -55,10 +54,10 @@ export default class HeadlessStore {
   }
 
   exportGraph(
+    id: string,
     graph: GraphStore,
     settings: ExportSettingsStore,
   ): Promise<Uint8Array> {
-    const id = nanoid();
     return new Promise<Uint8Array>((resolve, reject) => {
       const request = new Request(this, id, graph, settings, resolve, reject);
       runInAction(() => this.pendingRequests.set(id, request));
