@@ -11,10 +11,8 @@
     <contextListener class="ch.qos.logback.classic.jul.LevelChangePropagator">
         <resetJUL>true</resetJUL>
     </contextListener>
+    <variable name="REFINERY_DEFAULT_LOG_LEVEL" value="INFO"/>
     <include resource="logback-refinery.xml"/>
-    <root level="${REFINERY_LOG_LEVEL:-INFO}">
-        <appender-ref ref="refinery-console"/>
-    </root>
     <!--
         Silence warning about MessageBodyWriter<java.awt.image.RenderedImage>,
         since we don't use this provider and don't need the noise in the logs.

@@ -79,4 +79,32 @@
             </else>
         </if>
     </appender>
+    <define name="REFINERY_LOG_LEVEL_OR_DEFAULT"
+            class="tools.refinery.logging.FirstValidLogLevelDefiner">
+        <candidate>${REFINERY_LOG_LEVEL}</candidate>
+        <candidate>${REFINERY_ALL_LOG_LEVEL}</candidate>
+        <candidate>${REFINERY_DEFAULT_LOG_LEVEL}</candidate>
+        <candidate>DEBUG</candidate>
+    </define>
+    <define name="REFINERY_LOG_LEVEL_GATED"
+            class="tools.refinery.logging.GatedLogLevelDefiner">
+        <minLevel>INFO</minLevel>
+        <level>${REFINERY_LOG_LEVEL_OR_DEFAULT}</level>
+    </define>
+    <define name="REFINERY_ALL_LOG_LEVEL_OR_DEFAULT"
+            class="tools.refinery.logging.FirstValidLogLevelDefiner">
+        <candidate>${REFINERY_ALL_LOG_LEVEL}</candidate>
+        <candidate>${REFINERY_LOG_LEVEL_GATED}</candidate>
+    </define>
+    <define name="REFINERY_INTERPRETER_LOG_LEVEL_OR_DEFAULT"
+            class="tools.refinery.logging.FirstValidLogLevelDefiner">
+        <candidate>${REFINERY_INTERPRETER_LOG_LEVEL}</candidate>
+        <candidate>${REFINERY_ALL_LOG_LEVEL_OR_DEFAULT}</candidate>
+    </define>
+    <logger name="tools.refinery" level="${REFINERY_LOG_LEVEL_OR_DEFAULT}"/>
+    <logger name="tools.refinery.interpreter"
+            level="${REFINERY_INTERPRETER_LOG_LEVEL_OR_DEFAULT}"/>
+    <root level="${REFINERY_ALL_LOG_LEVEL_OR_DEFAULT}">
+        <appender-ref ref="refinery-console"/>
+    </root>
 </included>

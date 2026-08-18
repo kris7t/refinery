@@ -8,7 +8,6 @@ package tools.refinery.logging;
 import ch.qos.logback.classic.spi.IThrowableProxy;
 
 public class ThrowableMessageConverter extends AbstractThrowableFieldConverter {
-
 	@Override
 	protected String extract(IThrowableProxy proxy) {
 		return proxy.getMessage();

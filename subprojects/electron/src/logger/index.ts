@@ -9,6 +9,7 @@ import pretty from 'pino-pretty';
 
 export const logLevel =
   process.env['REFINERY_LOG_LEVEL']?.toLowerCase() ??
+  process.env['REFINERY_ALL_LOG_LEVEL']?.toLowerCase() ??
   (process.isDev ? 'debug' : 'warn');
 
 function getDestination(): DestinationStream {
