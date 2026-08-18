@@ -33,6 +33,7 @@ import { nanoid } from 'nanoid';
 
 import type PWAStore from '../PWAStore';
 import GraphStore, { type Visibility } from '../graph/GraphStore';
+import type ThemeStore from '../theme/ThemeStore';
 import {
   REFINERY_CONTENT_TYPE,
   FILE_TYPE_OPTIONS,
@@ -84,10 +85,6 @@ export default class EditorStore {
 
   readonly delayedErrors: EditorErrors;
 
-  showLineNumbers = false;
-
-  colorIdentifiers = true;
-
   disposed = false;
 
   analyzing = false;
@@ -120,15 +117,18 @@ export default class EditorStore {
 
   private visibilityMapReaction: IReactionDisposer;
 
+  private darkModeReaction: IReactionDisposer;
+
   constructor(
     initialValue: string,
     initialVisibility: Record<string, Visibility> | undefined,
     pwaStore: PWAStore,
+    private readonly themeStore: ThemeStore,
     public readonly backendConfig: BackendConfigWithDefaults,
     onUpdate: (text: string, visibility: Record<string, Visibility>) => void,
   ) {
     this.id = nanoid();
-    this.state = createEditorState(initialValue, this);
+    this.state = createEditorState(initialValue, this, themeStore.darkMode);
     this.delayedErrors = new EditorErrors(this);
     this.searchPanel = new SearchPanelStore(this);
     this.lintPanel = new LintPanelStore(this);
@@ -157,6 +157,17 @@ export default class EditorStore {
       () => this.graph.visibilityObject,
       (visibilityMap) => {
         onUpdate(this.state.sliceDoc(), visibilityMap);
+      },
+    );
+    this.darkModeReaction = reaction(
+      () => this.themeStore.darkMode,
+      (darkMode) => {
+        log.debug('Update editor dark mode: %s', String(darkMode));
+        this.dispatch({
+          effects: [
+            StateEffect.appendConfig.of([EditorView.darkTheme.of(darkMode)]),
+          ],
+        });
       },
     );
     makeAutoObservable<EditorStore, 'client'>(this, {
@@ -199,15 +210,6 @@ export default class EditorStore {
 
   disconnect(): void {
     this.client?.webSocketClient.disconnect();
-  }
-
-  setDarkMode(darkMode: boolean): void {
-    log.debug('Update editor dark mode: %s', String(darkMode));
-    this.dispatch({
-      effects: [
-        StateEffect.appendConfig.of([EditorView.darkTheme.of(darkMode)]),
-      ],
-    });
   }
 
   setEditorParent(editorParent: Element | undefined): void {
@@ -389,14 +391,20 @@ export default class EditorStore {
     log.debug('Redo: %s', String(this.doStateCommand(redo)));
   }
 
+  get showLineNumbers(): boolean {
+    return this.themeStore.showLineNumbers;
+  }
+
   toggleLineNumbers(): void {
-    this.showLineNumbers = !this.showLineNumbers;
-    log.debug('Show line numbers: %s', String(this.showLineNumbers));
+    this.themeStore.toggleLineNumbers();
+  }
+
+  get colorIdentifiers() {
+    return this.themeStore.colorIdentifiers;
   }
 
   toggleColorIdentifiers(): void {
-    this.colorIdentifiers = !this.colorIdentifiers;
-    log.debug('Color identifiers: %s', String(this.colorIdentifiers));
+    this.themeStore.toggleColorIdentifiers();
   }
 
   get hasSelection(): boolean {
@@ -443,6 +451,7 @@ export default class EditorStore {
   }
 
   dispose(): void {
+    this.darkModeReaction();
     this.visibilityMapReaction();
     this.client?.dispose();
     this.delayedErrors.dispose();

@@ -5,15 +5,27 @@
  */
 
 import { makeAutoObservable, runInAction } from 'mobx';
+import { z } from 'zod/v4';
 
+import getLogger from '../utils/getLogger';
 import isElectron from '../utils/isElectron';
 
-export type ThemePreference = 'system' | 'light' | 'dark';
+const ThemePreference = z.enum(['system', 'light', 'dark']);
+
+export type ThemePreference = z.infer<typeof ThemePreference>;
 
 export type SelectedPane = 'code' | 'graph' | 'table' | 'chat';
 
+const THEME_PREFERENCE_KEY = 'refinery:themePreference';
+
+const SHOW_LINE_NUMBERS_KEY = 'refinery:showLineNumbers';
+
+const COLOR_IDENTIFIERS_KEY = 'refinery:colorIdentifiers';
+
+const log = getLogger('theme.ThemeStore');
+
 export default class ThemeStore {
-  preference = 'system';
+  preference: ThemePreference = 'system';
 
   systemDarkMode: boolean;
 
@@ -25,6 +37,10 @@ export default class ThemeStore {
 
   showChat = false;
 
+  showLineNumbers: boolean;
+
+  colorIdentifiers: boolean;
+
   constructor() {
     const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
     this.systemDarkMode = mediaQuery.matches;
@@ -33,6 +49,10 @@ export default class ThemeStore {
         this.systemDarkMode = event.matches;
       });
     });
+    this.showLineNumbers =
+      window.localStorage.getItem(SHOW_LINE_NUMBERS_KEY) === 'true';
+    this.colorIdentifiers =
+      window.localStorage.getItem(COLOR_IDENTIFIERS_KEY) !== 'false';
     if (window.refinery) {
       window.refinery.onThemeSourceChange((nextPreference) => {
         if (this.preference !== nextPreference) {
@@ -41,7 +61,30 @@ export default class ThemeStore {
           });
         }
       });
+    } else {
+      this.preference =
+        ThemePreference.safeParse(
+          window.localStorage.getItem(THEME_PREFERENCE_KEY),
+        ).data ?? 'system';
     }
+    window.addEventListener('storage', ({ key, newValue }) => {
+      switch (key) {
+        case THEME_PREFERENCE_KEY:
+          {
+            const parsedValue = ThemePreference.safeParse(newValue);
+            if (!isElectron && parsedValue.success) {
+              runInAction(() => (this.preference = parsedValue.data));
+            }
+          }
+          break;
+        case SHOW_LINE_NUMBERS_KEY:
+          runInAction(() => (this.showLineNumbers = newValue === 'true'));
+          break;
+        case COLOR_IDENTIFIERS_KEY:
+          runInAction(() => (this.colorIdentifiers = newValue !== 'false'));
+          break;
+      }
+    });
     makeAutoObservable(this, {
       isShowing: false,
     });
@@ -72,15 +115,19 @@ export default class ThemeStore {
       nextPreference = this.systemDarkMode ? 'system' : 'dark';
     }
     this.preference = nextPreference;
-    if (window.refinery) {
-      window.refinery.setThemeSource(nextPreference);
-    }
+    this.saveThemePreference();
   }
 
   setPreference(preference: ThemePreference) {
     this.preference = preference;
+    this.saveThemePreference();
+  }
+
+  private saveThemePreference() {
     if (window.refinery) {
-      window.refinery.setThemeSource(preference);
+      window.refinery.setThemeSource(this.preference);
+    } else {
+      window.localStorage.setItem(THEME_PREFERENCE_KEY, this.preference);
     }
   }
 
@@ -164,5 +211,23 @@ export default class ThemeStore {
     this.showCode = pane === 'code' || (keepCode && this.showCode);
     this.showGraph = pane === 'graph';
     this.showTable = pane === 'table';
+  }
+
+  toggleLineNumbers(): void {
+    this.showLineNumbers = !this.showLineNumbers;
+    window.localStorage.setItem(
+      SHOW_LINE_NUMBERS_KEY,
+      String(this.showLineNumbers),
+    );
+    log.debug('Show line numbers: %s', String(this.showLineNumbers));
+  }
+
+  toggleColorIdentifiers(): void {
+    this.colorIdentifiers = !this.colorIdentifiers;
+    window.localStorage.setItem(
+      COLOR_IDENTIFIERS_KEY,
+      String(this.colorIdentifiers),
+    );
+    log.debug('Color identifiers: %s', String(this.colorIdentifiers));
   }
 }

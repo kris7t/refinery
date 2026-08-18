@@ -37,13 +37,11 @@ export default async function startServer(
 
   // To enable tree-shaking `./FrontendManager`, we can't use a reference to `isDev` here.
   if (process.isDev && getPathToServe('/') === undefined) {
-    let frontendPort;
-    do {
-      frontendPort = await getFreePort();
-    } while (frontendPort === backendPort);
     const { default: FrontedManager } = await import('./FrontedManager');
     const frontend = new FrontedManager(
-      frontendPort,
+      // Fixed so that `localStorage` settings are persisted, but distinct from
+      // `./yarnw frontend dev` so that we can debug both at the same time.
+      1314,
       BackendManager.hostname,
       backendPort,
     );

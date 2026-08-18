@@ -101,6 +101,7 @@ export default class RootStore {
         this.initialValue,
         this.initialVisibility,
         this.pwaStore,
+        this.themeStore,
         this.backendConfig,
         this.compressor.compress.bind(this.compressor),
       );

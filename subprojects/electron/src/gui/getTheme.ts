@@ -15,9 +15,11 @@ import {
   nativeTheme,
   type TitleBarOverlay,
 } from 'electron';
+import { reaction } from 'mobx';
 import z from 'zod';
 
 import getLogger from '../logger/getLogger';
+import settings from '../settings';
 import { isMac, isWindows } from '../utils/platform';
 
 const logger = getLogger('gui.getTheme');
@@ -104,6 +106,12 @@ function updateWindow(window: BrowserWindow): void {
 }
 
 export function attachNativeThemeHandler(): void {
+  reaction(
+    () => settings.theme,
+    (theme) => (nativeTheme.themeSource = theme),
+    { fireImmediately: true },
+  );
+
   nativeTheme.on('updated', () => {
     const { themeSource } = nativeTheme;
     for (const window of BrowserWindow.getAllWindows()) {
@@ -120,7 +128,7 @@ export function attachNativeThemeHandler(): void {
   ipcMain.on('refinery:setThemeSource', (_event, rawThemeSource: unknown) => {
     const themeSource = ThemeSource.safeParse(rawThemeSource);
     if (themeSource.success) {
-      nativeTheme.themeSource = themeSource.data;
+      settings.setTheme(themeSource.data);
     } else {
       logger.error({ err: themeSource.error }, 'Failed to parse ThemeSource');
     }

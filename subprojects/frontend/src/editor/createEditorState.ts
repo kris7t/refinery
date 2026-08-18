@@ -64,6 +64,7 @@ export function createHistoryExtension(): Extension {
 export default function createEditorState(
   initialValue: string,
   store: EditorStore,
+  darkTheme: boolean,
 ): EditorState {
   return EditorState.create({
     doc: initialValue,
@@ -175,6 +176,7 @@ export default function createEditorState(
         ...defaultKeymap,
       ]),
       problemLanguageSupport(),
+      EditorView.darkTheme.of(darkTheme),
     ],
   });
 }

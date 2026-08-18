@@ -11,6 +11,7 @@ import { app, BrowserWindow, nativeTheme } from 'electron';
 import enableWebContentsLogger from '../logger/enableWebContentsLogger';
 import getLogger from '../logger/getLogger';
 import startServer from '../server/startServer';
+import settings from '../settings';
 import { isMac, isWindows } from '../utils/platform';
 
 import getTheme, { attachNativeThemeHandler } from './getTheme';
@@ -61,7 +62,10 @@ export default async function runGUI() {
     }
   });
 
-  const { root: pageURL, backend } = await startServer();
+  const [{ root: pageURL, backend }] = await Promise.all([
+    startServer(),
+    settings.readSettings(),
+  ]);
 
   // `startServer()` waits for `app.whenReady()` internally, so this is safe to do here.
   attachNativeThemeHandler();
