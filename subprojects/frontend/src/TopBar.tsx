@@ -20,9 +20,11 @@ import { useEffect, useMemo, useState } from 'react';
 
 import PaneButtons from './PaneButtons';
 import { useRootStore } from './RootStoreProvider';
+import SettingsMenuButton from './SettingsMenuButton';
 import ToggleDarkModeButton from './ToggleDarkModeButton';
 import ConcretizeButton from './editor/ConcretizeButton';
 import GenerateButton from './editor/GenerateButton';
+import isElectron from './utils/isElectron';
 
 function useWindowControlsOverlayVisible(): boolean {
   const [windowControlsOverlayVisible, setWindowControlsOverlayVisible] =
@@ -170,11 +172,7 @@ export default observer(function TopBar(): React.ReactElement {
         })}
       >
         <RefineryIcon size={32} />
-        <Typography
-          variant="h6"
-          component="h1"
-          sx={{ pl: 1 }}
-        >
+        <Typography variant="h6" component="h1" sx={{ pl: 1 }}>
           Refinery {import.meta.env.DEV && <DevModeBadge>Dev</DevModeBadge>}
         </Typography>
         {large && editorStore?.simpleName !== undefined && (
@@ -255,7 +253,7 @@ export default observer(function TopBar(): React.ReactElement {
               hideWarnings={!extraLarge}
             />
           </ButtonStack>
-          <ToggleDarkModeButton />
+          {isElectron ? <SettingsMenuButton /> : <ToggleDarkModeButton />}
         </Stack>
       </Stack>
     </AppBar>

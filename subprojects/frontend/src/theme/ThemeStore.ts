@@ -77,6 +77,13 @@ export default class ThemeStore {
     }
   }
 
+  setPreference(preference: ThemePreference) {
+    this.preference = preference;
+    if (window.refinery) {
+      window.refinery.setThemeSource(preference);
+    }
+  }
+
   togglePane(pane: SelectedPane) {
     switch (pane) {
       case 'code':
