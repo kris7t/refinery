@@ -23,7 +23,6 @@ export default defineConfig({
     // `describe > test` path instead.
     reporters: ['verbose'],
     env: {
-      REFINERY_LOG_CHROMIUM: '1',
       // An unpacked `electron-builder` output doesn't have `chrome-sandbox`
       // configured the way an installed package does, so Chromium's SUID
       // sandbox aborts on startup unless it's disabled here.

@@ -12,17 +12,11 @@ export const logLevel =
   (process.isDev ? 'debug' : 'warn');
 
 function getDestination(): DestinationStream {
-  const setting = process.env['REFINERY_LOG_DESTINATION'] ?? 'pretty';
-  switch (setting) {
-    case 'stdout':
-      return pino.destination(1);
-    case 'stderr':
-      return pino.destination(2);
-    case 'pretty':
-      return pretty({ destination: 2 });
-    default:
-      throw new Error(`Unknown log destination: ${setting}`);
+  const fd = process.env['REFINERY_LOG_DESTINATION'] === 'stdout' ? 1 : 2;
+  if (process.env['REFINERY_LOG_FORMAT'] === 'json') {
+    return pino.destination(fd);
   }
+  return pretty({ destination: fd });
 }
 
 export const destination = getDestination();

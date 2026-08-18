@@ -7,10 +7,9 @@
 import child_process, { type ChildProcess } from 'node:child_process';
 import fs from 'node:fs';
 import { access } from 'node:fs/promises';
-import { EOL } from 'node:os';
-import { createInterface } from 'node:readline';
 
-import { destination } from '../logger';
+import { logLevel } from '../logger';
+import pipeToLogger, { pipeToCallback } from '../logger/pipeToLogger';
 import ServerManager from '../utils/ServerManager';
 
 export default class HeadlessServerManager extends ServerManager {
@@ -27,6 +26,8 @@ export default class HeadlessServerManager extends ServerManager {
       ...process.env,
       REFINERY_IPC_ENDPOINT: this.endpoint,
       REFINERY_LOG_DESTINATION: 'stdout',
+      REFINERY_LOG_FORMAT: 'json',
+      REFINERY_LOG_LEVEL: logLevel,
     };
     delete newEnv['ELECTRON_RUN_AS_NODE'];
     if (this.display !== undefined) {
@@ -35,47 +36,19 @@ export default class HeadlessServerManager extends ServerManager {
       delete newEnv['XDG_SESSION_TYPE'];
     }
 
-    // Chromium is chatty on stderr even in normal operation, so this is
-    // opt-in (e.g. for the e2e tests) only.
-    const logChromium = process.env['REFINERY_LOG_CHROMIUM'] === '1';
-
     const electronArgs =
       process.env['REFINERY_NO_SANDBOX'] === '1' ? ['--no-sandbox'] : [];
     const child = child_process.spawn(process.argv0, electronArgs, {
       env: newEnv,
-      stdio: ['ignore', 'pipe', logChromium ? 'pipe' : 'ignore'],
+      stdio: ['ignore', 'pipe', 'pipe'],
       detached: false,
     });
 
-    const readlines: ReturnType<typeof createInterface>[] = [];
+    pipeToLogger(child.stdout, child);
+    pipeToCallback(child.stderr, child, (line) =>
+      this.logger.debug({ name: 'chromium', pid: child.pid }, line),
+    );
 
-    if (child.stdout) {
-      const stdoutReadline = createInterface({
-        input: child.stdout,
-        crlfDelay: Infinity,
-      });
-      stdoutReadline.on('line', (line) => {
-        destination.write(`${line}${EOL}`);
-      });
-      readlines.push(stdoutReadline);
-    }
-
-    if (logChromium && child.stderr) {
-      const stderrReadline = createInterface({
-        input: child.stderr,
-        crlfDelay: Infinity,
-      });
-      stderrReadline.on('line', (line) => {
-        destination.write(`[stderr] ${line}${EOL}`);
-      });
-      readlines.push(stderrReadline);
-    }
-
-    for (const event of ['error', 'exit'] as const) {
-      child.on(event, () => {
-        readlines.forEach((readline) => readline.close());
-      });
-    }
     return child;
   }
 

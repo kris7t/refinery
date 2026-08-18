@@ -4,15 +4,8 @@
     SPDX-License-Identifier: EPL-2.0
 -->
 <configuration>
-    <appender name="STDERR" class="ch.qos.logback.core.ConsoleAppender">
-        <target>System.err</target>
-        <encoder>
-            <pattern>
-                %d{HH:mm:ss.SSS} [%thread] %-5level %logger{36} - %msg%n
-            </pattern>
-        </encoder>
-    </appender>
+    <include resource="logback-refinery.xml"/>
     <root level="${REFINERY_LOG_LEVEL:-WARN}">
-        <appender-ref ref="STDERR"/>
+        <appender-ref ref="refinery-console"/>
     </root>
 </configuration>

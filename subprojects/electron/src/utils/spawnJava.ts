@@ -10,6 +10,9 @@ import child_process, {
 } from 'node:child_process';
 import path from 'node:path';
 
+import { logLevel } from '../logger';
+import pipeToLogger from '../logger/pipeToLogger';
+
 import { isWindows } from './platform';
 
 export default function spawnJava(
@@ -46,6 +49,9 @@ export default function spawnJava(
 
   const newEnv: NodeJS.ProcessEnv = {
     ...(options.env ?? {}),
+    REFINERY_LOG_DESTINATION: 'stderr',
+    REFINERY_LOG_FORMAT: 'json',
+    REFINERY_LOG_LEVEL: logLevel,
     PATH: newPathEnv,
     JAVA_HOME: javaDir,
     CLASSPATH: pathingJar,
@@ -59,13 +65,8 @@ export default function spawnJava(
   delete newEnv['_JAVA_OPTIONS'];
   delete newEnv['JDK_JAVA_OPTIONS'];
   delete newEnv['JAVA_TOOL_OPTIONS'];
-  // By default, `refinery-language-web` displays INFO messages to enable traceability
-  // in a production Docker environment, but this gets noisy for desktop use.
-  if (!('REFINERY_LOG_LEVEL' in newEnv)) {
-    newEnv['REFINERY_LOG_LEVEL'] = 'WARN';
-  }
 
-  return child_process.spawn(
+  const child = child_process.spawn(
     javaBinary,
     [
       '--enable-native-access=ALL-UNNAMED',
@@ -77,9 +78,13 @@ export default function spawnJava(
     {
       ...options,
       env: newEnv,
-      stdio: [interactive ? 'inherit' : 'ignore', 'inherit', 'inherit'],
+      stdio: [interactive ? 'inherit' : 'ignore', 'inherit', 'pipe'],
       detached: false,
       ...(isWindows ? { windowsHide: true } : {}),
     },
   );
+
+  pipeToLogger(child.stderr, child);
+
+  return child;
 }

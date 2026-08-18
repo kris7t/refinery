@@ -5,11 +5,7 @@
  */
 package tools.refinery.gradle
 
-import gradle.kotlin.dsl.accessors._cce2b3859407527802ad9abd2c51bda6.application
-import gradle.kotlin.dsl.accessors._cce2b3859407527802ad9abd2c51bda6.distTar
-import gradle.kotlin.dsl.accessors._cce2b3859407527802ad9abd2c51bda6.distZip
 import org.gradle.accessors.dm.LibrariesForLibs
-import org.gradle.internal.execution.caching.CachingState.enabled
 import tools.refinery.gradle.utils.JvmArgsUtils
 
 plugins {
@@ -25,8 +21,7 @@ val distTarConfiguration = configurations.create("distTar") {
 }
 
 dependencies {
-	runtimeOnly(libs.logback.core)
-	runtimeOnly(libs.logback.classic)
+	runtimeOnly(project(":refinery-logging"))
 	implementation(libs.slf4j.log4j)
 	implementation(enforcedPlatform(project(":refinery-bom-dependencies")))
 }

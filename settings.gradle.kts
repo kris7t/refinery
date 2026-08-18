@@ -29,6 +29,7 @@ include(
 		"language-semantics-ibex",
 		"language-semantics-z3",
 		"language-web",
+		"logging",
 		"logic",
 		"store",
 		"store-dse",

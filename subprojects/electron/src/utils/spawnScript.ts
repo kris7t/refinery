@@ -9,7 +9,11 @@ import child_process, {
   type SpawnOptionsWithoutStdio,
   type SpawnOptionsWithStdioTuple,
   type StdioNull,
+  type StdioPipe,
 } from 'child_process';
+
+import { logLevel } from '../logger';
+import pipeToLogger from '../logger/pipeToLogger';
 
 import { isWindows } from './platform';
 
@@ -21,25 +25,34 @@ export default function spawnScript(
   const commonOptions: SpawnOptionsWithStdioTuple<
     StdioNull,
     StdioNull,
-    StdioNull
+    StdioPipe
   > = {
-    stdio: ['ignore', 'inherit', 'inherit'],
+    ...options,
+    env: {
+      ...(options.env ?? {}),
+      REFINERY_LOG_DESTINATION: 'stderr',
+      REFINERY_LOG_FORMAT: 'json',
+      REFINERY_LOG_LEVEL: logLevel,
+    },
+    stdio: ['ignore', 'inherit', 'pipe'],
     detached: false,
   };
+
+  let child;
   if (isWindows) {
-    return child_process.spawn(
+    child = child_process.spawn(
       'cmd.exe',
       ['/q', '/c', `${command}.bat`, ...args],
       {
-        ...options,
         ...commonOptions,
         windowsHide: true,
       },
     );
   } else {
-    return child_process.spawn(command, args, {
-      ...options,
-      ...commonOptions,
-    });
+    child = child_process.spawn(command, args, commonOptions);
   }
+
+  pipeToLogger(child.stderr, child);
+
+  return child;
 }
