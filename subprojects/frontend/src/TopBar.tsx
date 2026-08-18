@@ -10,7 +10,6 @@ import HomeIcon from '@mui/icons-material/Home';
 import AppBar from '@mui/material/AppBar';
 import IconButton from '@mui/material/IconButton';
 import Stack from '@mui/material/Stack';
-import Toolbar from '@mui/material/Toolbar';
 import Tooltip from '@mui/material/Tooltip';
 import Typography from '@mui/material/Typography';
 import { styled, useTheme } from '@mui/material/styles';
@@ -147,8 +146,9 @@ export default observer(function TopBar(): React.ReactElement {
         },
       })}
     >
-      <Toolbar
-        sx={{
+      <Stack
+        direction="row"
+        sx={(theme) => ({
           ...(overlayVisible
             ? {
                 marginLeft: 'env(titlebar-area-x, 0)',
@@ -159,14 +159,21 @@ export default observer(function TopBar(): React.ReactElement {
             : {
                 minHeight: 'auto',
               }),
-          py: 0.5,
-        }}
+          position: 'relative',
+          alignItems: 'center',
+          pl: 2,
+          pr: 1,
+          py: 1.5,
+          [theme.breakpoints.down('sm')]: {
+            py: 0.5,
+          },
+        })}
       >
         <RefineryIcon size={32} />
         <Typography
           variant="h6"
           component="h1"
-          sx={{ pl: (theme) => theme.spacing(1) }}
+          sx={{ pl: 1 }}
         >
           Refinery {import.meta.env.DEV && <DevModeBadge>Dev</DevModeBadge>}
         </Typography>
@@ -250,7 +257,7 @@ export default observer(function TopBar(): React.ReactElement {
           </ButtonStack>
           <ToggleDarkModeButton />
         </Stack>
-      </Toolbar>
+      </Stack>
     </AppBar>
   );
 });

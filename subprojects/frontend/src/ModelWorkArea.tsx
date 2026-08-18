@@ -204,7 +204,7 @@ function ModelWorkArea({
           disabled={selectedIndex === 0}
           sx={{ mx: 1 }}
         >
-          <CloseIcon fontSize="small" />
+          <CloseIcon />
         </IconButton>
       </Stack>
       <Stack

@@ -21,6 +21,7 @@ const SlideInPanelRoot = styled('div', {
 })<{ anchor: 'left' | 'right' }>(({ theme, anchor }) => ({
   position: 'absolute',
   padding: theme.spacing(1),
+  paddingTop: theme.spacing(0.5),
   top: 0,
   [anchor]: 0,
   maxHeight: '100%',
@@ -34,6 +35,7 @@ const SlideInPanelRoot = styled('div', {
     display: 'flex',
     maxWidth: '100%',
     margin: theme.spacing(1),
+    marginTop: theme.spacing(0.5),
   },
 }));
 
@@ -80,6 +82,7 @@ export default function SlideInPanel({
           aria-checked={show}
           aria-controls={dialog ? undefined : id}
           onClick={() => setShow(!show)}
+          color="inherit"
         >
           {icon(show)}
         </IconButton>
