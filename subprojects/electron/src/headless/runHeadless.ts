@@ -12,6 +12,7 @@ import enableWebContentsLogger from '../logger/enableWebContentsLogger';
 import getLogger from '../logger/getLogger';
 import startServer from '../server/startServer';
 import { onCleanup } from '../utils/cleanup';
+import hardenWebContents from '../utils/hardenWebContents';
 import { isMac } from '../utils/platform';
 
 import IPCServer from './IPCServer';
@@ -28,7 +29,7 @@ export default async function runHeadless(endpoint: string) {
     app.quit();
   });
 
-  const { root } = await startServer(false);
+  const { root, allowedOrigins } = await startServer(false);
   const pageURL = `${root}headless.html`;
 
   const window = new BrowserWindow({
@@ -53,6 +54,7 @@ export default async function runHeadless(endpoint: string) {
 
   const { webContents } = window;
 
+  hardenWebContents(webContents, allowedOrigins, []);
   enableWebContentsLogger(webContents);
 
   const ipcServer = new IPCServer(endpoint, {

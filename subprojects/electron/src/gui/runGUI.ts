@@ -12,13 +12,17 @@ import enableWebContentsLogger from '../logger/enableWebContentsLogger';
 import getLogger from '../logger/getLogger';
 import startServer from '../server/startServer';
 import settings from '../settings';
+import hardenWebContents from '../utils/hardenWebContents';
 import { isMac, isWindows } from '../utils/platform';
 
 import getTheme, { attachNativeThemeHandler } from './getTheme';
 
 const logger = getLogger('gui.runGUI');
 
-function createWindow(pageURL: string): BrowserWindow {
+function createWindow(
+  pageURL: string,
+  allowedOrigins: string[],
+): BrowserWindow {
   const { backgroundColor, accentColor, titleBarOverlay } = getTheme(
     nativeTheme.shouldUseDarkColors,
   );
@@ -46,7 +50,14 @@ function createWindow(pageURL: string): BrowserWindow {
     }
   });
 
-  enableWebContentsLogger(window.webContents);
+  const { webContents } = window;
+
+  hardenWebContents(webContents, allowedOrigins, [
+    'clipboard-read',
+    'clipboard-sanitized-write',
+    'fileSystem',
+  ]);
+  enableWebContentsLogger(webContents);
 
   window
     .loadURL(pageURL)
@@ -62,7 +73,7 @@ export default async function runGUI() {
     }
   });
 
-  const [{ root: pageURL, backend }] = await Promise.all([
+  const [{ root: pageURL, backend, allowedOrigins }] = await Promise.all([
     startServer(),
     settings.readSettings(),
   ]);
@@ -73,11 +84,11 @@ export default async function runGUI() {
   // Only start the backend once the UI is ready to show to avoid CPU contention
   // slowing down time to UI interactivity.
   await new Promise<void>((resolve, reject) => {
-    const window = createWindow(pageURL);
+    const window = createWindow(pageURL, allowedOrigins);
     window.once('ready-to-show', () => {
       app.on('activate', () => {
         if (BrowserWindow.getAllWindows().length === 0) {
-          createWindow(pageURL);
+          createWindow(pageURL, allowedOrigins);
         }
       });
 

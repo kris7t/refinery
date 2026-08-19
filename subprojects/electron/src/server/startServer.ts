@@ -19,13 +19,15 @@ const logger = getLogger('server.startServer');
 
 export default function startServer(
   withBackend?: true,
-): Promise<{ root: string; backend: BackendManager }>;
+): Promise<{ root: string; allowedOrigins: string[]; backend: BackendManager }>;
 export default function startServer(
   withBackend: false,
-): Promise<{ root: string }>;
-export default async function startServer(
-  withBackend = true,
-): Promise<{ root: string; backend?: BackendManager }> {
+): Promise<{ root: string; allowedOrigins: string[] }>;
+export default async function startServer(withBackend = true): Promise<{
+  root: string;
+  allowedOrigins: string[];
+  backend?: BackendManager;
+}> {
   let root = 'app://refinery/';
   const allowedOrigins = ['app://refinery'];
 
@@ -146,5 +148,5 @@ export default async function startServer(
     });
   });
 
-  return backend ? { root, backend } : { root };
+  return backend ? { root, allowedOrigins, backend } : { root, allowedOrigins };
 }
