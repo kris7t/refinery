@@ -16,6 +16,7 @@ import hardenWebContents from '../utils/hardenWebContents';
 import { isMac, isWindows } from '../utils/platform';
 
 import { createWindowStore } from './WindowStore';
+import attachFileIOHandlers from './fileIO';
 import getTheme, {
   attachNativeThemeHandler,
   attachWindowThemeHandler,
@@ -85,6 +86,7 @@ export default async function runGUI() {
   ]);
 
   // `startServer()` waits for `app.whenReady()` internally, so this is safe to do here.
+  attachFileIOHandlers();
   attachNativeThemeHandler();
 
   // Only start the backend once the UI is ready to show to avoid CPU contention

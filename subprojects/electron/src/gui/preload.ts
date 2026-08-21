@@ -6,6 +6,8 @@
 
 import type RefineryContextBridge from '@tools.refinery/frontend/RefineryContextBridge';
 import type {
+  FileResult,
+  OpenFileResult,
   ServerStateChangeCallback,
   ThemeSource,
   ThemeSourceChangeCallback,
@@ -77,6 +79,21 @@ contextBridge.exposeInMainWorld('refinery', {
       .catch((error) =>
         logger.error({ err: error }, 'Failed to get theme source'),
       );
+  },
+  async openFile() {
+    return ipcRenderer.invoke('refinery:openFile') as Promise<
+      OpenFileResult | undefined
+    >;
+  },
+  async saveFile(text) {
+    return ipcRenderer.invoke('refinery:saveFile', text) as Promise<
+      FileResult | undefined
+    >;
+  },
+  async saveFileAs(text) {
+    return ipcRenderer.invoke('refinery:saveFileAs', text) as Promise<
+      FileResult | undefined
+    >;
   },
   openDialog(id) {
     logger.info({ dialogID: id }, 'Opening dialog');

@@ -40,6 +40,7 @@ import type { BackendConfigWithDefaults } from '../xtext/fetchBackendConfig';
 import type { SemanticsModelResult } from '../xtext/xtextServiceResults';
 
 import EditorErrors from './EditorErrors';
+import ElectronFileStore from './ElectronFileStore';
 import type FileStore from './FileStore';
 import FileSystemAccessFileStore from './FileSystemAccessFileStore';
 import GeneratedModelStore from './GeneratedModelStore';
@@ -115,10 +116,12 @@ export default class EditorStore {
   ) {
     this.id = nanoid();
     this.state = createEditorState(initialValue, this, themeStore.darkMode);
-    this.fileStore = new FileSystemAccessFileStore(
-      (text) => this.fileOpened(text),
-      () => this.clearUnsavedChanges(),
-    );
+    const onFileOpened = (text: string) => this.fileOpened(text);
+    const onFileSaved = () => this.clearUnsavedChanges();
+    const { refinery } = window;
+    this.fileStore = refinery
+      ? new ElectronFileStore(refinery, onFileOpened, onFileSaved)
+      : new FileSystemAccessFileStore(onFileOpened, onFileSaved);
     this.delayedErrors = new EditorErrors(this);
     this.searchPanel = new SearchPanelStore(this);
     this.lintPanel = new LintPanelStore(this);

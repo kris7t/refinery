@@ -14,6 +14,8 @@ export default class WindowStore {
 
   modalDialogCount = 0;
 
+  filePath: string | undefined;
+
   constructor() {
     makeAutoObservable<WindowStore, 'disposed' | 'reactionDisposers'>(this, {
       disposed: false,
@@ -25,6 +27,10 @@ export default class WindowStore {
 
   setModalDialogCount(modalDialogCount: number): void {
     this.modalDialogCount = modalDialogCount;
+  }
+
+  setFilePath(filePath: string | undefined): void {
+    this.filePath = filePath;
   }
 
   addReactionDisposer(disposer: () => void): void {
@@ -70,4 +76,15 @@ export function getWindowStore(browserWindow: BrowserWindow): WindowStore {
     throw new Error('No WindowStore found for BrowserWindow');
   }
   return windowStore;
+}
+
+export function findWindowByFilePath(
+  filePath: string,
+): BrowserWindow | undefined {
+  for (const [browserWindow, windowStore] of windowStores) {
+    if (windowStore.filePath === filePath) {
+      return browserWindow;
+    }
+  }
+  return undefined;
 }

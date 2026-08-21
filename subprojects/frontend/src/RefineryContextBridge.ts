@@ -16,6 +16,14 @@ export type ThemeSource = z.infer<typeof ThemeSource>;
 
 export type ThemeSourceChangeCallback = (themeSource: ThemeSource) => void;
 
+export const FileResult = z.object({ name: z.string() });
+
+export type FileResult = z.infer<typeof FileResult>;
+
+export const OpenFileResult = FileResult.extend({ text: z.string() });
+
+export type OpenFileResult = z.infer<typeof OpenFileResult>;
+
 export default interface RefineryContextBridge {
   logLevel: string;
   log(obj: object): void;
@@ -23,6 +31,9 @@ export default interface RefineryContextBridge {
   onServerStateChange(callback: ServerStateChangeCallback): void;
   setThemeSource(themeSource: ThemeSource): void;
   onThemeSourceChange(callback: ThemeSourceChangeCallback): void;
+  openFile(): Promise<OpenFileResult | undefined>;
+  saveFile(text: string): Promise<FileResult | undefined>;
+  saveFileAs(text: string): Promise<FileResult | undefined>;
   openDialog(id: string): void;
   closeDialog(id: string): void;
 }

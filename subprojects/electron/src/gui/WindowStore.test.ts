@@ -10,7 +10,11 @@ import type { BrowserWindow } from 'electron';
 import { isObservableProp } from 'mobx';
 import { describe, expect, test, vi } from 'vitest';
 
-import { createWindowStore, getWindowStore } from './WindowStore';
+import {
+  createWindowStore,
+  findWindowByFilePath,
+  getWindowStore,
+} from './WindowStore';
 
 function createBrowserWindow(): BrowserWindow {
   return new EventEmitter() as BrowserWindow;
@@ -23,9 +27,13 @@ describe('WindowStore registry', () => {
 
     expect(getWindowStore(browserWindow)).toBe(windowStore);
     expect(isObservableProp(windowStore, 'modalDialogCount')).toBe(true);
+    expect(isObservableProp(windowStore, 'filePath')).toBe(true);
+    expect(windowStore.filePath).toBeUndefined();
 
     windowStore.setModalDialogCount(2);
     expect(windowStore.modalDialogCount).toBe(2);
+    windowStore.setFilePath('/example/model.problem');
+    expect(windowStore.filePath).toBe('/example/model.problem');
 
     browserWindow.emit('closed');
   });
@@ -47,6 +55,19 @@ describe('WindowStore registry', () => {
     expect(() => getWindowStore(browserWindow)).toThrow(
       'No WindowStore found for BrowserWindow',
     );
+  });
+
+  test('finds the window associated with a file path', () => {
+    const browserWindow = createBrowserWindow();
+    const windowStore = createWindowStore(browserWindow);
+    const filePath = '/example/model.problem';
+    windowStore.setFilePath(filePath);
+
+    expect(findWindowByFilePath(filePath)).toBe(browserWindow);
+    expect(findWindowByFilePath('/example/other.problem')).toBeUndefined();
+
+    browserWindow.emit('closed');
+    expect(findWindowByFilePath(filePath)).toBeUndefined();
   });
 
   test('removes and disposes the store when the window is closed', () => {
