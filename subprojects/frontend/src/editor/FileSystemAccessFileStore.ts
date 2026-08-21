@@ -4,7 +4,7 @@
  * SPDX-License-Identifier: EPL-2.0
  */
 
-import { makeAutoObservable } from 'mobx';
+import { action, makeObservable } from 'mobx';
 
 import {
   REFINERY_CONTENT_TYPE,
@@ -17,7 +17,7 @@ import {
 } from '../utils/fileIO';
 import getLogger from '../utils/getLogger';
 
-import type FileStore from './FileStore';
+import FileStore from './FileStore';
 
 const log = getLogger('editor.FileSystemAccessFileStore');
 
@@ -26,9 +26,7 @@ const FILE_PICKER_OPTIONS: FilePickerOptions = {
   ...FILE_TYPE_OPTIONS,
 };
 
-export default class FileSystemAccessFileStore implements FileStore {
-  fileName: string | undefined;
-
+export default class FileSystemAccessFileStore extends FileStore {
   private fileHandle: FileSystemFileHandle | undefined;
 
   constructor(
@@ -36,14 +34,18 @@ export default class FileSystemAccessFileStore implements FileStore {
     private readonly onFileOpened: (text: string) => void,
     private readonly onFileSaved: () => void,
   ) {
-    this.fileName = initialFileName;
-    makeAutoObservable<
+    super(initialFileName);
+    makeObservable<
       FileSystemAccessFileStore,
-      'fileHandle' | 'onFileOpened' | 'onFileSaved'
+      'fileHandle' | 'fileOpened' | 'fileSavedAs' | 'setFile'
     >(this, {
       fileHandle: false,
-      onFileOpened: false,
-      onFileSaved: false,
+      openFile: action,
+      setFile: action,
+      fileOpened: action,
+      saveFile: action,
+      saveFileAs: action,
+      fileSavedAs: action,
     });
   }
 
@@ -94,21 +96,5 @@ export default class FileSystemAccessFileStore implements FileStore {
       this.setFile(result);
     }
     this.onFileSaved();
-  }
-
-  get simpleName(): string | undefined {
-    const { fileName } = this;
-    if (fileName === undefined) {
-      return undefined;
-    }
-    const index = fileName.lastIndexOf('.');
-    if (index < 0) {
-      return fileName;
-    }
-    return fileName.substring(0, index);
-  }
-
-  get simpleNameOrFallback(): string {
-    return this.simpleName ?? 'graph';
   }
 }

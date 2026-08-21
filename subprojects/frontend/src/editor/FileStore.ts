@@ -4,16 +4,42 @@
  * SPDX-License-Identifier: EPL-2.0
  */
 
-export default interface FileStore {
-  readonly fileName: string | undefined;
+import { computed, makeObservable, observable } from 'mobx';
 
-  readonly simpleName: string | undefined;
+export default abstract class FileStore {
+  fileName: string | undefined;
 
-  readonly simpleNameOrFallback: string;
+  constructor(initialFileName: string | undefined) {
+    this.fileName = initialFileName;
+    makeObservable(this, {
+      fileName: observable,
+      simpleName: computed,
+      simpleNameOrFallback: computed,
+      openFile: false,
+      saveFile: false,
+      saveFileAs: false,
+    });
+  }
 
-  openFile(): boolean;
+  get simpleName(): string | undefined {
+    const { fileName } = this;
+    if (fileName === undefined) {
+      return undefined;
+    }
+    const index = fileName.lastIndexOf('.');
+    if (index < 0) {
+      return fileName;
+    }
+    return fileName.substring(0, index);
+  }
 
-  saveFile(text: string): boolean;
+  get simpleNameOrFallback(): string {
+    return this.simpleName ?? 'graph';
+  }
 
-  saveFileAs(text: string): boolean;
+  abstract openFile(): boolean;
+
+  abstract saveFile(text: string): boolean;
+
+  abstract saveFileAs(text: string): boolean;
 }

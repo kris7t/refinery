@@ -4,34 +4,35 @@
  * SPDX-License-Identifier: EPL-2.0
  */
 
-import { makeAutoObservable } from 'mobx';
+import { action, makeObservable } from 'mobx';
 
 import type RefineryContextBridge from '../RefineryContextBridge';
 import type { FileResult, OpenFileResult } from '../RefineryContextBridge';
 import getLogger from '../utils/getLogger';
 
-import type FileStore from './FileStore';
+import FileStore from './FileStore';
 
 const log = getLogger('editor.ElectronFileStore');
 
-export default class ElectronFileStore implements FileStore {
-  fileName: string | undefined;
-
+export default class ElectronFileStore extends FileStore {
   constructor(
     private readonly refinery: RefineryContextBridge,
     initialFileName: string | undefined,
     private readonly onFileOpened: (text: string) => void,
     private readonly onFileSaved: () => void,
   ) {
-    this.fileName = initialFileName;
-    makeAutoObservable<
-      ElectronFileStore,
-      'onFileOpened' | 'onFileSaved' | 'refinery'
-    >(this, {
-      refinery: false,
-      onFileOpened: false,
-      onFileSaved: false,
-    });
+    super(initialFileName);
+    makeObservable<ElectronFileStore, 'fileOpened' | 'fileSaved' | 'setFile'>(
+      this,
+      {
+        openFile: action,
+        fileOpened: action,
+        saveFile: action,
+        saveFileAs: action,
+        fileSaved: action,
+        setFile: action,
+      },
+    );
   }
 
   openFile(): boolean {
@@ -77,21 +78,5 @@ export default class ElectronFileStore implements FileStore {
   private setFile({ name }: FileResult): void {
     log.info('Opened file: %s', name);
     this.fileName = name;
-  }
-
-  get simpleName(): string | undefined {
-    const { fileName } = this;
-    if (fileName === undefined) {
-      return undefined;
-    }
-    const index = fileName.lastIndexOf('.');
-    if (index < 0) {
-      return fileName;
-    }
-    return fileName.substring(0, index);
-  }
-
-  get simpleNameOrFallback(): string {
-    return this.simpleName ?? 'graph';
   }
 }
