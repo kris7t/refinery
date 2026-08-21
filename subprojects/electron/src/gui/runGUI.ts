@@ -15,7 +15,11 @@ import settings from '../settings';
 import hardenWebContents from '../utils/hardenWebContents';
 import { isMac, isWindows } from '../utils/platform';
 
-import getTheme, { attachNativeThemeHandler } from './getTheme';
+import { createWindowStore } from './WindowStore';
+import getTheme, {
+  attachNativeThemeHandler,
+  attachWindowThemeHandler,
+} from './getTheme';
 
 const logger = getLogger('gui.runGUI');
 
@@ -42,6 +46,8 @@ function createWindow(
     titleBarStyle: isMac ? 'hiddenInset' : 'hidden',
     ...(isMac ? {} : { titleBarOverlay }),
   });
+  createWindowStore(window);
+  attachWindowThemeHandler(window);
 
   window.once('ready-to-show', () => {
     window.show();
