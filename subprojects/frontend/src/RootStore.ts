@@ -91,13 +91,17 @@ export default class RootStore {
     if (refinery) {
       refinery
         .readFile()
-        .then((result) =>
+        .then((result) => {
+          if (result !== undefined && 'hash' in result) {
+            this.compressor.decompressInitial(result.hash);
+            return;
+          }
           this.setInitialValue(
             result?.text ?? defaultInitialValue,
             undefined,
             result?.name,
-          ),
-        )
+          );
+        })
         .catch((err: unknown) => {
           log.error({ err }, 'Failed to read initial file');
           this.setInitialValue(defaultInitialValue, undefined, undefined);

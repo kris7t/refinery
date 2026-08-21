@@ -67,15 +67,20 @@ export default class Compressor {
   private nextVersion: CompressorVersion = 1;
 
   constructor(private readonly onDecompressed: DecompressCallback) {
-    if (isElectron) {
-      // No hash-based links in Electron, so no need to instantiate the compressor.
-      return;
+    if (!isElectron) {
+      window.addEventListener('hashchange', this.hashChangeHandler);
     }
-    this.worker = new CompressionWorker();
-    this.worker.onerror = (err) => LOG.error({ err }, 'Worker error');
-    this.worker.onmessageerror = (err: unknown) =>
+  }
+
+  private getWorker(): Worker {
+    if (this.worker !== undefined) {
+      return this.worker;
+    }
+    const worker = new CompressionWorker();
+    worker.onerror = (err) => LOG.error({ err }, 'Worker error');
+    worker.onmessageerror = (err: unknown) =>
       LOG.error({ err }, 'Worker message error');
-    this.worker.onmessage = (event) => {
+    worker.onmessage = (event) => {
       try {
         const message = CompressorResponse.parse(event.data);
         switch (message.response) {
@@ -105,11 +110,12 @@ export default class Compressor {
         LOG.error({ err }, 'Error processing worker message');
       }
     };
-    window.addEventListener('hashchange', this.hashChangeHandler);
+    this.worker = worker;
+    return worker;
   }
 
-  decompressInitial(): void {
-    this.updateHash();
+  decompressInitial(fragment = window.location.hash): void {
+    this.updateFragment(fragment);
     if (this.fragment === undefined) {
       LOG.debug('Loading default source');
       this.onDecompressed(initialValue);
@@ -119,6 +125,7 @@ export default class Compressor {
   compress(text: string, visibility?: Record<string, Visibility>): void {
     if (isElectron) {
       // No hash-based links in Electron, so no need to run the compressor.
+      return;
     }
     if (visibility === undefined || Object.keys(visibility).length === 0) {
       this.doCompress(1, text);
@@ -138,7 +145,7 @@ export default class Compressor {
       return;
     }
     this.compressing = true;
-    this.worker?.postMessage({
+    this.getWorker().postMessage({
       request: 'compress',
       text,
       version,
@@ -174,19 +181,19 @@ export default class Compressor {
   }
 
   private updateHash(): void {
-    if (!this.worker) {
-      // No hash-based links in Electron, so no need to run the decompressor.
+    this.updateFragment(window.location.hash);
+  }
+
+  private updateFragment(fragment: string): void {
+    if (fragment === this.fragment) {
       return;
     }
-    if (window.location.hash === this.fragment) {
-      return;
-    }
-    const result = fromFragment(window.location.hash);
+    const result = fromFragment(fragment);
     if (result === undefined) {
       return;
     }
-    this.fragment = window.location.hash;
-    this.worker.postMessage({
+    this.fragment = fragment;
+    this.getWorker().postMessage({
       request: 'decompress',
       compressedText: result.text,
       version: result.version,

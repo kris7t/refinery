@@ -33,6 +33,12 @@ if (
 const config = {
   appId: 'tools.refinery.Refinery',
   productName: 'Refinery',
+  protocols: [
+    {
+      name: 'Refinery link',
+      schemes: ['refinery'],
+    },
+  ],
   fileAssociations: [
     {
       ext: ['problem', 'refinery'],

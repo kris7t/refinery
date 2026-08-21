@@ -16,6 +16,8 @@ export default class WindowStore {
 
   filePath: string | undefined;
 
+  hash: string | undefined;
+
   constructor() {
     makeAutoObservable<WindowStore, 'disposed' | 'reactionDisposers'>(this, {
       disposed: false,
@@ -31,6 +33,12 @@ export default class WindowStore {
 
   setFilePath(filePath: string | undefined): void {
     this.filePath = filePath;
+    this.hash = undefined;
+  }
+
+  setHash(hash: string): void {
+    this.filePath = undefined;
+    this.hash = hash;
   }
 
   addReactionDisposer(disposer: () => void): void {

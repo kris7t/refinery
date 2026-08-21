@@ -6,47 +6,49 @@
 
 import type { BrowserWindow } from 'electron';
 
-interface OpenRequest {
-  filePath: string | undefined;
+export type OpenRequest = { filePath: string } | { hash: string };
+
+interface PendingOpenRequest {
+  request: OpenRequest | undefined;
   replacesDefaultWindow: boolean;
 }
 
 export default class OpenRequestHandler {
-  private readonly pendingRequests: OpenRequest[] = [];
+  private readonly pendingRequests: PendingOpenRequest[] = [];
 
   private openImmediately:
-    ((filePath: string | undefined) => BrowserWindow) | undefined;
+    ((request: OpenRequest | undefined) => BrowserWindow) | undefined;
 
   /**
    * Opens an additional window without replacing the default startup window.
    * This ensures the first instance still gets a window if another instance
    * sends a request while it is starting.
    */
-  open(filePath?: string): BrowserWindow | undefined {
+  open(request?: OpenRequest): BrowserWindow | undefined {
     if (this.openImmediately === undefined) {
       this.pendingRequests.push({
-        filePath,
+        request,
         replacesDefaultWindow: false,
       });
       return undefined;
     }
-    return this.openImmediately(filePath);
+    return this.openImmediately(request);
   }
 
   /**
-   * Opens a file supplied during initial startup. Such a file takes the place
-   * of the default untitled window instead of creating an unnecessary extra.
+   * Opens a resource supplied during initial startup. It takes the place of
+   * the default untitled window instead of creating an unnecessary extra.
    */
-  openInitial(filePath: string): BrowserWindow | undefined {
+  openInitial(request: OpenRequest): BrowserWindow | undefined {
     if (this.openImmediately === undefined) {
-      this.pendingRequests.push({ filePath, replacesDefaultWindow: true });
+      this.pendingRequests.push({ request, replacesDefaultWindow: true });
       return undefined;
     }
-    return this.openImmediately(filePath);
+    return this.openImmediately(request);
   }
 
   initialize(
-    openImmediately: (filePath: string | undefined) => BrowserWindow,
+    openImmediately: (request: OpenRequest | undefined) => BrowserWindow,
   ): [BrowserWindow, ...BrowserWindow[]] {
     if (this.openImmediately !== undefined) {
       throw new Error('OpenRequestHandler is already initialized');
@@ -58,12 +60,12 @@ export default class OpenRequestHandler {
       )
     ) {
       this.pendingRequests.unshift({
-        filePath: undefined,
+        request: undefined,
         replacesDefaultWindow: true,
       });
     }
-    const results = this.pendingRequests.map(({ filePath }) =>
-      openImmediately(filePath),
+    const results = this.pendingRequests.map(({ request }) =>
+      openImmediately(request),
     );
     this.pendingRequests.length = 0;
     return results as [BrowserWindow, ...BrowserWindow[]];

@@ -8,6 +8,7 @@ import type RefineryContextBridge from '@tools.refinery/frontend/RefineryContext
 import type {
   FileResult,
   OpenFileResult,
+  ReadFileResult,
   ServerStateChangeCallback,
   ThemeSource,
   ThemeSourceChangeCallback,
@@ -82,7 +83,7 @@ contextBridge.exposeInMainWorld('refinery', {
   },
   async readFile() {
     return ipcRenderer.invoke('refinery:readFile') as Promise<
-      OpenFileResult | undefined
+      ReadFileResult | undefined
     >;
   },
   async openFile() {

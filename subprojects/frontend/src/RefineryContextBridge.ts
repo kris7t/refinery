@@ -24,6 +24,13 @@ export const OpenFileResult = FileResult.extend({ text: z.string() });
 
 export type OpenFileResult = z.infer<typeof OpenFileResult>;
 
+export const ReadFileResult = z.union([
+  OpenFileResult,
+  z.object({ hash: z.string() }),
+]);
+
+export type ReadFileResult = z.infer<typeof ReadFileResult>;
+
 export default interface RefineryContextBridge {
   logLevel: string;
   log(obj: object): void;
@@ -31,7 +38,7 @@ export default interface RefineryContextBridge {
   onServerStateChange(callback: ServerStateChangeCallback): void;
   setThemeSource(themeSource: ThemeSource): void;
   onThemeSourceChange(callback: ThemeSourceChangeCallback): void;
-  readFile(): Promise<OpenFileResult | undefined>;
+  readFile(): Promise<ReadFileResult | undefined>;
   openFile(): Promise<OpenFileResult | undefined>;
   saveFile(text: string): Promise<FileResult | undefined>;
   saveFileAs(text: string): Promise<FileResult | undefined>;

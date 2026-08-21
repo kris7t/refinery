@@ -10,6 +10,7 @@ import path from 'node:path';
 import type {
   FileResult,
   OpenFileResult,
+  ReadFileResult,
 } from '@tools.refinery/frontend/RefineryContextBridge';
 import {
   BrowserWindow,
@@ -59,8 +60,11 @@ export function focusWindowForFile(
 
 async function readWindowFile(
   browserWindow: BrowserWindow,
-): Promise<OpenFileResult | undefined> {
-  const { filePath } = getWindowStore(browserWindow);
+): Promise<ReadFileResult | undefined> {
+  const { filePath, hash } = getWindowStore(browserWindow);
+  if (hash !== undefined) {
+    return { hash };
+  }
   if (filePath === undefined) {
     return undefined;
   }

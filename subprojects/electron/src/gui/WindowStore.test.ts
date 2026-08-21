@@ -28,12 +28,20 @@ describe('WindowStore registry', () => {
     expect(getWindowStore(browserWindow)).toBe(windowStore);
     expect(isObservableProp(windowStore, 'modalDialogCount')).toBe(true);
     expect(isObservableProp(windowStore, 'filePath')).toBe(true);
+    expect(isObservableProp(windowStore, 'hash')).toBe(true);
     expect(windowStore.filePath).toBeUndefined();
+    expect(windowStore.hash).toBeUndefined();
 
     windowStore.setModalDialogCount(2);
     expect(windowStore.modalDialogCount).toBe(2);
     windowStore.setFilePath('/example/model.problem');
     expect(windowStore.filePath).toBe('/example/model.problem');
+    windowStore.setHash('#/2/shared-model');
+    expect(windowStore.filePath).toBeUndefined();
+    expect(windowStore.hash).toBe('#/2/shared-model');
+    windowStore.setFilePath('/example/saved.problem');
+    expect(windowStore.filePath).toBe('/example/saved.problem');
+    expect(windowStore.hash).toBeUndefined();
 
     browserWindow.emit('closed');
   });

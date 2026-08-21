@@ -16,21 +16,26 @@ import settings from '../settings';
 import hardenWebContents from '../utils/hardenWebContents';
 import { isMac, isWindows } from '../utils/platform';
 
-import OpenRequestHandler from './OpenRequestHandler';
+import OpenRequestHandler, { type OpenRequest } from './OpenRequestHandler';
 import { createWindowStore } from './WindowStore';
 import attachFileIOHandlers, { focusWindowForFile } from './fileIO';
 import getTheme, {
   attachNativeThemeHandler,
   attachWindowThemeHandler,
 } from './getTheme';
-import resolveFileArguments, {
-  resolveFileArgument,
-} from './resolveFileArguments';
+import resolveOpenArguments, {
+  resolveOpenArgument,
+} from './resolveOpenArguments';
 
 const logger = getLogger('gui.runGUI');
 
+const OpenRequestData = z.union([
+  z.object({ filePath: z.string() }),
+  z.object({ hash: z.string() }),
+]);
+
 const AdditionalData = z.object({
-  filePaths: z.array(z.string()),
+  requests: z.array(OpenRequestData),
 });
 
 const openRequests = new OpenRequestHandler();
@@ -38,7 +43,7 @@ const openRequests = new OpenRequestHandler();
 function createWindow(
   pageURL: string,
   allowedOrigins: string[],
-  filePath?: string,
+  request?: OpenRequest,
 ): BrowserWindow {
   const { backgroundColor, accentColor, titleBarOverlay } = getTheme(
     nativeTheme.shouldUseDarkColors,
@@ -59,7 +64,14 @@ function createWindow(
     titleBarStyle: isMac ? 'hiddenInset' : 'hidden',
     ...(isMac ? {} : { titleBarOverlay }),
   });
-  createWindowStore(window).setFilePath(filePath);
+  const windowStore = createWindowStore(window);
+  if (request !== undefined) {
+    if ('filePath' in request) {
+      windowStore.setFilePath(request.filePath);
+    } else {
+      windowStore.setHash(request.hash);
+    }
+  }
   attachWindowThemeHandler(window);
 
   window.once('ready-to-show', () => {
@@ -86,34 +98,42 @@ function createWindow(
 }
 
 export default async function runGUI() {
+  if (process.defaultApp) {
+    const entryPoint = process.argv[1];
+    if (entryPoint !== undefined) {
+      app.setAsDefaultProtocolClient('refinery', process.execPath, [
+        path.resolve(entryPoint),
+      ]);
+    }
+  } else {
+    app.setAsDefaultProtocolClient('refinery');
+  }
+
   if (isMac) {
     app.on('open-file', (event, filePath) => {
-      event.preventDefault();
-      const resolvedPath = resolveFileArgument(filePath, process.cwd());
-      if (resolvedPath !== undefined) {
-        openRequests.openInitial(resolvedPath);
+      const request = resolveOpenArgument(filePath, process.cwd());
+      if (request !== undefined) {
+        event.preventDefault();
+        openRequests.openInitial(request);
       }
     });
     app.on('open-url', (event, url) => {
-      if (!/^file:/i.test(url)) {
-        return;
-      }
-      event.preventDefault();
-      const resolvedPath = resolveFileArgument(url, process.cwd());
-      if (resolvedPath !== undefined) {
-        openRequests.openInitial(resolvedPath);
+      const request = resolveOpenArgument(url, process.cwd());
+      if (request !== undefined) {
+        event.preventDefault();
+        openRequests.openInitial(request);
       }
     });
   }
 
   const args = process.argv.slice(process.defaultApp ? 2 : 1);
-  const filePaths = resolveFileArguments(args, process.cwd());
-  if (!app.requestSingleInstanceLock({ filePaths })) {
+  const requests = resolveOpenArguments(args, process.cwd());
+  if (!app.requestSingleInstanceLock({ requests })) {
     app.quit();
     return;
   }
-  for (const filePath of filePaths) {
-    openRequests.openInitial(filePath);
+  for (const request of requests) {
+    openRequests.openInitial(request);
   }
   app.on('second-instance', (_event, _argv, _workingDirectory, rawData) => {
     const data = AdditionalData.safeParse(rawData);
@@ -121,11 +141,11 @@ export default async function runGUI() {
       logger.error({ err: data.error }, 'Failed to parse second instance data');
       return;
     }
-    if (data.data.filePaths.length === 0) {
+    if (data.data.requests.length === 0) {
       openRequests.open();
     } else {
-      for (const filePath of data.data.filePaths) {
-        openRequests.open(filePath);
+      for (const request of data.data.requests) {
+        openRequests.open(request);
       }
     }
   });
@@ -145,14 +165,14 @@ export default async function runGUI() {
   attachFileIOHandlers();
   attachNativeThemeHandler();
 
-  const openWindow = (filePath: string | undefined) => {
-    if (filePath !== undefined) {
-      const existingWindow = focusWindowForFile(filePath);
+  const openWindow = (request: OpenRequest | undefined) => {
+    if (request !== undefined && 'filePath' in request) {
+      const existingWindow = focusWindowForFile(request.filePath);
       if (existingWindow !== undefined) {
         return existingWindow;
       }
     }
-    return createWindow(pageURL, allowedOrigins, filePath);
+    return createWindow(pageURL, allowedOrigins, request);
   };
 
   app.on('activate', () => {
