@@ -34,21 +34,14 @@ import { nanoid } from 'nanoid';
 import type PWAStore from '../PWAStore';
 import GraphStore, { type Visibility } from '../graph/GraphStore';
 import type ThemeStore from '../theme/ThemeStore';
-import {
-  REFINERY_CONTENT_TYPE,
-  FILE_TYPE_OPTIONS,
-  type OpenResult,
-  type OpenTextFileResult,
-  openTextFile,
-  saveTextFile,
-  saveBlob,
-} from '../utils/fileIO';
 import getLogger from '../utils/getLogger';
 import type XtextClient from '../xtext/XtextClient';
 import type { BackendConfigWithDefaults } from '../xtext/fetchBackendConfig';
 import type { SemanticsModelResult } from '../xtext/xtextServiceResults';
 
 import EditorErrors from './EditorErrors';
+import type FileStore from './FileStore';
+import FileSystemAccessFileStore from './FileSystemAccessFileStore';
 import GeneratedModelStore from './GeneratedModelStore';
 import LintPanelStore from './LintPanelStore';
 import SearchPanelStore from './SearchPanelStore';
@@ -64,11 +57,6 @@ import {
 } from './semanticHighlighting';
 
 const log = getLogger('editor.EditorStore');
-
-const FILE_PICKER_OPTIONS: FilePickerOptions = {
-  id: 'problem',
-  ...FILE_TYPE_OPTIONS,
-};
 
 export default class EditorStore {
   readonly id: string;
@@ -101,9 +89,7 @@ export default class EditorStore {
 
   selectedGeneratedModel: string | undefined;
 
-  fileName: string | undefined;
-
-  private fileHandle: FileSystemFileHandle | undefined;
+  private readonly fileStore: FileStore;
 
   unsavedChanges = false;
 
@@ -129,6 +115,10 @@ export default class EditorStore {
   ) {
     this.id = nanoid();
     this.state = createEditorState(initialValue, this, themeStore.darkMode);
+    this.fileStore = new FileSystemAccessFileStore(
+      (text) => this.fileOpened(text),
+      () => this.clearUnsavedChanges(),
+    );
     this.delayedErrors = new EditorErrors(this);
     this.searchPanel = new SearchPanelStore(this);
     this.lintPanel = new LintPanelStore(this);
@@ -170,10 +160,11 @@ export default class EditorStore {
         });
       },
     );
-    makeAutoObservable<EditorStore, 'client'>(this, {
+    makeAutoObservable<EditorStore, 'client' | 'fileStore'>(this, {
       id: false,
       state: observable.ref,
       client: observable.ref,
+      fileStore: false,
       view: observable.ref,
       searchPanel: false,
       lintPanel: false,
@@ -548,29 +539,20 @@ export default class EditorStore {
   }
 
   openFile(): boolean {
-    openTextFile(FILE_PICKER_OPTIONS)
-      .then((result) => this.fileOpened(result))
-      .catch((err: unknown) => log.error({ err }, 'Failed to open file'));
-    return true;
+    return this.fileStore.openFile();
   }
 
   private clearUnsavedChanges(): void {
     this.unsavedChanges = false;
   }
 
-  private setFile({ name, handle }: OpenResult): void {
-    log.info('Opened file: %s', name);
-    this.fileName = name;
-    this.fileHandle = handle;
-  }
-
-  private fileOpened(result: OpenTextFileResult): void {
+  private fileOpened(text: string): void {
     this.dispatch({
       changes: [
         {
           from: 0,
           to: this.state.doc.length,
-          insert: result.text,
+          insert: text,
         },
       ],
       effects: [historyCompartment.reconfigure([])],
@@ -582,7 +564,6 @@ export default class EditorStore {
     this.dispatch({
       effects: [historyCompartment.reconfigure([createHistoryExtension()])],
     });
-    this.setFile(result);
     this.clearUnsavedChanges();
   }
 
@@ -590,46 +571,23 @@ export default class EditorStore {
     if (!this.unsavedChanges) {
       return false;
     }
-    if (this.fileHandle === undefined) {
-      return this.saveFileAs();
-    }
-    saveTextFile(this.fileHandle, this.state.sliceDoc())
-      .then(() => this.clearUnsavedChanges())
-      .catch((err: unknown) => log.error({ err }, 'Failed to save file'));
-    return true;
+    return this.fileStore.saveFile(this.state.sliceDoc());
   }
 
   saveFileAs(): boolean {
-    const blob = new Blob([this.state.sliceDoc()], {
-      type: REFINERY_CONTENT_TYPE,
-    });
-    saveBlob(blob, this.fileName ?? 'graph.problem', FILE_PICKER_OPTIONS)
-      .then((result) => this.fileSavedAs(result))
-      .catch((err: unknown) => log.error({ err }, 'Failed to save file'));
-    return true;
+    return this.fileStore.saveFileAs(this.state.sliceDoc());
   }
 
-  private fileSavedAs(result: OpenResult | undefined) {
-    if (result !== undefined) {
-      this.setFile(result);
-    }
-    this.clearUnsavedChanges();
+  get fileName(): string | undefined {
+    return this.fileStore.fileName;
   }
 
   get simpleName(): string | undefined {
-    const { fileName } = this;
-    if (fileName === undefined) {
-      return undefined;
-    }
-    const index = fileName.lastIndexOf('.');
-    if (index < 0) {
-      return fileName;
-    }
-    return fileName.substring(0, index);
+    return this.fileStore.simpleName;
   }
 
   get simpleNameOrFallback(): string {
-    return this.simpleName ?? 'graph';
+    return this.fileStore.simpleNameOrFallback;
   }
 
   toggleConcretize(): void {
