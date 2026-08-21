@@ -33,6 +33,15 @@ if (
 const config = {
   appId: 'tools.refinery.Refinery',
   productName: 'Refinery',
+  fileAssociations: [
+    {
+      ext: ['problem', 'refinery'],
+      name: 'Refinery file',
+      description: 'Refinery problem file',
+      mimeType: 'application/x-refinery',
+      role: 'Editor',
+    },
+  ],
   directories: {
     app: 'app',
     output: 'build/dist',

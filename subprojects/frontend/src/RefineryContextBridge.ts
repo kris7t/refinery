@@ -31,6 +31,7 @@ export default interface RefineryContextBridge {
   onServerStateChange(callback: ServerStateChangeCallback): void;
   setThemeSource(themeSource: ThemeSource): void;
   onThemeSourceChange(callback: ThemeSourceChangeCallback): void;
+  readFile(): Promise<OpenFileResult | undefined>;
   openFile(): Promise<OpenFileResult | undefined>;
   saveFile(text: string): Promise<FileResult | undefined>;
   saveFileAs(text: string): Promise<FileResult | undefined>;

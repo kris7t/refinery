@@ -7,6 +7,7 @@
 import path from 'node:path';
 
 import { app, BrowserWindow, nativeTheme } from 'electron';
+import z from 'zod/v4';
 
 import enableWebContentsLogger from '../logger/enableWebContentsLogger';
 import getLogger from '../logger/getLogger';
@@ -15,18 +16,29 @@ import settings from '../settings';
 import hardenWebContents from '../utils/hardenWebContents';
 import { isMac, isWindows } from '../utils/platform';
 
+import OpenRequestHandler from './OpenRequestHandler';
 import { createWindowStore } from './WindowStore';
-import attachFileIOHandlers from './fileIO';
+import attachFileIOHandlers, { focusWindowForFile } from './fileIO';
 import getTheme, {
   attachNativeThemeHandler,
   attachWindowThemeHandler,
 } from './getTheme';
+import resolveFileArguments, {
+  resolveFileArgument,
+} from './resolveFileArguments';
 
 const logger = getLogger('gui.runGUI');
+
+const AdditionalData = z.object({
+  filePaths: z.array(z.string()),
+});
+
+const openRequests = new OpenRequestHandler();
 
 function createWindow(
   pageURL: string,
   allowedOrigins: string[],
+  filePath?: string,
 ): BrowserWindow {
   const { backgroundColor, accentColor, titleBarOverlay } = getTheme(
     nativeTheme.shouldUseDarkColors,
@@ -47,7 +59,7 @@ function createWindow(
     titleBarStyle: isMac ? 'hiddenInset' : 'hidden',
     ...(isMac ? {} : { titleBarOverlay }),
   });
-  createWindowStore(window);
+  createWindowStore(window).setFilePath(filePath);
   attachWindowThemeHandler(window);
 
   window.once('ready-to-show', () => {
@@ -74,6 +86,50 @@ function createWindow(
 }
 
 export default async function runGUI() {
+  if (isMac) {
+    app.on('open-file', (event, filePath) => {
+      event.preventDefault();
+      const resolvedPath = resolveFileArgument(filePath, process.cwd());
+      if (resolvedPath !== undefined) {
+        openRequests.openInitial(resolvedPath);
+      }
+    });
+    app.on('open-url', (event, url) => {
+      if (!/^file:/i.test(url)) {
+        return;
+      }
+      event.preventDefault();
+      const resolvedPath = resolveFileArgument(url, process.cwd());
+      if (resolvedPath !== undefined) {
+        openRequests.openInitial(resolvedPath);
+      }
+    });
+  }
+
+  const args = process.argv.slice(process.defaultApp ? 2 : 1);
+  const filePaths = resolveFileArguments(args, process.cwd());
+  if (!app.requestSingleInstanceLock({ filePaths })) {
+    app.quit();
+    return;
+  }
+  for (const filePath of filePaths) {
+    openRequests.openInitial(filePath);
+  }
+  app.on('second-instance', (_event, _argv, _workingDirectory, rawData) => {
+    const data = AdditionalData.safeParse(rawData);
+    if (!data.success) {
+      logger.error({ err: data.error }, 'Failed to parse second instance data');
+      return;
+    }
+    if (data.data.filePaths.length === 0) {
+      openRequests.open();
+    } else {
+      for (const filePath of data.data.filePaths) {
+        openRequests.open(filePath);
+      }
+    }
+  });
+
   app.on('window-all-closed', () => {
     if (!isMac) {
       app.quit();
@@ -89,17 +145,28 @@ export default async function runGUI() {
   attachFileIOHandlers();
   attachNativeThemeHandler();
 
+  const openWindow = (filePath: string | undefined) => {
+    if (filePath !== undefined) {
+      const existingWindow = focusWindowForFile(filePath);
+      if (existingWindow !== undefined) {
+        return existingWindow;
+      }
+    }
+    return createWindow(pageURL, allowedOrigins, filePath);
+  };
+
+  app.on('activate', () => {
+    if (BrowserWindow.getAllWindows().length === 0) {
+      openRequests.open();
+    }
+  });
+
+  const [window] = openRequests.initialize(openWindow);
+
   // Only start the backend once the UI is ready to show to avoid CPU contention
   // slowing down time to UI interactivity.
   await new Promise<void>((resolve, reject) => {
-    const window = createWindow(pageURL, allowedOrigins);
     window.once('ready-to-show', () => {
-      app.on('activate', () => {
-        if (BrowserWindow.getAllWindows().length === 0) {
-          createWindow(pageURL, allowedOrigins);
-        }
-      });
-
       resolve();
     });
     window.webContents.on(

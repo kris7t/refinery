@@ -80,6 +80,11 @@ contextBridge.exposeInMainWorld('refinery', {
         logger.error({ err: error }, 'Failed to get theme source'),
       );
   },
+  async readFile() {
+    return ipcRenderer.invoke('refinery:readFile') as Promise<
+      OpenFileResult | undefined
+    >;
+  },
   async openFile() {
     return ipcRenderer.invoke('refinery:openFile') as Promise<
       OpenFileResult | undefined

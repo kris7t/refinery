@@ -17,6 +17,7 @@ import PWAStore from './PWAStore';
 import type EditorStore from './editor/EditorStore';
 import ExportSettingsStore from './graph/export/ExportSettingsStore';
 import Compressor from './persistence/Compressor';
+import defaultInitialValue from './persistence/initialValue';
 import ThemeStore from './theme/ThemeStore';
 import fetchBackendConfig, {
   type BackendConfigWithDefaults,
@@ -30,6 +31,8 @@ export default class RootStore {
   private initialValue: string | undefined;
 
   private initialVisibility: Record<string, Visibility> | undefined;
+
+  private initialFileName: string | undefined;
 
   private editorStoreClass: typeof EditorStore | undefined;
 
@@ -74,22 +77,45 @@ export default class RootStore {
         this.backendConfig = backendConfig;
         this.editorStoreClass = EditorStore;
         if (this.initialValue !== undefined) {
-          this.setInitialValue(this.initialValue, this.initialVisibility);
+          this.setInitialValue(
+            this.initialValue,
+            this.initialVisibility,
+            this.initialFileName,
+          );
         }
       });
     })().catch((err: unknown) => {
       log.error({ err }, 'Failed to load EditorStore');
     });
-    this.compressor.decompressInitial();
+    const { refinery } = window;
+    if (refinery) {
+      refinery
+        .readFile()
+        .then((result) =>
+          this.setInitialValue(
+            result?.text ?? defaultInitialValue,
+            undefined,
+            result?.name,
+          ),
+        )
+        .catch((err: unknown) => {
+          log.error({ err }, 'Failed to read initial file');
+          this.setInitialValue(defaultInitialValue, undefined, undefined);
+        });
+    } else {
+      this.compressor.decompressInitial();
+    }
   }
 
   setInitialValue(
     initialValue: string,
     visibility: Record<string, Visibility> | undefined,
+    fileName?: string,
   ): void {
     runInAction(() => {
       this.initialValue = initialValue;
       this.initialVisibility = visibility;
+      this.initialFileName = fileName;
     });
     if (
       this.initialValue !== undefined &&
@@ -99,6 +125,7 @@ export default class RootStore {
       const EditorStore = this.editorStoreClass;
       const editorStore = new EditorStore(
         this.initialValue,
+        this.initialFileName,
         this.initialVisibility,
         this.pwaStore,
         this.themeStore,

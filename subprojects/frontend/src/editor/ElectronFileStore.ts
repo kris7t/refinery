@@ -19,9 +19,11 @@ export default class ElectronFileStore implements FileStore {
 
   constructor(
     private readonly refinery: RefineryContextBridge,
+    initialFileName: string | undefined,
     private readonly onFileOpened: (text: string) => void,
     private readonly onFileSaved: () => void,
   ) {
+    this.fileName = initialFileName;
     makeAutoObservable<
       ElectronFileStore,
       'onFileOpened' | 'onFileSaved' | 'refinery'

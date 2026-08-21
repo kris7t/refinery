@@ -32,9 +32,11 @@ export default class FileSystemAccessFileStore implements FileStore {
   private fileHandle: FileSystemFileHandle | undefined;
 
   constructor(
+    initialFileName: string | undefined,
     private readonly onFileOpened: (text: string) => void,
     private readonly onFileSaved: () => void,
   ) {
+    this.fileName = initialFileName;
     makeAutoObservable<
       FileSystemAccessFileStore,
       'fileHandle' | 'onFileOpened' | 'onFileSaved'

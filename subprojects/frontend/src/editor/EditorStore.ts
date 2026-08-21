@@ -108,6 +108,7 @@ export default class EditorStore {
 
   constructor(
     initialValue: string,
+    initialFileName: string | undefined,
     initialVisibility: Record<string, Visibility> | undefined,
     pwaStore: PWAStore,
     private readonly themeStore: ThemeStore,
@@ -120,8 +121,17 @@ export default class EditorStore {
     const onFileSaved = () => this.clearUnsavedChanges();
     const { refinery } = window;
     this.fileStore = refinery
-      ? new ElectronFileStore(refinery, onFileOpened, onFileSaved)
-      : new FileSystemAccessFileStore(onFileOpened, onFileSaved);
+      ? new ElectronFileStore(
+          refinery,
+          initialFileName,
+          onFileOpened,
+          onFileSaved,
+        )
+      : new FileSystemAccessFileStore(
+          initialFileName,
+          onFileOpened,
+          onFileSaved,
+        );
     this.delayedErrors = new EditorErrors(this);
     this.searchPanel = new SearchPanelStore(this);
     this.lintPanel = new LintPanelStore(this);

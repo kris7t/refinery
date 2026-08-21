@@ -42,11 +42,48 @@ function getBrowserWindow(event: IpcMainInvokeEvent): BrowserWindow {
   return browserWindow;
 }
 
-function bringToFront(existingWindow: BrowserWindow) {
+export function focusWindowForFile(
+  filePath: string,
+  excludedWindow?: BrowserWindow,
+): BrowserWindow | undefined {
+  const existingWindow = findWindowByFilePath(filePath);
+  if (existingWindow === undefined || existingWindow === excludedWindow) {
+    return undefined;
+  }
   if (existingWindow.isMinimized()) {
     existingWindow.restore();
   }
   existingWindow.focus();
+  return existingWindow;
+}
+
+async function readWindowFile(
+  browserWindow: BrowserWindow,
+): Promise<OpenFileResult | undefined> {
+  const { filePath } = getWindowStore(browserWindow);
+  if (filePath === undefined) {
+    return undefined;
+  }
+  let text: string;
+  try {
+    text = await readFile(filePath, 'utf-8');
+  } catch (error) {
+    if (
+      error !== null &&
+      typeof error === 'object' &&
+      'code' in error &&
+      error.code === 'ENOENT'
+    ) {
+      // Create a new file by specifying a nonexistent path on the command line.
+      text = '';
+    } else {
+      throw error;
+    }
+  }
+  return {
+    name: path.basename(filePath),
+    text,
+  };
 }
 
 async function openFile(
@@ -61,9 +98,7 @@ async function openFile(
     return undefined;
   }
   const resolvedPath = path.resolve(filePath);
-  const existingWindow = findWindowByFilePath(resolvedPath);
-  if (existingWindow !== undefined && existingWindow !== browserWindow) {
-    bringToFront(existingWindow);
+  if (focusWindowForFile(resolvedPath, browserWindow) !== undefined) {
     return undefined;
   }
   const text = await readFile(resolvedPath, 'utf-8');
@@ -87,9 +122,7 @@ async function saveFileAs(
     return undefined;
   }
   const resolvedPath = path.resolve(result.filePath);
-  const existingWindow = findWindowByFilePath(resolvedPath);
-  if (existingWindow !== undefined && existingWindow !== browserWindow) {
-    bringToFront(existingWindow);
+  if (focusWindowForFile(resolvedPath, browserWindow) !== undefined) {
     return undefined;
   }
   await writeFile(resolvedPath, text, 'utf-8');
@@ -114,6 +147,17 @@ async function saveFile(
 }
 
 export default function attachFileIOHandlers(): void {
+  ipcMain.handle('refinery:readFile', async (event) => {
+    try {
+      return await readWindowFile(getBrowserWindow(event));
+    } catch (error) {
+      logger.error({ err: error }, 'Failed to read file');
+      // This handler is called right after opening a window,
+      // so we bail by closing it if the file can't be read.
+      BrowserWindow.fromWebContents(event.sender)?.close();
+      return undefined;
+    }
+  });
   ipcMain.handle('refinery:openFile', async (event) => {
     try {
       return await openFile(getBrowserWindow(event));
