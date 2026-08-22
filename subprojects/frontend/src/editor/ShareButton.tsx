@@ -46,6 +46,19 @@ function createDesktopURI(fragment: string): string {
   return `refinery://open/${fragment}`;
 }
 
+async function readClipboardIfPermitted(): Promise<string | undefined> {
+  if (navigator.clipboard === undefined) {
+    return undefined;
+  }
+  const permission = await navigator.permissions.query({
+    name: 'clipboard-read' as PermissionName,
+  });
+  if (permission.state !== 'granted') {
+    return undefined;
+  }
+  return navigator.clipboard.readText();
+}
+
 export default function ShareButton({
   editorStore,
 }: {
@@ -55,12 +68,14 @@ export default function ShareButton({
   const dialogID = useId();
   const openLinkFormID = useId();
   const requestID = useRef(0);
+  const shareButtonRef = useRef<HTMLButtonElement>(null);
+  const openLinkInputRef = useRef<HTMLInputElement>(null);
+  const restoreFocusAfterClose = useRef(true);
   const [open, setOpen] = useState(false);
   const [fragment, setFragment] = useState<string>();
   const [error, setError] = useState<string>();
   const [copied, setCopied] = useState(false);
   const [uriToOpen, setURIToOpen] = useState('');
-  const [restoreFocusOnClose, setRestoreFocusOnClose] = useState(true);
 
   const close = () => {
     requestID.current += 1;
@@ -77,8 +92,32 @@ export default function ShareButton({
     setError(undefined);
     setCopied(false);
     setURIToOpen('');
-    setRestoreFocusOnClose(true);
+    restoreFocusAfterClose.current = true;
     setOpen(true);
+    readClipboardIfPermitted()
+      .then((clipboardText) => {
+        const uri = clipboardText?.trim();
+        if (
+          uri === undefined ||
+          requestID.current !== currentRequestID ||
+          openLinkInputRef.current?.value !== '' ||
+          parseShareURI(uri) === undefined
+        ) {
+          return;
+        }
+        setURIToOpen(uri);
+        window.requestAnimationFrame(() => {
+          if (
+            requestID.current === currentRequestID &&
+            openLinkInputRef.current?.value === uri
+          ) {
+            openLinkInputRef.current?.focus();
+          }
+        });
+      })
+      .catch((err: unknown) => {
+        log.debug({ err }, 'Failed to read shared link from clipboard');
+      });
     editorStore
       .getShareFragment()
       .then((newFragment) => {
@@ -120,7 +159,7 @@ export default function ShareButton({
     if (hashToOpen === undefined || editorStore === undefined) {
       return;
     }
-    setRestoreFocusOnClose(false);
+    restoreFocusAfterClose.current = false;
     editorStore.openShare(hashToOpen);
     close();
   };
@@ -129,6 +168,7 @@ export default function ShareButton({
     <>
       <Tooltip title="Share">
         <IconButton
+          ref={shareButtonRef}
           disabled={editorStore === undefined}
           onClick={show}
           aria-haspopup="dialog"
@@ -144,8 +184,19 @@ export default function ShareButton({
         onClose={close}
         fullWidth
         maxWidth="sm"
-        disableRestoreFocus={!restoreFocusOnClose}
-        slotProps={{ paper: { id: dialogID } }}
+        // MUI captures focus restoration when the focus trap opens, so keep it
+        // disabled and restore explicitly after ordinary closes instead.
+        disableRestoreFocus
+        slotProps={{
+          paper: { id: dialogID },
+          transition: {
+            onExited: () => {
+              if (restoreFocusAfterClose.current) {
+                shareButtonRef.current?.focus();
+              }
+            },
+          },
+        }}
       >
         <DialogTitleBar close={close} title="Share model" />
         <Box sx={{ minWidth: 0, p: 2 }}>
@@ -194,6 +245,7 @@ export default function ShareButton({
           <Divider sx={{ my: 2 }}>Open a shared link</Divider>
           <Box component="form" id={openLinkFormID} onSubmit={openSharedModel}>
             <TextField
+              inputRef={openLinkInputRef}
               label="Shared link"
               value={uriToOpen}
               onChange={(event) => setURIToOpen(event.target.value)}
