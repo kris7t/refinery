@@ -28,6 +28,7 @@ const log = getLogger('RootStore');
 export default class RootStore {
   private readonly compressor = new Compressor(
     this.setDecompressedValue.bind(this),
+    this.decompressionFailed.bind(this),
   );
 
   private initialValue: string | undefined;
@@ -41,6 +42,9 @@ export default class RootStore {
   backendConfig: BackendConfigWithDefaults | undefined;
 
   editorStore: EditorStore | undefined;
+
+  errorDialog: { title: string; body: string; fatal: boolean } | undefined =
+    undefined;
 
   readonly pwaStore: PWAStore;
 
@@ -94,6 +98,10 @@ export default class RootStore {
       refinery
         .readFile()
         .then((result) => {
+          if (result !== undefined && 'error' in result) {
+            this.initialFileFailed(result.name);
+            return;
+          }
           if (result !== undefined && 'hash' in result) {
             this.compressor.decompressInitial(result.hash);
             return;
@@ -106,11 +114,45 @@ export default class RootStore {
         })
         .catch((err: unknown) => {
           log.error({ err }, 'Failed to read initial file');
-          this.setInitialValue(defaultInitialValue, undefined, undefined);
+          this.initialFileFailed();
         });
     } else {
       this.compressor.decompressInitial();
     }
+  }
+
+  private initialFileFailed(fileName?: string) {
+    this.showError(
+      'Failed to open file',
+      fileName === undefined
+        ? 'The requested file could not be opened.'
+        : `The requested file “${fileName}” could not be opened.`,
+      true,
+    );
+  }
+
+  private decompressionFailed(source: DecompressSource, error: Error): void {
+    log.error({ err: error }, 'Failed to decompress shared state');
+    if (source === 'initial') {
+      this.initialFileFailed();
+      return;
+    }
+    this.showError(
+      'Failed to open shared link',
+      'The shared link is invalid and could not be opened.',
+    );
+  }
+
+  showError(title: string, body: string, fatal = false): void {
+    this.errorDialog = { title, body, fatal };
+  }
+
+  closeErrorDialog(): void {
+    if (this.errorDialog?.fatal) {
+      window.close();
+      return;
+    }
+    this.errorDialog = undefined;
   }
 
   private setDecompressedValue(
@@ -157,6 +199,7 @@ export default class RootStore {
         this.compressor.compress.bind(this.compressor),
         this.compressor.getShareFragment.bind(this.compressor),
         this.compressor.decompress.bind(this.compressor),
+        this.showError.bind(this),
       );
       this.editorStore = editorStore;
       this.titleReaction = autorun(() => {

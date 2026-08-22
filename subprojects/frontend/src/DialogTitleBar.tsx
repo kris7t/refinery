@@ -33,19 +33,21 @@ export default function DialogTitleBar({
   close,
   title,
 }: {
-  close: () => void;
+  close?: (() => void) | undefined;
   title: string;
 }): React.ReactElement {
   return (
     <DialogTitleBarRoot>
       <DialogTitle>{title}</DialogTitle>
-      <IconButton
-        aria-label="Close"
-        onClick={close}
-        sx={{ appRegion: 'no-drag' }}
-      >
-        <CloseIcon />
-      </IconButton>
+      {close !== undefined && (
+        <IconButton
+          aria-label="Close"
+          onClick={close}
+          sx={{ appRegion: 'no-drag' }}
+        >
+          <CloseIcon />
+        </IconButton>
+      )}
     </DialogTitleBarRoot>
   );
 }

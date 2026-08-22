@@ -11,6 +11,7 @@ import {
   FILE_TYPE_OPTIONS,
   type OpenResult,
   type OpenTextFileResult,
+  FileIOError,
   openTextFile,
   saveTextFile,
   saveBlob,
@@ -33,8 +34,9 @@ export default class FileSystemAccessFileStore extends FileStore {
     initialFileName: string | undefined,
     private readonly onFileOpened: (text: string) => void,
     private readonly onFileSaved: () => void,
+    onError: (title: string, body: string) => void,
   ) {
-    super(initialFileName);
+    super(initialFileName, onError);
     makeObservable<
       FileSystemAccessFileStore,
       'fileHandle' | 'fileOpened' | 'fileSavedAs' | 'setFile'
@@ -54,7 +56,11 @@ export default class FileSystemAccessFileStore extends FileStore {
   openFile(): boolean {
     openTextFile(FILE_PICKER_OPTIONS)
       .then((result) => this.fileOpened(result))
-      .catch((err: unknown) => log.error({ err }, 'Failed to open file'));
+      .catch((err: unknown) => {
+        log.error({ err }, 'Failed to open file');
+        const fileName = err instanceof FileIOError ? err.fileName : undefined;
+        this.openFileFailed(fileName, err);
+      });
     return true;
   }
 
@@ -86,7 +92,13 @@ export default class FileSystemAccessFileStore extends FileStore {
     }
     saveTextFile(this.fileHandle, text)
       .then(() => this.onFileSaved())
-      .catch((err: unknown) => log.error({ err }, 'Failed to save file'));
+      .catch((err: unknown) => {
+        log.error({ err }, 'Failed to save file');
+        this.saveFileFailed(
+          err instanceof FileIOError ? err.fileName : undefined,
+          err,
+        );
+      });
     return true;
   }
 
@@ -100,7 +112,13 @@ export default class FileSystemAccessFileStore extends FileStore {
       FILE_PICKER_OPTIONS,
     )
       .then((result) => this.fileSavedAs(result))
-      .catch((err: unknown) => log.error({ err }, 'Failed to save file'));
+      .catch((err: unknown) => {
+        log.error({ err }, 'Failed to save file as');
+        this.saveFileFailed(
+          err instanceof FileIOError ? err.fileName : undefined,
+          err,
+        );
+      });
     return true;
   }
 

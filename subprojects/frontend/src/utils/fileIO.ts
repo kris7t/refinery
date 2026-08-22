@@ -26,6 +26,15 @@ export interface OpenTextFileResult extends OpenResult {
   text: string;
 }
 
+export class FileIOError extends Error {
+  constructor(
+    readonly fileName: string,
+    cause: unknown,
+  ) {
+    super('File operation failed', { cause });
+  }
+}
+
 export async function openTextFile(
   options: FilePickerOptions,
 ): Promise<OpenTextFileResult> {
@@ -53,7 +62,12 @@ export async function openTextFile(
       input.click();
     });
   }
-  const text = await file.text();
+  let text: string;
+  try {
+    text = await file.text();
+  } catch (error) {
+    throw new FileIOError(file.name, error);
+  }
   return {
     name: file.name,
     text,
@@ -65,11 +79,15 @@ export async function saveTextFile(
   handle: FileSystemFileHandle,
   text: string,
 ): Promise<void> {
-  const writable = await handle.createWritable();
   try {
-    await writable.write(text);
-  } finally {
-    await writable.close();
+    const writable = await handle.createWritable();
+    try {
+      await writable.write(text);
+    } finally {
+      await writable.close();
+    }
+  } catch (error) {
+    throw new FileIOError(handle.name, error);
   }
 }
 
@@ -83,11 +101,15 @@ export async function saveBlob(
       ...options,
       suggestedName: name,
     });
-    const writable = await handle.createWritable();
     try {
-      await writable.write(blob);
-    } finally {
-      await writable.close();
+      const writable = await handle.createWritable();
+      try {
+        await writable.write(blob);
+      } finally {
+        await writable.close();
+      }
+    } catch (error) {
+      throw new FileIOError(handle.name, error);
     }
     return {
       name: handle.name,

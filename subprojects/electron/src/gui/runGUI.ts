@@ -177,7 +177,9 @@ export default async function runGUI() {
         { err: error, hash: rawHash },
         'Failed to open shared model',
       );
+      return { error: true };
     }
+    return undefined;
   });
 
   const openWindow = (request: OpenRequest | undefined) => {

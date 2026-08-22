@@ -6,8 +6,9 @@
 
 import type RefineryContextBridge from '@tools.refinery/frontend/RefineryContextBridge';
 import type {
-  FileResult,
-  OpenFileResult,
+  FileErrorResult,
+  FileResultOrError,
+  OpenFileResultOrError,
   ReadFileResult,
   ServerStateChangeCallback,
   ThemeSource,
@@ -82,30 +83,33 @@ contextBridge.exposeInMainWorld('refinery', {
       );
   },
   async readFile() {
-    return ipcRenderer.invoke('refinery:readFile') as Promise<
-      ReadFileResult | undefined
-    >;
+    return ipcRenderer.invoke('refinery:readFile') as Promise<ReadFileResult>;
   },
   async openFile() {
-    return ipcRenderer.invoke('refinery:openFile') as Promise<
-      OpenFileResult | undefined
-    >;
+    return ipcRenderer.invoke(
+      'refinery:openFile',
+    ) as Promise<OpenFileResultOrError>;
   },
   async clearFile() {
-    await ipcRenderer.invoke('refinery:clearFile');
+    return ipcRenderer.invoke('refinery:clearFile') as Promise<FileErrorResult>;
   },
   async openHash(hash) {
-    await ipcRenderer.invoke('refinery:openHash', hash);
+    return ipcRenderer.invoke(
+      'refinery:openHash',
+      hash,
+    ) as Promise<FileErrorResult>;
   },
   async saveFile(text) {
-    return ipcRenderer.invoke('refinery:saveFile', text) as Promise<
-      FileResult | undefined
-    >;
+    return ipcRenderer.invoke(
+      'refinery:saveFile',
+      text,
+    ) as Promise<FileResultOrError>;
   },
   async saveFileAs(text) {
-    return ipcRenderer.invoke('refinery:saveFileAs', text) as Promise<
-      FileResult | undefined
-    >;
+    return ipcRenderer.invoke(
+      'refinery:saveFileAs',
+      text,
+    ) as Promise<FileResultOrError>;
   },
   openDialog(id) {
     logger.info({ dialogID: id }, 'Opening dialog');

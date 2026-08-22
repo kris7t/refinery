@@ -30,6 +30,11 @@ export type DecompressCallback = (
 
 export type DecompressSource = 'initial' | 'openShare' | 'hashChange';
 
+export type DecompressErrorCallback = (
+  source: DecompressSource,
+  error: Error,
+) => void;
+
 interface CompressionInput {
   version: CompressorVersion;
   text: string;
@@ -95,7 +100,10 @@ export default class Compressor {
 
   private disposed = false;
 
-  constructor(private readonly onDecompressed: DecompressCallback) {
+  constructor(
+    private readonly onDecompressed: DecompressCallback,
+    private readonly onDecompressError: DecompressErrorCallback,
+  ) {
     if (!isElectron) {
       window.addEventListener('hashchange', this.hashChangeHandler);
     }
@@ -119,13 +127,25 @@ export default class Compressor {
 
   decompressInitial(fragment = window.location.hash): void {
     if (!this.updateFragment(fragment, 'initial')) {
+      if (fragment !== '') {
+        this.onDecompressError(
+          'initial',
+          new Error('The initial shared link is invalid'),
+        );
+        return;
+      }
       LOG.debug('Loading default source');
       this.onDecompressed(initialValue, undefined, 'initial');
     }
   }
 
   decompress(fragment: string): void {
-    this.updateFragment(fragment, 'openShare');
+    if (!this.updateFragment(fragment, 'openShare')) {
+      this.onDecompressError(
+        'openShare',
+        new Error('The shared link is invalid'),
+      );
+    }
   }
 
   compress(text: string, visibility?: Record<string, Visibility>): void {
@@ -229,6 +249,10 @@ export default class Compressor {
       payload = V2Payload.parse(JSON.parse(text));
     } catch (err) {
       LOG.error({ err }, 'Failed to parse URI fragment payload');
+      this.onDecompressError(
+        source,
+        err instanceof Error ? err : new Error(String(err)),
+      );
       return;
     }
     this.fragment = task.fragment;
@@ -293,6 +317,8 @@ export default class Compressor {
             for (const { reject } of task.waiters) {
               reject(error);
             }
+          } else {
+            this.onDecompressError(task.source, error);
           }
           LOG.error({ err: error }, 'Error processing compressor request');
           break;
@@ -351,6 +377,9 @@ export default class Compressor {
     }
     this.workerError = error;
     this.rejectCompressionWaiters(error);
+    if (this.activeWorkerTask?.type === 'decompress') {
+      this.onDecompressError(this.activeWorkerTask.source, error);
+    }
     this.activeWorkerTask = undefined;
     this.workerTasks.length = 0;
     this.worker?.terminate();
@@ -359,7 +388,9 @@ export default class Compressor {
   }
 
   private updateHash(source: DecompressSource): void {
-    this.updateFragment(window.location.hash, source);
+    if (!this.updateFragment(window.location.hash, source)) {
+      this.onDecompressError(source, new Error('The shared link is invalid'));
+    }
   }
 
   private updateFragment(fragment: string, source: DecompressSource): boolean {

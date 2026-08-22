@@ -125,6 +125,7 @@ export default class EditorStore {
       visibility: Record<string, Visibility>,
     ) => Promise<string>,
     private readonly openShareInCurrentEditor: (fragment: string) => void,
+    onError: (title: string, body: string) => void,
   ) {
     this.id = nanoid();
     this.state = createEditorState(initialValue, this, themeStore.darkMode);
@@ -137,11 +138,13 @@ export default class EditorStore {
           initialFileName,
           onFileOpened,
           onFileSaved,
+          onError,
         )
       : new FileSystemAccessFileStore(
           initialFileName,
           onFileOpened,
           onFileSaved,
+          onError,
         );
     this.delayedErrors = new EditorErrors(this);
     this.searchPanel = new SearchPanelStore(this);

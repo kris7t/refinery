@@ -8,7 +8,7 @@ import { readFile, writeFile } from 'node:fs/promises';
 import path from 'node:path';
 
 import type {
-  FileResult,
+  FileResultOrError,
   OpenFileResult,
   ReadFileResult,
 } from '@tools.refinery/frontend/RefineryContextBridge';
@@ -27,6 +27,32 @@ import { findWindowByFilePath, getWindowStore } from './WindowStore';
 const logger = getLogger('gui.fileIO');
 
 const FileText = z.string();
+
+class FileOperationError extends Error {
+  constructor(
+    readonly filePath: string,
+    cause: unknown,
+  ) {
+    super('File operation failed', { cause });
+  }
+}
+
+function getFileErrorResult(error: unknown, browserWindow?: BrowserWindow) {
+  let filePath: string | undefined;
+  if (error instanceof FileOperationError) {
+    filePath = error.filePath;
+  } else if (browserWindow !== undefined) {
+    try {
+      filePath = getWindowStore(browserWindow).filePath;
+    } catch {
+      // The original error is more useful and has already been logged.
+    }
+  }
+  return {
+    error: true as const,
+    ...(filePath === undefined ? {} : { name: path.basename(filePath) }),
+  };
+}
 
 const filters = [
   {
@@ -60,7 +86,7 @@ export function focusWindowForFile(
 
 async function readWindowFile(
   browserWindow: BrowserWindow,
-): Promise<ReadFileResult | undefined> {
+): Promise<ReadFileResult> {
   const { filePath, hash } = getWindowStore(browserWindow);
   if (hash !== undefined) {
     return { hash };
@@ -105,7 +131,12 @@ async function openFile(
   if (focusWindowForFile(resolvedPath, browserWindow) !== undefined) {
     return undefined;
   }
-  const text = await readFile(resolvedPath, 'utf-8');
+  let text: string;
+  try {
+    text = await readFile(resolvedPath, 'utf-8');
+  } catch (error) {
+    throw new FileOperationError(resolvedPath, error);
+  }
   getWindowStore(browserWindow).setFilePath(resolvedPath);
   return {
     name: path.basename(resolvedPath),
@@ -116,7 +147,7 @@ async function openFile(
 async function saveFileAs(
   browserWindow: BrowserWindow,
   text: string,
-): Promise<FileResult | undefined> {
+): Promise<FileResultOrError> {
   const windowStore = getWindowStore(browserWindow);
   const result = await dialog.showSaveDialog(browserWindow, {
     defaultPath: windowStore.filePath ?? 'graph.problem',
@@ -126,10 +157,19 @@ async function saveFileAs(
     return undefined;
   }
   const resolvedPath = path.resolve(result.filePath);
-  if (focusWindowForFile(resolvedPath, browserWindow) !== undefined) {
-    return undefined;
+  const existingWindow = findWindowByFilePath(resolvedPath);
+  if (existingWindow !== undefined && existingWindow !== browserWindow) {
+    return {
+      error: true,
+      name: path.basename(resolvedPath),
+      reason: 'alreadyOpen',
+    };
   }
-  await writeFile(resolvedPath, text, 'utf-8');
+  try {
+    await writeFile(resolvedPath, text, 'utf-8');
+  } catch (error) {
+    throw new FileOperationError(resolvedPath, error);
+  }
   windowStore.setFilePath(resolvedPath);
   return {
     name: path.basename(resolvedPath),
@@ -139,7 +179,7 @@ async function saveFileAs(
 async function saveFile(
   browserWindow: BrowserWindow,
   text: string,
-): Promise<FileResult | undefined> {
+): Promise<FileResultOrError> {
   const { filePath } = getWindowStore(browserWindow);
   if (filePath === undefined) {
     return saveFileAs(browserWindow, text);
@@ -152,22 +192,23 @@ async function saveFile(
 
 export default function attachFileIOHandlers(): void {
   ipcMain.handle('refinery:readFile', async (event) => {
+    let browserWindow: BrowserWindow | undefined;
     try {
-      return await readWindowFile(getBrowserWindow(event));
+      browserWindow = getBrowserWindow(event);
+      return await readWindowFile(browserWindow);
     } catch (error) {
       logger.error({ err: error }, 'Failed to read file');
-      // This handler is called right after opening a window,
-      // so we bail by closing it if the file can't be read.
-      BrowserWindow.fromWebContents(event.sender)?.close();
-      return undefined;
+      return getFileErrorResult(error, browserWindow);
     }
   });
   ipcMain.handle('refinery:openFile', async (event) => {
+    let browserWindow: BrowserWindow | undefined;
     try {
-      return await openFile(getBrowserWindow(event));
+      browserWindow = getBrowserWindow(event);
+      return await openFile(browserWindow);
     } catch (error) {
       logger.error({ err: error }, 'Failed to open file');
-      return undefined;
+      return getFileErrorResult(error, browserWindow);
     }
   });
   ipcMain.handle('refinery:clearFile', (event) => {
@@ -175,22 +216,28 @@ export default function attachFileIOHandlers(): void {
       getWindowStore(getBrowserWindow(event)).setFilePath(undefined);
     } catch (error) {
       logger.error({ err: error }, 'Failed to clear open file');
+      return { error: true };
     }
+    return undefined;
   });
   ipcMain.handle('refinery:saveFile', async (event, rawText: unknown) => {
+    let browserWindow: BrowserWindow | undefined;
     try {
-      return await saveFile(getBrowserWindow(event), FileText.parse(rawText));
+      browserWindow = getBrowserWindow(event);
+      return await saveFile(browserWindow, FileText.parse(rawText));
     } catch (error) {
       logger.error({ err: error }, 'Failed to save file');
-      return undefined;
+      return getFileErrorResult(error, browserWindow);
     }
   });
   ipcMain.handle('refinery:saveFileAs', async (event, rawText: unknown) => {
+    let browserWindow: BrowserWindow | undefined;
     try {
-      return await saveFileAs(getBrowserWindow(event), FileText.parse(rawText));
+      browserWindow = getBrowserWindow(event);
+      return await saveFileAs(browserWindow, FileText.parse(rawText));
     } catch (error) {
       logger.error({ err: error }, 'Failed to save file as');
-      return undefined;
+      return getFileErrorResult(error, browserWindow);
     }
   });
 }

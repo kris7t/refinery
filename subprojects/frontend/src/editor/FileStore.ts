@@ -9,18 +9,54 @@ import { computed, makeObservable, observable } from 'mobx';
 export default abstract class FileStore {
   fileName: string | undefined;
 
-  constructor(initialFileName: string | undefined) {
+  constructor(
+    initialFileName: string | undefined,
+    private readonly onError: (title: string, body: string) => void,
+  ) {
     this.fileName = initialFileName;
-    makeObservable(this, {
+    makeObservable<
+      FileStore,
+      'openFileFailed' | 'reportError' | 'saveFileFailed'
+    >(this, {
       fileName: observable,
       simpleName: computed,
       simpleNameOrFallback: computed,
       clearFile: false,
+      reportError: false,
       openFile: false,
+      openFileFailed: false,
       openShare: false,
+      saveFileFailed: false,
       saveFile: false,
       saveFileAs: false,
     });
+  }
+
+  protected reportError(title: string, body: string, error?: unknown): void {
+    if (error instanceof DOMException && error.name === 'AbortError') {
+      return;
+    }
+    this.onError(title, body);
+  }
+
+  protected openFileFailed(fileName?: string, error?: unknown): void {
+    this.reportError(
+      'Failed to open file',
+      fileName === undefined
+        ? 'The selected file could not be opened.'
+        : `The selected file “${fileName}” could not be opened.`,
+      error,
+    );
+  }
+
+  protected saveFileFailed(fileName?: string, error?: unknown): void {
+    this.reportError(
+      'Failed to save file',
+      fileName === undefined
+        ? 'The file could not be saved.'
+        : `The file “${fileName}” could not be saved.`,
+      error,
+    );
   }
 
   get simpleName(): string | undefined {

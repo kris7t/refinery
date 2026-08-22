@@ -24,10 +24,29 @@ export const OpenFileResult = FileResult.extend({ text: z.string() });
 
 export type OpenFileResult = z.infer<typeof OpenFileResult>;
 
-export const ReadFileResult = z.union([
-  OpenFileResult,
-  z.object({ hash: z.string() }),
-]);
+const FileError = z.object({
+  error: z.literal(true),
+  name: z.string().optional(),
+  reason: z.enum(['alreadyOpen']).optional(),
+});
+
+export const FileErrorResult = FileError.optional();
+
+export type FileErrorResult = z.infer<typeof FileErrorResult>;
+
+export const FileResultOrError = z.union([FileResult, FileError]).optional();
+
+export type FileResultOrError = z.infer<typeof FileResultOrError>;
+
+export const OpenFileResultOrError = z
+  .union([OpenFileResult, FileError])
+  .optional();
+
+export type OpenFileResultOrError = z.infer<typeof OpenFileResultOrError>;
+
+export const ReadFileResult = z
+  .union([OpenFileResult, z.object({ hash: z.string() }), FileError])
+  .optional();
 
 export type ReadFileResult = z.infer<typeof ReadFileResult>;
 
@@ -38,12 +57,12 @@ export default interface RefineryContextBridge {
   onServerStateChange(callback: ServerStateChangeCallback): void;
   setThemeSource(themeSource: ThemeSource): void;
   onThemeSourceChange(callback: ThemeSourceChangeCallback): void;
-  readFile(): Promise<ReadFileResult | undefined>;
-  openFile(): Promise<OpenFileResult | undefined>;
-  clearFile(): Promise<void>;
-  openHash(hash: string): Promise<void>;
-  saveFile(text: string): Promise<FileResult | undefined>;
-  saveFileAs(text: string): Promise<FileResult | undefined>;
+  readFile(): Promise<ReadFileResult>;
+  openFile(): Promise<OpenFileResultOrError>;
+  clearFile(): Promise<FileErrorResult>;
+  openHash(hash: string): Promise<FileErrorResult>;
+  saveFile(text: string): Promise<FileResultOrError>;
+  saveFileAs(text: string): Promise<FileResultOrError>;
   openDialog(id: string): void;
   closeDialog(id: string): void;
 }

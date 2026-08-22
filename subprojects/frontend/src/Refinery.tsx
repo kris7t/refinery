@@ -8,6 +8,7 @@ import Grow from '@mui/material/Grow';
 import Stack from '@mui/material/Stack';
 import { SnackbarProvider } from 'notistack';
 
+import ErrorDialog from './ErrorDialog';
 import TopBar from './TopBar';
 import UpdateNotification from './UpdateNotification';
 import WorkArea from './WorkArea';
@@ -16,6 +17,7 @@ export default function Refinery(): React.ReactElement {
   return (
     <SnackbarProvider TransitionComponent={Grow}>
       <UpdateNotification />
+      <ErrorDialog />
       <Stack direction="column" sx={{ height: '100%', overflow: 'auto' }}>
         <TopBar />
         <WorkArea />

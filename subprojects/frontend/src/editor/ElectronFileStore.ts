@@ -7,7 +7,11 @@
 import { action, makeObservable } from 'mobx';
 
 import type RefineryContextBridge from '../RefineryContextBridge';
-import type { FileResult, OpenFileResult } from '../RefineryContextBridge';
+import type {
+  FileResult,
+  FileResultOrError,
+  OpenFileResultOrError,
+} from '../RefineryContextBridge';
 import getLogger from '../utils/getLogger';
 
 import FileStore from './FileStore';
@@ -20,48 +24,88 @@ export default class ElectronFileStore extends FileStore {
     initialFileName: string | undefined,
     private readonly onFileOpened: (text: string) => void,
     private readonly onFileSaved: () => void,
+    onError: (title: string, body: string) => void,
   ) {
-    super(initialFileName);
-    makeObservable<ElectronFileStore, 'fileOpened' | 'fileSaved' | 'setFile'>(
-      this,
-      {
-        clearFile: action,
-        openFile: action,
-        openShare: false,
-        fileOpened: action,
-        saveFile: action,
-        saveFileAs: action,
-        fileSaved: action,
-        setFile: action,
-      },
-    );
+    super(initialFileName, onError);
+    makeObservable<
+      ElectronFileStore,
+      | 'clearFileFailed'
+      | 'fileOpened'
+      | 'fileAlreadyOpen'
+      | 'fileSaved'
+      | 'openShareFailed'
+      | 'setFile'
+    >(this, {
+      clearFile: action,
+      clearFileFailed: false,
+      openFile: action,
+      openShare: false,
+      openShareFailed: false,
+      fileOpened: action,
+      fileAlreadyOpen: false,
+      saveFile: action,
+      saveFileAs: action,
+      fileSaved: action,
+      setFile: action,
+    });
   }
 
   openFile(): boolean {
     this.refinery
       .openFile()
       .then((result) => this.fileOpened(result))
-      .catch((err: unknown) => log.error({ err }, 'Failed to open file'));
+      .catch((err: unknown) => {
+        log.error({ err }, 'Failed to open file');
+        this.openFileFailed(undefined, err);
+      });
     return true;
   }
 
   clearFile(): void {
+    const { fileName } = this;
     this.fileName = undefined;
     this.refinery
       .clearFile()
-      .catch((err: unknown) => log.error({ err }, 'Failed to clear open file'));
+      .then((result) => {
+        if (result !== undefined) {
+          this.clearFileFailed(result.name ?? fileName);
+        }
+      })
+      .catch((err: unknown) => {
+        log.error({ err }, 'Failed to clear open file');
+        this.clearFileFailed(fileName);
+      });
+  }
+
+  private clearFileFailed(fileName: string | undefined): void {
+    this.reportError(
+      'Failed to open shared link safely',
+      fileName === undefined
+        ? 'Do not save this window, because it may overwrite the previously opened file. Close the window and try opening the shared link again.'
+        : `Do not save this window, because it may overwrite the file “${fileName}”. Close the window and try opening the shared link again.`,
+    );
   }
 
   openShare(fragment: string): void {
     this.refinery
       .openHash(fragment)
-      .catch((err: unknown) =>
-        log.error({ err }, 'Failed to open shared model'),
-      );
+      .then((result) => {
+        if (result !== undefined) {
+          this.openShareFailed();
+        }
+      })
+      .catch((err: unknown) => {
+        log.error({ err }, 'Failed to open shared model');
+        this.openShareFailed(err);
+      });
   }
 
-  private fileOpened(result: OpenFileResult | undefined): void {
+  private fileOpened(result: OpenFileResultOrError): void {
     if (result === undefined) {
+      return;
+    }
+    if ('error' in result) {
+      this.openFileFailed(result.name);
       return;
     }
     this.onFileOpened(result.text);
@@ -72,7 +116,10 @@ export default class ElectronFileStore extends FileStore {
     this.refinery
       .saveFile(text)
       .then((result) => this.fileSaved(result))
-      .catch((err: unknown) => log.error({ err }, 'Failed to save file'));
+      .catch((err: unknown) => {
+        log.error({ err }, 'Failed to save file');
+        this.saveFileFailed(this.fileName, err);
+      });
     return true;
   }
 
@@ -80,12 +127,23 @@ export default class ElectronFileStore extends FileStore {
     this.refinery
       .saveFileAs(text)
       .then((result) => this.fileSaved(result))
-      .catch((err: unknown) => log.error({ err }, 'Failed to save file'));
+      .catch((err: unknown) => {
+        log.error({ err }, 'Failed to save file as');
+        this.saveFileFailed(undefined, err);
+      });
     return true;
   }
 
-  private fileSaved(result: FileResult | undefined): void {
+  private fileSaved(result: FileResultOrError): void {
     if (result === undefined) {
+      return;
+    }
+    if ('error' in result) {
+      if (result.reason === 'alreadyOpen') {
+        this.fileAlreadyOpen(result.name);
+        return;
+      }
+      this.saveFileFailed(result.name);
       return;
     }
     this.setFile(result);
@@ -95,5 +153,22 @@ export default class ElectronFileStore extends FileStore {
   private setFile({ name }: FileResult): void {
     log.info('Opened file: %s', name);
     this.fileName = name;
+  }
+
+  private openShareFailed(error?: unknown): void {
+    this.reportError(
+      'Failed to open shared link',
+      'The shared link could not be opened.',
+      error,
+    );
+  }
+
+  private fileAlreadyOpen(fileName: string | undefined): void {
+    this.reportError(
+      'Failed to save file',
+      fileName === undefined
+        ? 'The selected file is already open in another window.'
+        : `The file “${fileName}” is already open in another window.`,
+    );
   }
 }
