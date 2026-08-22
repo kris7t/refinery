@@ -4,9 +4,6 @@
  * SPDX-License-Identifier: EPL-2.0
  */
 
-/* eslint-disable-next-line import/no-unresolved --
-  This module is only available during bundling.
-*/
 import { ThemeSource } from '@tools.refinery/frontend/RefineryContextBridge';
 import { color } from 'd3-color';
 import {

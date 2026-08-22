@@ -51,6 +51,7 @@ describe('shared URIs', () => {
 
   test.each([
     'https://refinery.tools',
+    'https://refinery.tools/#/3/compressed-model',
     'refinery://settings/#/2/compressed-model',
     'refinery://open/model#/2/compressed-model',
     'other://open/#/2/compressed-model',

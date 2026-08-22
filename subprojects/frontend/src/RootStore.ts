@@ -26,7 +26,9 @@ import fetchBackendConfig, {
 const log = getLogger('RootStore');
 
 export default class RootStore {
-  private readonly compressor = new Compressor(this.setInitialValue.bind(this));
+  private readonly compressor = new Compressor(
+    this.setDecompressedValue.bind(this),
+  );
 
   private initialValue: string | undefined;
 
@@ -111,6 +113,17 @@ export default class RootStore {
     }
   }
 
+  private setDecompressedValue(
+    value: string,
+    visibility: Record<string, Visibility> | undefined,
+  ): void {
+    if (this.editorStore === undefined) {
+      this.setInitialValue(value, visibility);
+    } else {
+      this.editorStore.fileOpened(value, visibility ?? {});
+    }
+  }
+
   setInitialValue(
     initialValue: string,
     visibility: Record<string, Visibility> | undefined,
@@ -124,7 +137,8 @@ export default class RootStore {
     if (
       this.initialValue !== undefined &&
       this.backendConfig !== undefined &&
-      this.editorStoreClass !== undefined
+      this.editorStoreClass !== undefined &&
+      this.editorStore === undefined
     ) {
       const EditorStore = this.editorStoreClass;
       const editorStore = new EditorStore(
@@ -136,9 +150,9 @@ export default class RootStore {
         this.backendConfig,
         this.compressor.compress.bind(this.compressor),
         this.compressor.getShareFragment.bind(this.compressor),
+        this.compressor.decompress.bind(this.compressor),
       );
       this.editorStore = editorStore;
-      this.titleReaction?.();
       this.titleReaction = autorun(() => {
         const { simpleName, unsavedChanges } = editorStore;
         if (simpleName === undefined) {

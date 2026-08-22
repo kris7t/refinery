@@ -6,7 +6,8 @@
 
 import path from 'node:path';
 
-import { app, BrowserWindow, nativeTheme } from 'electron';
+import { isShareFragment } from '@tools.refinery/frontend/persistence/shareURI';
+import { app, BrowserWindow, ipcMain, nativeTheme } from 'electron';
 import z from 'zod/v4';
 
 import enableWebContentsLogger from '../logger/enableWebContentsLogger';
@@ -37,6 +38,8 @@ const OpenRequestData = z.union([
 const AdditionalData = z.object({
   requests: z.array(OpenRequestData),
 });
+
+const Hash = z.string().refine(isShareFragment);
 
 const openRequests = new OpenRequestHandler();
 
@@ -164,6 +167,18 @@ export default async function runGUI() {
   // `startServer()` waits for `app.whenReady()` internally, so this is safe to do here.
   attachFileIOHandlers();
   attachNativeThemeHandler();
+
+  ipcMain.handle('refinery:openHash', (_event, rawHash: unknown) => {
+    try {
+      const hash = Hash.parse(rawHash);
+      openRequests.open({ hash });
+    } catch (error) {
+      logger.error(
+        { err: error, hash: rawHash },
+        'Failed to open shared model',
+      );
+    }
+  });
 
   const openWindow = (request: OpenRequest | undefined) => {
     if (request !== undefined && 'filePath' in request) {

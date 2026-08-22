@@ -18,12 +18,9 @@ import {
 } from './compressionMessages';
 import CompressionWorker from './compressionWorker?worker';
 import initialValue from './initialValue';
+import { createShareFragment, parseShareFragment } from './shareURI';
 
 const LOG = getLogger('persistence.Compressor');
-
-const FRAGMENT_PREFIX_V1 = '#/1/';
-
-const FRAGMENT_PREFIX_V2 = '#/2/';
 
 export type DecompressCallback = (
   text: string,
@@ -54,29 +51,6 @@ function sameCompressionInput(
   right: CompressionInput,
 ): boolean {
   return left?.version === right.version && left.text === right.text;
-}
-
-function toFragment(version: CompressorVersion, value: string): string {
-  switch (version) {
-    case 1:
-      return `${FRAGMENT_PREFIX_V1}${value}`;
-    case 2:
-      return `${FRAGMENT_PREFIX_V2}${value}`;
-    default:
-      throw new Error(`Unsupported compressor version: ${String(version)}`);
-  }
-}
-
-function fromFragment(
-  fragment: string,
-): { version: CompressorVersion; text: string } | undefined {
-  if (fragment.startsWith(FRAGMENT_PREFIX_V1)) {
-    return { version: 1, text: fragment.slice(FRAGMENT_PREFIX_V1.length) };
-  }
-  if (fragment.startsWith(FRAGMENT_PREFIX_V2)) {
-    return { version: 2, text: fragment.slice(FRAGMENT_PREFIX_V2.length) };
-  }
-  return undefined;
 }
 
 export default class Compressor {
@@ -147,11 +121,18 @@ export default class Compressor {
   }
 
   decompressInitial(fragment = window.location.hash): void {
-    this.updateFragment(fragment);
+    this.decompress(fragment);
     if (this.fragment === undefined) {
       LOG.debug('Loading default source');
       this.onDecompressed(initialValue);
     }
+  }
+
+  decompress(fragment: string): void {
+    if (!isElectron && window.location.hash !== fragment) {
+      window.history.replaceState(null, '', fragment);
+    }
+    this.updateFragment(fragment);
   }
 
   compress(text: string, visibility?: Record<string, Visibility>): void {
@@ -218,7 +199,7 @@ export default class Compressor {
     compressedText: string,
     updateLocation: boolean,
   ): string {
-    const fragment = toFragment(input.version, compressedText);
+    const fragment = createShareFragment(input.version, compressedText);
     this.fragment = fragment;
     this.fragmentInput = input;
     if (updateLocation) {
@@ -280,7 +261,7 @@ export default class Compressor {
     if (fragment === this.fragment) {
       return;
     }
-    const result = fromFragment(fragment);
+    const result = parseShareFragment(fragment);
     if (result === undefined) {
       return;
     }

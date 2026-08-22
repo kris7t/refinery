@@ -118,6 +118,7 @@ export default class EditorStore {
       text: string,
       visibility: Record<string, Visibility>,
     ) => Promise<string>,
+    private readonly openShareInCurrentEditor: (fragment: string) => void,
   ) {
     this.id = nanoid();
     this.state = createEditorState(initialValue, this, themeStore.darkMode);
@@ -179,13 +180,14 @@ export default class EditorStore {
     );
     makeAutoObservable<
       EditorStore,
-      'client' | 'compressForShare' | 'fileStore'
+      'client' | 'compressForShare' | 'fileStore' | 'openShareInCurrentEditor'
     >(this, {
       id: false,
       state: observable.ref,
       client: observable.ref,
       compressForShare: false,
       fileStore: false,
+      openShareInCurrentEditor: false,
       view: observable.ref,
       searchPanel: false,
       lintPanel: false,
@@ -567,7 +569,7 @@ export default class EditorStore {
     this.unsavedChanges = false;
   }
 
-  private fileOpened(text: string): void {
+  fileOpened(text: string, visibility?: Record<string, Visibility>): void {
     this.dispatch({
       changes: [
         {
@@ -585,6 +587,12 @@ export default class EditorStore {
     this.dispatch({
       effects: [historyCompartment.reconfigure([createHistoryExtension()])],
     });
+    if (visibility !== undefined) {
+      this.graph.visibility.clear();
+      for (const [key, value] of Object.entries(visibility)) {
+        this.graph.visibility.set(key, value);
+      }
+    }
     this.clearUnsavedChanges();
   }
 
@@ -616,6 +624,14 @@ export default class EditorStore {
       this.state.sliceDoc(),
       this.graph.visibilityObject,
     );
+  }
+
+  openShare(fragment: string): void {
+    if (this.fileName === undefined) {
+      this.openShareInCurrentEditor(fragment);
+    } else {
+      this.fileStore.openShare(fragment);
+    }
   }
 
   toggleConcretize(): void {

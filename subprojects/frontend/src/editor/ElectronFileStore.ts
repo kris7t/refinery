@@ -26,6 +26,7 @@ export default class ElectronFileStore extends FileStore {
       this,
       {
         openFile: action,
+        openShare: false,
         fileOpened: action,
         saveFile: action,
         saveFileAs: action,
@@ -41,6 +42,14 @@ export default class ElectronFileStore extends FileStore {
       .then((result) => this.fileOpened(result))
       .catch((err: unknown) => log.error({ err }, 'Failed to open file'));
     return true;
+  }
+
+  openShare(fragment: string): void {
+    this.refinery
+      .openHash(fragment)
+      .catch((err: unknown) =>
+        log.error({ err }, 'Failed to open shared model'),
+      );
   }
 
   private fileOpened(result: OpenFileResult | undefined): void {

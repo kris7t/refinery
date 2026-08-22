@@ -4,6 +4,8 @@
  * SPDX-License-Identifier: EPL-2.0
  */
 
+import path from 'node:path';
+
 import { defineConfig } from 'vitest/config';
 
 export default defineConfig({
@@ -15,6 +17,14 @@ export default defineConfig({
       provider: 'istanbul',
       reportsDirectory: './build/coverage',
       include: ['src/**/*.ts'],
+    },
+  },
+  resolve: {
+    alias: {
+      '@tools.refinery/frontend': path.resolve(
+        import.meta.dirname,
+        '../frontend/src',
+      ),
     },
   },
 });

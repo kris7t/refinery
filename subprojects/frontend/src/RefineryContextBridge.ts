@@ -40,6 +40,7 @@ export default interface RefineryContextBridge {
   onThemeSourceChange(callback: ThemeSourceChangeCallback): void;
   readFile(): Promise<ReadFileResult | undefined>;
   openFile(): Promise<OpenFileResult | undefined>;
+  openHash(hash: string): Promise<void>;
   saveFile(text: string): Promise<FileResult | undefined>;
   saveFileAs(text: string): Promise<FileResult | undefined>;
   openDialog(id: string): void;

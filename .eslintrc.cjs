@@ -12,6 +12,7 @@ const project = [
   path.join(__dirname, 'tsconfig.json'),
   path.join(__dirname, 'subprojects/client-js/tsconfig.json'),
   path.join(__dirname, 'subprojects/docs/tsconfig.json'),
+  path.join(__dirname, 'subprojects/electron/tsconfig.json'),
   path.join(__dirname, 'subprojects/frontend/tsconfig.json'),
   path.join(__dirname, 'subprojects/frontend/tsconfig.node.json'),
   path.join(__dirname, 'subprojects/frontend/tsconfig.shared.json'),

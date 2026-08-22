@@ -7,20 +7,24 @@
 import CheckIcon from '@mui/icons-material/Check';
 import ContentCopyIcon from '@mui/icons-material/ContentCopy';
 import DesktopWindowsIcon from '@mui/icons-material/DesktopWindowsOutlined';
+import FileOpenIcon from '@mui/icons-material/FileOpen';
 import ShareIcon from '@mui/icons-material/Share';
 import Alert from '@mui/material/Alert';
 import Box from '@mui/material/Box';
 import Button from '@mui/material/Button';
 import CircularProgress from '@mui/material/CircularProgress';
+import Divider from '@mui/material/Divider';
 import IconButton from '@mui/material/IconButton';
 import Stack from '@mui/material/Stack';
+import TextField from '@mui/material/TextField';
 import visuallyHidden from '@mui/utils/visuallyHidden';
-import { useId, useRef, useState } from 'react';
+import { type SubmitEvent, useId, useRef, useState } from 'react';
 
 import Dialog from '../Dialog';
 import DialogActionBar from '../DialogActionBar';
 import DialogTitleBar from '../DialogTitleBar';
 import Tooltip from '../Tooltip';
+import { parseShareURI } from '../persistence/shareURI';
 import getLogger from '../utils/getLogger';
 import isElectron from '../utils/isElectron';
 
@@ -49,11 +53,17 @@ export default function ShareButton({
 }): React.ReactElement {
   const copyStatusID = useId();
   const dialogID = useId();
+  const openLinkFormID = useId();
   const requestID = useRef(0);
+  // MUI fixes focus restoration when the trap opens, but opening a shared
+  // link must not return focus to the Share button when the dialog closes.
+  const restoreFocusAfterClose = useRef(true);
+  const shareButtonRef = useRef<HTMLButtonElement>(null);
   const [open, setOpen] = useState(false);
   const [fragment, setFragment] = useState<string>();
   const [error, setError] = useState<string>();
   const [copied, setCopied] = useState(false);
+  const [uriToOpen, setURIToOpen] = useState('');
 
   const close = () => {
     requestID.current += 1;
@@ -69,6 +79,8 @@ export default function ShareButton({
     setFragment(undefined);
     setError(undefined);
     setCopied(false);
+    setURIToOpen('');
+    restoreFocusAfterClose.current = true;
     setOpen(true);
     editorStore
       .getShareFragment()
@@ -91,6 +103,7 @@ export default function ShareButton({
     isElectron || fragment === undefined
       ? undefined
       : createDesktopURI(fragment);
+  const hashToOpen = parseShareURI(uriToOpen);
 
   const copy = () => {
     if (shareURI === undefined) {
@@ -105,10 +118,21 @@ export default function ShareButton({
       });
   };
 
+  const openSharedModel = (event: SubmitEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    if (hashToOpen === undefined || editorStore === undefined) {
+      return;
+    }
+    restoreFocusAfterClose.current = false;
+    editorStore.openShare(hashToOpen);
+    close();
+  };
+
   return (
     <>
       <Tooltip title="Share">
         <IconButton
+          ref={shareButtonRef}
           disabled={editorStore === undefined}
           onClick={show}
           aria-haspopup="dialog"
@@ -124,7 +148,17 @@ export default function ShareButton({
         onClose={close}
         fullWidth
         maxWidth="sm"
-        slotProps={{ paper: { id: dialogID } }}
+        disableRestoreFocus
+        slotProps={{
+          paper: { id: dialogID },
+          transition: {
+            onExited: () => {
+              if (restoreFocusAfterClose.current) {
+                shareButtonRef.current?.focus();
+              }
+            },
+          },
+        }}
       >
         <DialogTitleBar close={close} title="Share model" />
         <Box sx={{ minWidth: 0, p: 2 }}>
@@ -152,7 +186,8 @@ export default function ShareButton({
                   display: 'block',
                   maxWidth: '100%',
                   overflowX: 'auto',
-                  p: 1.5,
+                  px: 1.5,
+                  py: 1,
                   textAlign: 'left',
                   whiteSpace: 'nowrap',
                   width: '100%',
@@ -169,8 +204,42 @@ export default function ShareButton({
               </Box>
             )
           )}
+          <Divider sx={{ my: 2 }}>Open a shared link</Divider>
+          <Box component="form" id={openLinkFormID} onSubmit={openSharedModel}>
+            <TextField
+              label="Shared link"
+              value={uriToOpen}
+              onChange={(event) => setURIToOpen(event.target.value)}
+              error={uriToOpen !== '' && hashToOpen === undefined}
+              helperText={
+                uriToOpen !== '' && hashToOpen === undefined
+                  ? 'Enter a valid shared link'
+                  : undefined
+              }
+              autoComplete="off"
+              fullWidth
+              size="small"
+              spellCheck={false}
+              slotProps={{
+                input: {
+                  sx: (theme) => ({
+                    ...theme.typography.editor,
+                  }),
+                },
+              }}
+            />
+          </Box>
         </Box>
         <DialogActionBar>
+          <Button
+            type="submit"
+            form={openLinkFormID}
+            disabled={hashToOpen === undefined}
+            startIcon={<FileOpenIcon />}
+            color="inherit"
+          >
+            Open link
+          </Button>
           <Button
             disabled={shareURI === undefined}
             onClick={copy}

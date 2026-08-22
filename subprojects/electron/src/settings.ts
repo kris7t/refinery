@@ -7,9 +7,6 @@
 import { readFile, rename, writeFile } from 'node:fs/promises';
 import path from 'node:path';
 
-/* eslint-disable-next-line import/no-unresolved --
-  This module is only available during bundling.
-*/
 import { ThemeSource } from '@tools.refinery/frontend/RefineryContextBridge';
 import { app } from 'electron';
 import { merge } from 'lodash-es';

@@ -16,6 +16,7 @@ export default abstract class FileStore {
       simpleName: computed,
       simpleNameOrFallback: computed,
       openFile: false,
+      openShare: false,
       saveFile: false,
       saveFileAs: false,
     });
@@ -38,6 +39,8 @@ export default abstract class FileStore {
   }
 
   abstract openFile(): boolean;
+
+  abstract openShare(fragment: string): void;
 
   abstract saveFile(text: string): boolean;
 

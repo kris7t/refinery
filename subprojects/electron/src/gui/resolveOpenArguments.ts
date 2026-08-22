@@ -7,6 +7,8 @@
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
+import { parseShareURI } from '@tools.refinery/frontend/persistence/shareURI';
+
 import type { OpenRequest } from './OpenRequestHandler';
 
 export function resolveOpenArgument(
@@ -24,20 +26,8 @@ export function resolveOpenArgument(
     }
   }
   if (/^[a-z][a-z\d+.-]*:\/\//i.test(argument)) {
-    try {
-      const url = new URL(argument);
-      const isWebURL = url.protocol === 'http:' || url.protocol === 'https:';
-      const isRefineryURL =
-        url.protocol === 'refinery:' &&
-        url.hostname.toLowerCase() === 'open' &&
-        (url.pathname === '' || url.pathname === '/');
-      if ((isWebURL || isRefineryURL) && url.hash.startsWith('#/')) {
-        return { hash: url.hash };
-      }
-    } catch {
-      // Ignore malformed URLs.
-    }
-    return undefined;
+    const hash = parseShareURI(argument);
+    return hash === undefined ? undefined : { hash };
   }
   return { filePath: path.resolve(workingDirectory, argument) };
 }
