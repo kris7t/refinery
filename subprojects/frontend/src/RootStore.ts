@@ -17,9 +17,13 @@ import PWAStore from './PWAStore';
 import { ReadFileResult } from './RefineryContextBridge';
 import type EditorStore from './editor/EditorStore';
 import ExportSettingsStore from './graph/export/ExportSettingsStore';
-import Compressor, { type DecompressSource } from './persistence/Compressor';
+import Compressor, {
+  type DecompressFailure,
+  type DecompressSource,
+} from './persistence/Compressor';
 import defaultInitialValue from './persistence/initialValue';
 import ThemeStore from './theme/ThemeStore';
+import isElectron from './utils/isElectron';
 import fetchBackendConfig, {
   type BackendConfigWithDefaults,
 } from './xtext/fetchBackendConfig';
@@ -133,19 +137,39 @@ export default class RootStore {
     );
   }
 
-  private decompressionFailed(source: DecompressSource, error: Error): void {
+  private decompressionFailed(
+    source: DecompressSource,
+    failure: DecompressFailure,
+    error: Error,
+  ): void {
     log.error({ err: error }, 'Failed to decompress shared state');
-    if (source === 'initial') {
-      this.initialFileFailed();
-      return;
+    const defaultLoaded = source === 'initial' && !isElectron;
+    if (defaultLoaded) {
+      this.setDecompressedValue(defaultInitialValue, undefined, source);
+    }
+    let body: string;
+    if (failure === 'workerFailed') {
+      body = defaultLoaded
+        ? 'Shared-link processing is unavailable. The default model was loaded instead.'
+        : 'The shared link could not be opened because shared-link processing is unavailable.';
+    } else {
+      body = defaultLoaded
+        ? 'The shared link is invalid. The default model was loaded instead.'
+        : 'The shared link is invalid and could not be opened.';
     }
     this.showError(
       'Failed to open shared link',
-      'The shared link is invalid and could not be opened.',
+      body,
+      source === 'initial' && isElectron,
     );
   }
 
   showError(title: string, body: string, fatal = false): void {
+    // Once initialization has failed, later recoverable errors must not expose
+    // an application that was never initialized successfully.
+    if (this.errorDialog?.fatal) {
+      return;
+    }
     this.errorDialog = { title, body, fatal };
   }
 

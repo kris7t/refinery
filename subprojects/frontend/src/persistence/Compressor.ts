@@ -30,8 +30,11 @@ export type DecompressCallback = (
 
 export type DecompressSource = 'initial' | 'openShare' | 'hashChange';
 
+export type DecompressFailure = 'invalidFragment' | 'workerFailed';
+
 export type DecompressErrorCallback = (
   source: DecompressSource,
+  failure: DecompressFailure,
   error: Error,
 ) => void;
 
@@ -61,6 +64,9 @@ interface DecompressionTask {
 }
 
 type WorkerTask = CompressionTask | DecompressionTask;
+
+type UpdateFragmentResult =
+  'accepted' | 'invalid' | 'workerFailed' | 'disposed';
 
 function createCompressionInput(
   text: string,
@@ -126,25 +132,38 @@ export default class Compressor {
   }
 
   decompressInitial(fragment = window.location.hash): void {
-    if (!this.updateFragment(fragment, 'initial')) {
-      if (fragment !== '') {
-        this.onDecompressError(
-          'initial',
-          new Error('The initial shared link is invalid'),
-        );
-        return;
-      }
-      LOG.debug('Loading default source');
-      this.onDecompressed(initialValue, undefined, 'initial');
+    if (fragment === '') {
+      this.loadDefault('initial');
+      return;
     }
+    this.reportFragmentUpdateFailure(
+      this.updateFragment(fragment, 'initial'),
+      'initial',
+      'The model link is invalid',
+    );
   }
 
   decompress(fragment: string): void {
-    if (!this.updateFragment(fragment, 'openShare')) {
+    this.reportFragmentUpdateFailure(
+      this.updateFragment(fragment, 'openShare'),
+      'openShare',
+      'The shared link is invalid',
+    );
+  }
+
+  private reportFragmentUpdateFailure(
+    result: UpdateFragmentResult,
+    source: DecompressSource,
+    invalidMessage: string,
+  ): void {
+    if (result === 'invalid') {
       this.onDecompressError(
-        'openShare',
-        new Error('The shared link is invalid'),
+        source,
+        'invalidFragment',
+        new Error(invalidMessage),
       );
+    } else if (result === 'workerFailed' && this.workerError !== undefined) {
+      this.onDecompressError(source, 'workerFailed', this.workerError);
     }
   }
 
@@ -237,6 +256,14 @@ export default class Compressor {
       throw new Error('Missing decompression task');
     }
     const { source } = task;
+    if (
+      !isElectron &&
+      source === 'hashChange' &&
+      window.location.hash !== task.fragment
+    ) {
+      // A later browser navigation superseded this worker response.
+      return;
+    }
     if (version === 1) {
       this.fragment = task.fragment;
       this.fragmentInput = { version, text };
@@ -251,6 +278,7 @@ export default class Compressor {
       LOG.error({ err }, 'Failed to parse URI fragment payload');
       this.onDecompressError(
         source,
+        'invalidFragment',
         err instanceof Error ? err : new Error(String(err)),
       );
       return;
@@ -318,7 +346,7 @@ export default class Compressor {
               reject(error);
             }
           } else {
-            this.onDecompressError(task.source, error);
+            this.onDecompressError(task.source, 'invalidFragment', error);
           }
           LOG.error({ err: error }, 'Error processing compressor request');
           break;
@@ -378,7 +406,11 @@ export default class Compressor {
     this.workerError = error;
     this.rejectCompressionWaiters(error);
     if (this.activeWorkerTask?.type === 'decompress') {
-      this.onDecompressError(this.activeWorkerTask.source, error);
+      this.onDecompressError(
+        this.activeWorkerTask.source,
+        'workerFailed',
+        error,
+      );
     }
     this.activeWorkerTask = undefined;
     this.workerTasks.length = 0;
@@ -388,17 +420,44 @@ export default class Compressor {
   }
 
   private updateHash(source: DecompressSource): void {
-    if (!this.updateFragment(window.location.hash, source)) {
-      this.onDecompressError(source, new Error('The shared link is invalid'));
+    // Compression started for the previous document must not overwrite a
+    // location the user reached with browser navigation.
+    for (const task of [this.activeWorkerTask, ...this.workerTasks]) {
+      if (task?.type === 'compress') {
+        task.updateLocation = false;
+      }
     }
+    const { hash } = window.location;
+    if (hash === '') {
+      this.loadDefault(source);
+      return;
+    }
+    this.reportFragmentUpdateFailure(
+      this.updateFragment(hash, source),
+      source,
+      'The model link is invalid',
+    );
   }
 
-  private updateFragment(fragment: string, source: DecompressSource): boolean {
+  private loadDefault(source: DecompressSource): void {
+    this.fragment = undefined;
+    this.fragmentInput = undefined;
+    LOG.debug('Loading default source');
+    this.onDecompressed(initialValue, undefined, source);
+  }
+
+  private updateFragment(
+    fragment: string,
+    source: DecompressSource,
+  ): UpdateFragmentResult {
     if (fragment === this.fragment) {
-      return true;
+      return 'accepted';
     }
-    if (this.workerError !== undefined || this.disposed) {
-      return false;
+    if (this.workerError !== undefined) {
+      return 'workerFailed';
+    }
+    if (this.disposed) {
+      return 'disposed';
     }
     const pendingTask = [this.activeWorkerTask, ...this.workerTasks].find(
       (task): task is DecompressionTask =>
@@ -406,11 +465,11 @@ export default class Compressor {
     );
     if (pendingTask !== undefined) {
       pendingTask.source = source;
-      return true;
+      return 'accepted';
     }
     const result = parseShareFragment(fragment);
     if (result === undefined) {
-      return false;
+      return 'invalid';
     }
     this.fragmentInput = undefined;
     this.workerTasks.push({
@@ -421,6 +480,6 @@ export default class Compressor {
       source,
     });
     this.startNextWorkerTask();
-    return true;
+    return 'accepted';
   }
 }
