@@ -4,6 +4,7 @@
  * SPDX-License-Identifier: EPL-2.0
  */
 
+import { isUtf8 } from 'node:buffer';
 import { readFile, writeFile } from 'node:fs/promises';
 import path from 'node:path';
 
@@ -37,6 +38,16 @@ class FileOperationError extends Error {
   }
 }
 
+class InvalidUTF8Error extends FileOperationError {}
+
+async function readUTF8File(filePath: string): Promise<string> {
+  const contents = await readFile(filePath);
+  if (!isUtf8(contents)) {
+    throw new InvalidUTF8Error(filePath, new Error('Invalid UTF-8'));
+  }
+  return contents.toString('utf-8');
+}
+
 function getFileErrorResult(error: unknown, browserWindow?: BrowserWindow) {
   let filePath: string | undefined;
   if (error instanceof FileOperationError) {
@@ -51,6 +62,9 @@ function getFileErrorResult(error: unknown, browserWindow?: BrowserWindow) {
   return {
     error: true as const,
     ...(filePath === undefined ? {} : { name: path.basename(filePath) }),
+    ...(error instanceof InvalidUTF8Error
+      ? { reason: 'invalidUtf8' as const }
+      : {}),
   };
 }
 
@@ -96,7 +110,7 @@ async function readWindowFile(
   }
   let text: string;
   try {
-    text = await readFile(filePath, 'utf-8');
+    text = await readUTF8File(filePath);
   } catch (error) {
     if (
       error !== null &&
@@ -133,8 +147,11 @@ async function openFile(
   }
   let text: string;
   try {
-    text = await readFile(resolvedPath, 'utf-8');
+    text = await readUTF8File(resolvedPath);
   } catch (error) {
+    if (error instanceof FileOperationError) {
+      throw error;
+    }
     throw new FileOperationError(resolvedPath, error);
   }
   getWindowStore(browserWindow).setFilePath(resolvedPath);

@@ -108,6 +108,15 @@ export default class ElectronFileStore extends FileStore {
       return;
     }
     if ('error' in result) {
+      if (result.reason === 'invalidUtf8') {
+        this.reportError(
+          'Failed to open file',
+          result.name === undefined
+            ? 'The selected file is not valid UTF-8 and could not be opened.'
+            : `The selected file “${result.name}” is not valid UTF-8 and could not be opened.`,
+        );
+        return;
+      }
       this.openFileFailed(result.name);
       return;
     }

@@ -27,7 +27,7 @@ export type OpenFileResult = z.infer<typeof OpenFileResult>;
 const FileError = z.object({
   error: z.literal(true),
   name: z.string().optional(),
-  reason: z.enum(['alreadyOpen']).optional(),
+  reason: z.enum(['alreadyOpen', 'invalidUtf8']).optional(),
 });
 
 export const FileErrorResult = FileError.optional();

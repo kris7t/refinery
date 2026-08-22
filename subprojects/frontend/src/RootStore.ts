@@ -105,7 +105,10 @@ export default class RootStore {
         .then((result) => ReadFileResult.parse(result))
         .then((result) => {
           if (result !== undefined && 'error' in result) {
-            this.initialFileFailed(result.name);
+            this.initialFileFailed(
+              result.name,
+              result.reason === 'invalidUtf8',
+            );
             return;
           }
           if (result !== undefined && 'hash' in result) {
@@ -127,12 +130,16 @@ export default class RootStore {
     }
   }
 
-  private initialFileFailed(fileName?: string) {
+  private initialFileFailed(fileName?: string, invalidUtf8 = false) {
     this.showError(
       'Failed to open file',
-      fileName === undefined
-        ? 'The requested file could not be opened.'
-        : `The requested file “${fileName}” could not be opened.`,
+      invalidUtf8
+        ? fileName === undefined
+          ? 'The requested file is not valid UTF-8 and could not be opened.'
+          : `The requested file “${fileName}” is not valid UTF-8 and could not be opened.`
+        : fileName === undefined
+          ? 'The requested file could not be opened.'
+          : `The requested file “${fileName}” could not be opened.`,
       true,
     );
   }
