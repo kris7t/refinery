@@ -6,11 +6,11 @@
 
 import { action, makeObservable } from 'mobx';
 
-import type RefineryContextBridge from '../RefineryContextBridge';
-import type {
-  FileResult,
+import RefineryContextBridge, {
+  FileErrorResult,
   FileResultOrError,
   OpenFileResultOrError,
+  type FileResult,
 } from '../RefineryContextBridge';
 import getLogger from '../utils/getLogger';
 
@@ -53,6 +53,7 @@ export default class ElectronFileStore extends FileStore {
   openFile(): boolean {
     this.refinery
       .openFile()
+      .then((result) => OpenFileResultOrError.parse(result))
       .then((result) => this.fileOpened(result))
       .catch((err: unknown) => {
         log.error({ err }, 'Failed to open file');
@@ -66,6 +67,7 @@ export default class ElectronFileStore extends FileStore {
     this.fileName = undefined;
     this.refinery
       .clearFile()
+      .then((result) => FileErrorResult.parse(result))
       .then((result) => {
         if (result !== undefined) {
           this.clearFileFailed(result.name ?? fileName);
@@ -89,6 +91,7 @@ export default class ElectronFileStore extends FileStore {
   openShare(fragment: string): void {
     this.refinery
       .openHash(fragment)
+      .then((result) => FileErrorResult.parse(result))
       .then((result) => {
         if (result !== undefined) {
           this.openShareFailed();
@@ -115,6 +118,7 @@ export default class ElectronFileStore extends FileStore {
   saveFile(text: string): boolean {
     this.refinery
       .saveFile(text)
+      .then((result) => FileResultOrError.parse(result))
       .then((result) => this.fileSaved(result))
       .catch((err: unknown) => {
         log.error({ err }, 'Failed to save file');
@@ -126,6 +130,7 @@ export default class ElectronFileStore extends FileStore {
   saveFileAs(text: string): boolean {
     this.refinery
       .saveFileAs(text)
+      .then((result) => FileResultOrError.parse(result))
       .then((result) => this.fileSaved(result))
       .catch((err: unknown) => {
         log.error({ err }, 'Failed to save file as');

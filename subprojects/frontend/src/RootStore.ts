@@ -14,6 +14,7 @@ import {
 } from 'mobx';
 
 import PWAStore from './PWAStore';
+import { ReadFileResult } from './RefineryContextBridge';
 import type EditorStore from './editor/EditorStore';
 import ExportSettingsStore from './graph/export/ExportSettingsStore';
 import Compressor, { type DecompressSource } from './persistence/Compressor';
@@ -97,6 +98,7 @@ export default class RootStore {
     if (refinery) {
       refinery
         .readFile()
+        .then((result) => ReadFileResult.parse(result))
         .then((result) => {
           if (result !== undefined && 'error' in result) {
             this.initialFileFailed(result.name);

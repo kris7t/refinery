@@ -5,14 +5,17 @@
  */
 
 import { makeAutoObservable, runInAction } from 'mobx';
-import { z } from 'zod/v4';
 
+import {
+  ThemeSource as ThemeSourceSchema,
+  type ThemeSource,
+} from '../RefineryContextBridge';
 import getLogger from '../utils/getLogger';
 import isElectron from '../utils/isElectron';
 
-const ThemePreference = z.enum(['system', 'light', 'dark']);
+const ThemePreference = ThemeSourceSchema;
 
-export type ThemePreference = z.infer<typeof ThemePreference>;
+export type ThemePreference = ThemeSource;
 
 export type SelectedPane = 'code' | 'graph' | 'table' | 'chat';
 
@@ -55,9 +58,15 @@ export default class ThemeStore {
       window.localStorage.getItem(COLOR_IDENTIFIERS_KEY) !== 'false';
     if (window.refinery) {
       window.refinery.onThemeSourceChange((nextPreference) => {
-        if (this.preference !== nextPreference) {
+        const result = ThemePreference.safeParse(nextPreference);
+        if (!result.success) {
+          log.error(
+            { err: result.error },
+            'Received invalid theme source from Electron',
+          );
+        } else if (this.preference !== result.data) {
           runInAction(() => {
-            this.preference = nextPreference;
+            this.preference = result.data;
           });
         }
       });
