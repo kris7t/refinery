@@ -31,6 +31,7 @@ import isElectron from '../utils/isElectron';
 
 import ConnectButton from './ConnectButton';
 import type EditorStore from './EditorStore';
+import ShareButton from './ShareButton';
 
 // Exhastive switch as proven by TypeScript.
 // eslint-disable-next-line consistent-return
@@ -72,8 +73,8 @@ export default observer(function EditorButtons({
           <SaveIcon fontSize="small" />
         </IconButton>
       </Tooltip>
-      {'showSaveFilePicker' in window && (
-        <Tooltip title={`Save as\u2026`}>
+      {('showSaveFilePicker' in window || isElectron) && (
+        <Tooltip title="Save as">
           <IconButton
             disabled={editorStore === undefined}
             onClick={() => editorStore?.saveFileAs()}
@@ -83,6 +84,7 @@ export default observer(function EditorButtons({
           </IconButton>
         </Tooltip>
       )}
+      <ShareButton editorStore={editorStore} />
       <Tooltip title="Undo">
         <IconButton
           disabled={!editorStore?.canUndo}

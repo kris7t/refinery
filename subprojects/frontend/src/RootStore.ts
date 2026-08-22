@@ -135,6 +135,7 @@ export default class RootStore {
         this.themeStore,
         this.backendConfig,
         this.compressor.compress.bind(this.compressor),
+        this.compressor.getShareFragment.bind(this.compressor),
       );
       this.editorStore = editorStore;
       this.titleReaction?.();

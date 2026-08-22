@@ -114,6 +114,10 @@ export default class EditorStore {
     private readonly themeStore: ThemeStore,
     public readonly backendConfig: BackendConfigWithDefaults,
     onUpdate: (text: string, visibility: Record<string, Visibility>) => void,
+    private readonly compressForShare: (
+      text: string,
+      visibility: Record<string, Visibility>,
+    ) => Promise<string>,
   ) {
     this.id = nanoid();
     this.state = createEditorState(initialValue, this, themeStore.darkMode);
@@ -173,10 +177,14 @@ export default class EditorStore {
         });
       },
     );
-    makeAutoObservable<EditorStore, 'client' | 'fileStore'>(this, {
+    makeAutoObservable<
+      EditorStore,
+      'client' | 'compressForShare' | 'fileStore'
+    >(this, {
       id: false,
       state: observable.ref,
       client: observable.ref,
+      compressForShare: false,
       fileStore: false,
       view: observable.ref,
       searchPanel: false,
@@ -601,6 +609,13 @@ export default class EditorStore {
 
   get simpleNameOrFallback(): string {
     return this.fileStore.simpleNameOrFallback;
+  }
+
+  getShareFragment(): Promise<string> {
+    return this.compressForShare(
+      this.state.sliceDoc(),
+      this.graph.visibilityObject,
+    );
   }
 
   toggleConcretize(): void {

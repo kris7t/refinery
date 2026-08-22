@@ -30,6 +30,32 @@ export type DecompressCallback = (
   visibility?: Record<string, Visibility>,
 ) => void;
 
+interface CompressionInput {
+  version: CompressorVersion;
+  text: string;
+}
+
+function createCompressionInput(
+  text: string,
+  visibility?: Record<string, Visibility>,
+): CompressionInput {
+  if (visibility === undefined || Object.keys(visibility).length === 0) {
+    return { version: 1, text };
+  }
+  const payload = {
+    t: text,
+    v: visibility,
+  } satisfies V2Payload;
+  return { version: 2, text: JSON.stringify(payload) };
+}
+
+function sameCompressionInput(
+  left: CompressionInput | undefined,
+  right: CompressionInput,
+): boolean {
+  return left?.version === right.version && left.text === right.text;
+}
+
 function toFragment(version: CompressorVersion, value: string): string {
   switch (version) {
     case 1:
@@ -60,11 +86,11 @@ export default class Compressor {
 
   private fragment: string | undefined;
 
-  private compressing = false;
+  private fragmentInput: CompressionInput | undefined;
 
-  private toCompress: string | undefined;
+  private compressingInput: CompressionInput | undefined;
 
-  private nextVersion: CompressorVersion = 1;
+  private toCompress: CompressionInput | undefined;
 
   constructor(private readonly onDecompressed: DecompressCallback) {
     if (!isElectron) {
@@ -85,9 +111,15 @@ export default class Compressor {
         const message = CompressorResponse.parse(event.data);
         switch (message.response) {
           case 'compressed':
-            this.fragment = toFragment(message.version, message.compressedText);
+            if (this.compressingInput?.version !== message.version) {
+              throw new Error('Unexpected compressed response');
+            }
+            this.setCompressedFragment(
+              this.compressingInput,
+              message.compressedText,
+              true,
+            );
             this.compressionEnded();
-            window.history.replaceState(null, '', this.fragment);
             break;
           case 'decompressed':
             this.processDecompressed(message.version, message.text);
@@ -127,33 +159,91 @@ export default class Compressor {
       // No hash-based links in Electron, so no need to run the compressor.
       return;
     }
-    if (visibility === undefined || Object.keys(visibility).length === 0) {
-      this.doCompress(1, text);
-      return;
-    }
-    const payload = {
-      t: text,
-      v: visibility,
-    } satisfies V2Payload;
-    this.doCompress(2, JSON.stringify(payload));
+    this.doCompress(createCompressionInput(text, visibility));
   }
 
-  private doCompress(version: CompressorVersion, text: string): void {
-    this.toCompress = text;
-    this.nextVersion = version;
-    if (this.compressing) {
+  getShareFragment(
+    text: string,
+    visibility?: Record<string, Visibility>,
+  ): Promise<string> {
+    const input = createCompressionInput(text, visibility);
+    if (
+      this.fragment !== undefined &&
+      sameCompressionInput(this.fragmentInput, input)
+    ) {
+      return Promise.resolve(this.fragment);
+    }
+    return new Promise((resolve, reject) => {
+      const worker = new CompressionWorker();
+      const fail = (error: unknown) => {
+        worker.terminate();
+        reject(error instanceof Error ? error : new Error(String(error)));
+      };
+      worker.onerror = (event) => fail(new Error(event.message));
+      worker.onmessageerror = () =>
+        fail(new Error('Failed to receive compressor worker message'));
+      worker.onmessage = (event) => {
+        try {
+          const message = CompressorResponse.parse(event.data);
+          if (message.response === 'error') {
+            fail(new Error(message.message));
+          } else if (
+            message.response !== 'compressed' ||
+            message.version !== input.version
+          ) {
+            fail(new Error('Unexpected compressor worker response'));
+          } else {
+            const fragment = this.setCompressedFragment(
+              input,
+              message.compressedText,
+              !isElectron,
+            );
+            worker.terminate();
+            resolve(fragment);
+          }
+        } catch (error) {
+          fail(error);
+        }
+      };
+      worker.postMessage({
+        request: 'compress',
+        text: input.text,
+        version: input.version,
+      } satisfies CompressRequest);
+    });
+  }
+
+  private setCompressedFragment(
+    input: CompressionInput,
+    compressedText: string,
+    updateLocation: boolean,
+  ): string {
+    const fragment = toFragment(input.version, compressedText);
+    this.fragment = fragment;
+    this.fragmentInput = input;
+    if (updateLocation) {
+      window.history.replaceState(null, '', fragment);
+    }
+    return fragment;
+  }
+
+  private doCompress(input: CompressionInput): void {
+    this.toCompress = input;
+    if (this.compressingInput !== undefined) {
       return;
     }
-    this.compressing = true;
+    this.compressingInput = input;
+    this.toCompress = undefined;
     this.getWorker().postMessage({
       request: 'compress',
-      text,
-      version,
+      text: input.text,
+      version: input.version,
     } satisfies CompressRequest);
   }
 
   private processDecompressed(version: CompressorVersion, text: string): void {
     if (version === 1) {
+      this.fragmentInput = { version, text };
       this.onDecompressed(text);
       return;
     }
@@ -164,6 +254,7 @@ export default class Compressor {
       LOG.error({ err }, 'Failed to parse URI fragment payload');
       return;
     }
+    this.fragmentInput = { version, text };
     this.onDecompressed(payload.t, payload.v);
   }
 
@@ -173,10 +264,11 @@ export default class Compressor {
   }
 
   private compressionEnded(): void {
-    this.compressing = false;
-    if (this.toCompress !== undefined) {
-      this.doCompress(this.nextVersion, this.toCompress);
-      this.toCompress = undefined;
+    this.compressingInput = undefined;
+    const nextInput = this.toCompress;
+    this.toCompress = undefined;
+    if (nextInput !== undefined) {
+      this.doCompress(nextInput);
     }
   }
 
@@ -193,6 +285,7 @@ export default class Compressor {
       return;
     }
     this.fragment = fragment;
+    this.fragmentInput = undefined;
     this.getWorker().postMessage({
       request: 'decompress',
       compressedText: result.text,

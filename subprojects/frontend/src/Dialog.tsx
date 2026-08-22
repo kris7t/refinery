@@ -20,5 +20,23 @@ export default function Dialog(props: DialogProps) {
     return undefined;
   }, [id, open]);
 
-  return <MuiDialog {...props} />;
+  return (
+    <MuiDialog
+      {...props}
+      slotProps={{
+        ...(props.slotProps ?? {}),
+        backdrop: {
+          ...(props.slotProps?.backdrop ?? {}),
+          sx: {
+            ...((
+              props.slotProps?.backdrop as unknown as {
+                sx?: Record<string, unknown>;
+              }
+            )?.sx ?? {}),
+            appRegion: 'no-drag',
+          },
+        },
+      }}
+    />
+  );
 }

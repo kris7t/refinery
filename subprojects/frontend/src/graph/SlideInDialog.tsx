@@ -4,40 +4,22 @@
  * SPDX-License-Identifier: EPL-2.0
  */
 
-import CloseIcon from '@mui/icons-material/Close';
 import Button from '@mui/material/Button';
-import IconButton from '@mui/material/IconButton';
-import Typography from '@mui/material/Typography';
 import { styled } from '@mui/material/styles';
-import React, { useId } from 'react';
+import React from 'react';
+
+import DialogActionBar from '../DialogActionBar';
+import DialogTitleBar from '../DialogTitleBar';
 
 const SlideInDialogRoot = styled('div', {
   name: 'SlideInDialog-Root',
-  shouldForwardProp: (propName) => propName !== 'dialog',
-})<{ dialog: boolean }>(({ theme, dialog }) => {
+})(({ theme }) => {
   return {
     maxHeight: '100%',
     maxWidth: '100%',
     overflow: 'hidden',
     display: 'flex',
     flexDirection: 'column',
-    appRegion: 'no-drag',
-    '.SlideInDialog-title': {
-      display: 'flex',
-      flexDirection: 'row',
-      alignItems: 'center',
-      padding: theme.spacing(1),
-      paddingLeft: theme.spacing(2),
-      borderBottom: `1px solid ${theme.palette.divider}`,
-      '& h2': {
-        flexGrow: 1,
-      },
-      '.MuiIconButton-root': {
-        flexGrow: 0,
-        flexShrink: 0,
-        marginLeft: theme.spacing(2),
-      },
-    },
     '.MuiFormControlLabel-root': {
       marginLeft: 0,
       paddingTop: theme.spacing(1),
@@ -45,18 +27,6 @@ const SlideInDialogRoot = styled('div', {
       '& + .MuiFormControlLabel-root': {
         paddingTop: 0,
       },
-    },
-    '.SlideInDialog-buttons': {
-      padding: theme.spacing(1),
-      display: 'flex',
-      flexDirection: 'row',
-      justifyContent: 'flex-end',
-      ...(dialog
-        ? {
-            marginTop: theme.spacing(2),
-            borderTop: `1px solid ${theme.palette.divider}`,
-          }
-        : {}),
     },
   };
 });
@@ -74,32 +44,21 @@ export default function SlideInDialog({
   buttons: React.ReactNode | ((close: () => void) => React.ReactNode);
   children?: React.ReactNode;
 }): React.ReactElement {
-  const titleId = useId();
-
   return (
-    <SlideInDialogRoot
-      dialog={dialog ?? false}
-      aria-labelledby={dialog ? titleId : undefined}
-    >
-      {dialog && (
-        <div className="SlideInDialog-title">
-          <Typography variant="h6" component="h2" id={titleId}>
-            {title}
-          </Typography>
-          <IconButton aria-label="Close" onClick={close}>
-            <CloseIcon />
-          </IconButton>
-        </div>
-      )}
+    <SlideInDialogRoot>
+      {dialog && <DialogTitleBar close={close} title={title} />}
       {children}
-      <div className="SlideInDialog-buttons">
+      <DialogActionBar
+        divider={dialog ?? false}
+        sx={dialog ? { mt: 2 } : undefined}
+      >
         {typeof buttons === 'function' ? buttons(close) : buttons}
         {!dialog && (
           <Button color="inherit" onClick={close}>
             Close
           </Button>
         )}
-      </div>
+      </DialogActionBar>
     </SlideInDialogRoot>
   );
 }
