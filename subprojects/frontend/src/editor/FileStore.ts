@@ -15,6 +15,7 @@ export default abstract class FileStore {
       fileName: observable,
       simpleName: computed,
       simpleNameOrFallback: computed,
+      clearFile: false,
       openFile: false,
       openShare: false,
       saveFile: false,
@@ -39,6 +40,8 @@ export default abstract class FileStore {
   }
 
   abstract openFile(): boolean;
+
+  abstract clearFile(): void;
 
   abstract openShare(fragment: string): void;
 

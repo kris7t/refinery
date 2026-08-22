@@ -25,6 +25,7 @@ export default class ElectronFileStore extends FileStore {
     makeObservable<ElectronFileStore, 'fileOpened' | 'fileSaved' | 'setFile'>(
       this,
       {
+        clearFile: action,
         openFile: action,
         openShare: false,
         fileOpened: action,
@@ -42,6 +43,13 @@ export default class ElectronFileStore extends FileStore {
       .then((result) => this.fileOpened(result))
       .catch((err: unknown) => log.error({ err }, 'Failed to open file'));
     return true;
+  }
+
+  clearFile(): void {
+    this.fileName = undefined;
+    this.refinery
+      .clearFile()
+      .catch((err: unknown) => log.error({ err }, 'Failed to clear open file'));
   }
 
   openShare(fragment: string): void {

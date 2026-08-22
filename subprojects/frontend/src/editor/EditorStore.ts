@@ -8,7 +8,13 @@ import type {
   CompletionContext,
   CompletionResult,
 } from '@codemirror/autocomplete';
-import { redo, redoDepth, undo, undoDepth } from '@codemirror/commands';
+import {
+  isolateHistory,
+  redo,
+  redoDepth,
+  undo,
+  undoDepth,
+} from '@codemirror/commands';
 import {
   type Diagnostic,
   setDiagnostics,
@@ -569,8 +575,13 @@ export default class EditorStore {
     this.unsavedChanges = false;
   }
 
-  fileOpened(text: string, visibility?: Record<string, Visibility>): void {
+  private replaceContents(
+    text: string,
+    visibility: Record<string, Visibility> | undefined,
+    transaction: Omit<TransactionSpec, 'changes'>,
+  ): void {
     this.dispatch({
+      ...transaction,
       changes: [
         {
           from: 0,
@@ -578,15 +589,8 @@ export default class EditorStore {
           insert: text,
         },
       ],
-      effects: [historyCompartment.reconfigure([])],
     });
     this.scrollToTop();
-    // Clear history by removing and re-adding the history extension. See
-    // https://stackoverflow.com/a/77943295 and
-    // https://discuss.codemirror.net/t/codemirror-6-cm-clearhistory-equivalent/2851/10
-    this.dispatch({
-      effects: [historyCompartment.reconfigure([createHistoryExtension()])],
-    });
     if (visibility !== undefined) {
       this.graph.visibility.clear();
       for (const [key, value] of Object.entries(visibility)) {
@@ -594,6 +598,44 @@ export default class EditorStore {
       }
     }
     this.clearUnsavedChanges();
+  }
+
+  fileOpened(text: string, visibility?: Record<string, Visibility>): void {
+    this.replaceContents(text, visibility, {
+      effects: [historyCompartment.reconfigure([])],
+    });
+    // Clear history by removing and re-adding the history extension. See
+    // https://stackoverflow.com/a/77943295 and
+    // https://discuss.codemirror.net/t/codemirror-6-cm-clearhistory-equivalent/2851/10
+    this.dispatch({
+      effects: [historyCompartment.reconfigure([createHistoryExtension()])],
+    });
+  }
+
+  sharedModelOpened(
+    text: string,
+    visibility: Record<string, Visibility>,
+  ): void {
+    if (this.fileName === undefined && !this.unsavedChanges) {
+      // No race condition was encountered, there is still no new file and no unsaved changes,
+      // so it's safe to replace the editor contents outright.
+      this.fileOpened(text, visibility);
+      return;
+    }
+    // Preserve any edits that happened in the meantime.
+    this.replaceContents(text, visibility, {
+      // Keep the replacement as a distinct undo step from nearby typing.
+      annotations: [isolateHistory.of('full')],
+    });
+    // A file-open operation may have completed while the shared model was
+    // being decompressed, so detach any file associated in the meantime.
+    if (this.fileName !== undefined) {
+      this.clearFile();
+    }
+  }
+
+  clearFile(): void {
+    this.fileStore.clearFile();
   }
 
   saveFile(): boolean {
@@ -627,7 +669,7 @@ export default class EditorStore {
   }
 
   openShare(fragment: string): void {
-    if (this.fileName === undefined) {
+    if (this.fileName === undefined && !this.unsavedChanges) {
       this.openShareInCurrentEditor(fragment);
     } else {
       this.fileStore.openShare(fragment);

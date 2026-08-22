@@ -170,6 +170,13 @@ export default function attachFileIOHandlers(): void {
       return undefined;
     }
   });
+  ipcMain.handle('refinery:clearFile', (event) => {
+    try {
+      getWindowStore(getBrowserWindow(event)).setFilePath(undefined);
+    } catch (error) {
+      logger.error({ err: error }, 'Failed to clear open file');
+    }
+  });
   ipcMain.handle('refinery:saveFile', async (event, rawText: unknown) => {
     try {
       return await saveFile(getBrowserWindow(event), FileText.parse(rawText));

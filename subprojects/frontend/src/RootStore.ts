@@ -16,7 +16,7 @@ import {
 import PWAStore from './PWAStore';
 import type EditorStore from './editor/EditorStore';
 import ExportSettingsStore from './graph/export/ExportSettingsStore';
-import Compressor from './persistence/Compressor';
+import Compressor, { type DecompressSource } from './persistence/Compressor';
 import defaultInitialValue from './persistence/initialValue';
 import ThemeStore from './theme/ThemeStore';
 import fetchBackendConfig, {
@@ -116,11 +116,17 @@ export default class RootStore {
   private setDecompressedValue(
     value: string,
     visibility: Record<string, Visibility> | undefined,
+    source: DecompressSource,
   ): void {
     if (this.editorStore === undefined) {
       this.setInitialValue(value, visibility);
+    } else if (source === 'openShare') {
+      this.editorStore.sharedModelOpened(value, visibility ?? {});
     } else {
       this.editorStore.fileOpened(value, visibility ?? {});
+      if (source === 'hashChange') {
+        this.editorStore.clearFile();
+      }
     }
   }
 

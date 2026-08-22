@@ -40,6 +40,7 @@ export default class FileSystemAccessFileStore extends FileStore {
       'fileHandle' | 'fileOpened' | 'fileSavedAs' | 'setFile'
     >(this, {
       fileHandle: false,
+      clearFile: action,
       openFile: action,
       openShare: false,
       setFile: action,
@@ -55,6 +56,11 @@ export default class FileSystemAccessFileStore extends FileStore {
       .then((result) => this.fileOpened(result))
       .catch((err: unknown) => log.error({ err }, 'Failed to open file'));
     return true;
+  }
+
+  clearFile(): void {
+    this.fileName = undefined;
+    this.fileHandle = undefined;
   }
 
   openShare(fragment: string): void {

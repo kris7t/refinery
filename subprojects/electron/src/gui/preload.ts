@@ -91,6 +91,9 @@ contextBridge.exposeInMainWorld('refinery', {
       OpenFileResult | undefined
     >;
   },
+  async clearFile() {
+    await ipcRenderer.invoke('refinery:clearFile');
+  },
   async openHash(hash) {
     await ipcRenderer.invoke('refinery:openHash', hash);
   },

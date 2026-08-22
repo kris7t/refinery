@@ -24,13 +24,38 @@ const LOG = getLogger('persistence.Compressor');
 
 export type DecompressCallback = (
   text: string,
-  visibility?: Record<string, Visibility>,
+  visibility: Record<string, Visibility> | undefined,
+  source: DecompressSource,
 ) => void;
+
+export type DecompressSource = 'initial' | 'openShare' | 'hashChange';
 
 interface CompressionInput {
   version: CompressorVersion;
   text: string;
 }
+
+interface CompressionWaiter {
+  resolve: (fragment: string) => void;
+  reject: (error: Error) => void;
+}
+
+interface CompressionTask {
+  type: 'compress';
+  input: CompressionInput;
+  updateLocation: boolean;
+  waiters: CompressionWaiter[];
+}
+
+interface DecompressionTask {
+  type: 'decompress';
+  fragment: string;
+  compressedText: string;
+  version: CompressorVersion;
+  source: DecompressSource;
+}
+
+type WorkerTask = CompressionTask | DecompressionTask;
 
 function createCompressionInput(
   text: string,
@@ -56,15 +81,19 @@ function sameCompressionInput(
 export default class Compressor {
   private worker: Worker | undefined;
 
-  private readonly hashChangeHandler = () => this.updateHash();
+  private readonly hashChangeHandler = () => this.updateHash('hashChange');
 
   private fragment: string | undefined;
 
   private fragmentInput: CompressionInput | undefined;
 
-  private compressingInput: CompressionInput | undefined;
+  private readonly workerTasks: WorkerTask[] = [];
 
-  private toCompress: CompressionInput | undefined;
+  private activeWorkerTask: WorkerTask | undefined;
+
+  private workerError: Error | undefined;
+
+  private disposed = false;
 
   constructor(private readonly onDecompressed: DecompressCallback) {
     if (!isElectron) {
@@ -77,62 +106,26 @@ export default class Compressor {
       return this.worker;
     }
     const worker = new CompressionWorker();
-    worker.onerror = (err) => LOG.error({ err }, 'Worker error');
-    worker.onmessageerror = (err: unknown) =>
-      LOG.error({ err }, 'Worker message error');
-    worker.onmessage = (event) => {
-      try {
-        const message = CompressorResponse.parse(event.data);
-        switch (message.response) {
-          case 'compressed':
-            if (this.compressingInput?.version !== message.version) {
-              throw new Error('Unexpected compressed response');
-            }
-            this.setCompressedFragment(
-              this.compressingInput,
-              message.compressedText,
-              true,
-            );
-            this.compressionEnded();
-            break;
-          case 'decompressed':
-            this.processDecompressed(message.version, message.text);
-            break;
-          case 'error':
-            this.compressionEnded();
-            LOG.error(
-              { message: message.message },
-              'Error processing compressor request',
-            );
-            break;
-          default:
-            LOG.error(
-              { data: event.data as unknown },
-              'Unknown response from compressor worker',
-            );
-            break;
-        }
-      } catch (err) {
-        LOG.error({ err }, 'Error processing worker message');
-      }
-    };
+    worker.onerror = (event) =>
+      this.workerFailed(new Error(event.message || 'Compression worker error'));
+    worker.onmessageerror = () =>
+      this.workerFailed(
+        new Error('Failed to receive compression worker message'),
+      );
+    worker.onmessage = (event) => this.processWorkerMessage(event.data);
     this.worker = worker;
     return worker;
   }
 
   decompressInitial(fragment = window.location.hash): void {
-    this.decompress(fragment);
-    if (this.fragment === undefined) {
+    if (!this.updateFragment(fragment, 'initial')) {
       LOG.debug('Loading default source');
-      this.onDecompressed(initialValue);
+      this.onDecompressed(initialValue, undefined, 'initial');
     }
   }
 
   decompress(fragment: string): void {
-    if (!isElectron && window.location.hash !== fragment) {
-      window.history.replaceState(null, '', fragment);
-    }
-    this.updateFragment(fragment);
+    this.updateFragment(fragment, 'openShare');
   }
 
   compress(text: string, visibility?: Record<string, Visibility>): void {
@@ -140,7 +133,7 @@ export default class Compressor {
       // No hash-based links in Electron, so no need to run the compressor.
       return;
     }
-    this.doCompress(createCompressionInput(text, visibility));
+    this.enqueueCompression(createCompressionInput(text, visibility), true);
   }
 
   getShareFragment(
@@ -155,42 +148,7 @@ export default class Compressor {
       return Promise.resolve(this.fragment);
     }
     return new Promise((resolve, reject) => {
-      const worker = new CompressionWorker();
-      const fail = (error: unknown) => {
-        worker.terminate();
-        reject(error instanceof Error ? error : new Error(String(error)));
-      };
-      worker.onerror = (event) => fail(new Error(event.message));
-      worker.onmessageerror = () =>
-        fail(new Error('Failed to receive compressor worker message'));
-      worker.onmessage = (event) => {
-        try {
-          const message = CompressorResponse.parse(event.data);
-          if (message.response === 'error') {
-            fail(new Error(message.message));
-          } else if (
-            message.response !== 'compressed' ||
-            message.version !== input.version
-          ) {
-            fail(new Error('Unexpected compressor worker response'));
-          } else {
-            const fragment = this.setCompressedFragment(
-              input,
-              message.compressedText,
-              !isElectron,
-            );
-            worker.terminate();
-            resolve(fragment);
-          }
-        } catch (error) {
-          fail(error);
-        }
-      };
-      worker.postMessage({
-        request: 'compress',
-        text: input.text,
-        version: input.version,
-      } satisfies CompressRequest);
+      this.enqueueCompression(input, !isElectron, { resolve, reject });
     });
   }
 
@@ -208,24 +166,62 @@ export default class Compressor {
     return fragment;
   }
 
-  private doCompress(input: CompressionInput): void {
-    this.toCompress = input;
-    if (this.compressingInput !== undefined) {
+  private enqueueCompression(
+    input: CompressionInput,
+    updateLocation: boolean,
+    waiter?: CompressionWaiter,
+  ): void {
+    if (this.workerError !== undefined || this.disposed) {
+      waiter?.reject(
+        this.workerError ?? new Error('Compressor has been disposed'),
+      );
       return;
     }
-    this.compressingInput = input;
-    this.toCompress = undefined;
-    this.getWorker().postMessage({
-      request: 'compress',
-      text: input.text,
-      version: input.version,
-    } satisfies CompressRequest);
+    const matchingTask = [this.activeWorkerTask, ...this.workerTasks].find(
+      (task): task is CompressionTask =>
+        task?.type === 'compress' && sameCompressionInput(task.input, input),
+    );
+    if (matchingTask !== undefined) {
+      matchingTask.updateLocation ||= updateLocation;
+      if (waiter !== undefined) {
+        matchingTask.waiters.push(waiter);
+      }
+      return;
+    }
+    if (waiter === undefined) {
+      const queuedBackgroundTask = this.workerTasks.find(
+        (task): task is CompressionTask =>
+          task.type === 'compress' && task.waiters.length === 0,
+      );
+      if (queuedBackgroundTask !== undefined) {
+        queuedBackgroundTask.input = input;
+        queuedBackgroundTask.updateLocation ||= updateLocation;
+        return;
+      }
+    }
+    this.workerTasks.push({
+      type: 'compress',
+      input,
+      updateLocation,
+      waiters: waiter === undefined ? [] : [waiter],
+    });
+    this.startNextWorkerTask();
   }
 
   private processDecompressed(version: CompressorVersion, text: string): void {
+    const task =
+      this.activeWorkerTask?.type === 'decompress'
+        ? this.activeWorkerTask
+        : undefined;
+    if (task === undefined) {
+      throw new Error('Missing decompression task');
+    }
+    const { source } = task;
     if (version === 1) {
+      this.fragment = task.fragment;
       this.fragmentInput = { version, text };
-      this.onDecompressed(text);
+      this.updateLocationAfterDecompression(task);
+      this.onDecompressed(text, undefined, source);
       return;
     }
     let payload: V2Payload;
@@ -235,42 +231,165 @@ export default class Compressor {
       LOG.error({ err }, 'Failed to parse URI fragment payload');
       return;
     }
+    this.fragment = task.fragment;
     this.fragmentInput = { version, text };
-    this.onDecompressed(payload.t, payload.v);
+    this.updateLocationAfterDecompression(task);
+    this.onDecompressed(payload.t, payload.v, source);
+  }
+
+  private updateLocationAfterDecompression(task: DecompressionTask): void {
+    if (!isElectron && window.location.hash !== task.fragment) {
+      window.history.replaceState(null, '', task.fragment);
+    }
   }
 
   dispose(): void {
+    if (this.disposed) {
+      return;
+    }
     window.removeEventListener('hashchange', this.hashChangeHandler);
+    this.rejectCompressionWaiters(new Error('Compressor has been disposed'));
+    this.activeWorkerTask = undefined;
+    this.workerTasks.length = 0;
     this.worker?.terminate();
+    this.worker = undefined;
+    this.disposed = true;
   }
 
-  private compressionEnded(): void {
-    this.compressingInput = undefined;
-    const nextInput = this.toCompress;
-    this.toCompress = undefined;
-    if (nextInput !== undefined) {
-      this.doCompress(nextInput);
+  private processWorkerMessage(data: unknown): void {
+    try {
+      const message = CompressorResponse.parse(data);
+      const task = this.activeWorkerTask;
+      if (task === undefined) {
+        throw new Error('Unexpected compression worker response');
+      }
+      switch (message.response) {
+        case 'compressed': {
+          if (
+            task.type !== 'compress' ||
+            task.input.version !== message.version
+          ) {
+            throw new Error('Unexpected compressed response');
+          }
+          const fragment = this.setCompressedFragment(
+            task.input,
+            message.compressedText,
+            task.updateLocation,
+          );
+          for (const { resolve } of task.waiters) {
+            resolve(fragment);
+          }
+          break;
+        }
+        case 'decompressed':
+          if (task.type !== 'decompress' || task.version !== message.version) {
+            throw new Error('Unexpected decompressed response');
+          }
+          this.processDecompressed(message.version, message.text);
+          break;
+        case 'error': {
+          const error = new Error(message.message);
+          if (task.type === 'compress') {
+            for (const { reject } of task.waiters) {
+              reject(error);
+            }
+          }
+          LOG.error({ err: error }, 'Error processing compressor request');
+          break;
+        }
+        default:
+          throw new Error('Unknown response from compressor worker');
+      }
+      this.activeWorkerTask = undefined;
+      this.startNextWorkerTask();
+    } catch (err) {
+      this.workerFailed(err instanceof Error ? err : new Error(String(err)));
     }
   }
 
-  private updateHash(): void {
-    this.updateFragment(window.location.hash);
+  private startNextWorkerTask(): void {
+    if (
+      this.activeWorkerTask !== undefined ||
+      this.workerError !== undefined ||
+      this.disposed
+    ) {
+      return;
+    }
+    const task = this.workerTasks.shift();
+    if (task === undefined) {
+      return;
+    }
+    this.activeWorkerTask = task;
+    if (task.type === 'compress') {
+      this.getWorker().postMessage({
+        request: 'compress',
+        text: task.input.text,
+        version: task.input.version,
+      } satisfies CompressRequest);
+    } else {
+      this.getWorker().postMessage({
+        request: 'decompress',
+        compressedText: task.compressedText,
+        version: task.version,
+      } satisfies DecompressRequest);
+    }
   }
 
-  private updateFragment(fragment: string): void {
-    if (fragment === this.fragment) {
+  private rejectCompressionWaiters(error: Error): void {
+    for (const task of [this.activeWorkerTask, ...this.workerTasks]) {
+      if (task?.type === 'compress') {
+        for (const { reject } of task.waiters) {
+          reject(error);
+        }
+      }
+    }
+  }
+
+  private workerFailed(error: Error): void {
+    if (this.workerError !== undefined || this.disposed) {
       return;
+    }
+    this.workerError = error;
+    this.rejectCompressionWaiters(error);
+    this.activeWorkerTask = undefined;
+    this.workerTasks.length = 0;
+    this.worker?.terminate();
+    this.worker = undefined;
+    LOG.error({ err: error }, 'Compression worker failed');
+  }
+
+  private updateHash(source: DecompressSource): void {
+    this.updateFragment(window.location.hash, source);
+  }
+
+  private updateFragment(fragment: string, source: DecompressSource): boolean {
+    if (fragment === this.fragment) {
+      return true;
+    }
+    if (this.workerError !== undefined || this.disposed) {
+      return false;
+    }
+    const pendingTask = [this.activeWorkerTask, ...this.workerTasks].find(
+      (task): task is DecompressionTask =>
+        task?.type === 'decompress' && task.fragment === fragment,
+    );
+    if (pendingTask !== undefined) {
+      pendingTask.source = source;
+      return true;
     }
     const result = parseShareFragment(fragment);
     if (result === undefined) {
-      return;
+      return false;
     }
-    this.fragment = fragment;
     this.fragmentInput = undefined;
-    this.getWorker().postMessage({
-      request: 'decompress',
+    this.workerTasks.push({
+      type: 'decompress',
+      fragment,
       compressedText: result.text,
       version: result.version,
-    } satisfies DecompressRequest);
+      source,
+    });
+    this.startNextWorkerTask();
+    return true;
   }
 }

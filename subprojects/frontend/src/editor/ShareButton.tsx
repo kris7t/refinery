@@ -55,15 +55,12 @@ export default function ShareButton({
   const dialogID = useId();
   const openLinkFormID = useId();
   const requestID = useRef(0);
-  // MUI fixes focus restoration when the trap opens, but opening a shared
-  // link must not return focus to the Share button when the dialog closes.
-  const restoreFocusAfterClose = useRef(true);
-  const shareButtonRef = useRef<HTMLButtonElement>(null);
   const [open, setOpen] = useState(false);
   const [fragment, setFragment] = useState<string>();
   const [error, setError] = useState<string>();
   const [copied, setCopied] = useState(false);
   const [uriToOpen, setURIToOpen] = useState('');
+  const [restoreFocusOnClose, setRestoreFocusOnClose] = useState(true);
 
   const close = () => {
     requestID.current += 1;
@@ -80,7 +77,7 @@ export default function ShareButton({
     setError(undefined);
     setCopied(false);
     setURIToOpen('');
-    restoreFocusAfterClose.current = true;
+    setRestoreFocusOnClose(true);
     setOpen(true);
     editorStore
       .getShareFragment()
@@ -123,7 +120,7 @@ export default function ShareButton({
     if (hashToOpen === undefined || editorStore === undefined) {
       return;
     }
-    restoreFocusAfterClose.current = false;
+    setRestoreFocusOnClose(false);
     editorStore.openShare(hashToOpen);
     close();
   };
@@ -132,7 +129,6 @@ export default function ShareButton({
     <>
       <Tooltip title="Share">
         <IconButton
-          ref={shareButtonRef}
           disabled={editorStore === undefined}
           onClick={show}
           aria-haspopup="dialog"
@@ -148,17 +144,8 @@ export default function ShareButton({
         onClose={close}
         fullWidth
         maxWidth="sm"
-        disableRestoreFocus
-        slotProps={{
-          paper: { id: dialogID },
-          transition: {
-            onExited: () => {
-              if (restoreFocusAfterClose.current) {
-                shareButtonRef.current?.focus();
-              }
-            },
-          },
-        }}
+        disableRestoreFocus={!restoreFocusOnClose}
+        slotProps={{ paper: { id: dialogID } }}
       >
         <DialogTitleBar close={close} title="Share model" />
         <Box sx={{ minWidth: 0, p: 2 }}>
@@ -221,7 +208,7 @@ export default function ShareButton({
               size="small"
               spellCheck={false}
               slotProps={{
-                input: {
+                htmlInput: {
                   sx: (theme) => ({
                     ...theme.typography.editor,
                   }),
