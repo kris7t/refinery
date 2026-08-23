@@ -107,6 +107,16 @@ export default class OpenWindowsStore {
     }
     return undefined;
   }
+
+  findWindowsWithUnsavedChanges(): BrowserWindow[] {
+    const unsavedWindows: BrowserWindow[] = [];
+    for (const [browserWindow, windowStore] of this.windowStores) {
+      if (windowStore.unsavedChanges) {
+        unsavedWindows.push(browserWindow);
+      }
+    }
+    return unsavedWindows;
+  }
 }
 
 export const openWindowsStore = new OpenWindowsStore();

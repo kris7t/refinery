@@ -27,6 +27,7 @@ import getTheme, {
   attachNativeThemeHandler,
   attachWindowThemeHandler,
 } from './getTheme';
+import attachQuitHandler from './quit';
 import resolveOpenArguments, {
   resolveOpenArgument,
 } from './resolveOpenArguments';
@@ -194,6 +195,8 @@ export default async function runGUI() {
   };
 
   // `startServer()` waits for `app.whenReady()` internally, so this is safe to do here.
+  // Register the quit guard before any cleanup handlers can run from `will-quit`.
+  attachQuitHandler();
   attachApplicationMenu(openRequests);
   attachFileIOHandlers(openWindow);
   attachNativeThemeHandler();

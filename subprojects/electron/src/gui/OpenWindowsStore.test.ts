@@ -78,6 +78,24 @@ describe('OpenWindowsStore', () => {
     expect(openWindowsStore.findWindowByFilePath(filePath)).toBeUndefined();
   });
 
+  test('finds windows with unsaved changes', () => {
+    const firstWindow = createBrowserWindow();
+    const secondWindow = createBrowserWindow();
+    openWindowsStore.createWindowStore(firstWindow);
+    const secondWindowStore = openWindowsStore.createWindowStore(secondWindow);
+    secondWindowStore.setUnsavedChanges(true);
+
+    expect(openWindowsStore.findWindowsWithUnsavedChanges()).toEqual([
+      secondWindow,
+    ]);
+
+    secondWindowStore.setUnsavedChanges(false);
+    expect(openWindowsStore.findWindowsWithUnsavedChanges()).toEqual([]);
+
+    firstWindow.emit('closed');
+    secondWindow.emit('closed');
+  });
+
   test('removes and disposes the store when the window is closed', () => {
     const browserWindow = createBrowserWindow();
     const windowStore = openWindowsStore.createWindowStore(browserWindow);
