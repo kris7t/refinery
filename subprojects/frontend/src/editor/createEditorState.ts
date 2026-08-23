@@ -134,6 +134,22 @@ export default function createEditorState(
         { key: 'Mod-Shift-f', run: () => store.formatText() },
         { key: 'Mod-o', run: () => store.openFile() },
         {
+          key: 'Mod-Shift-x',
+          run: () => {
+            store.openShareDialog('copyLink');
+            return true;
+          },
+          preventDefault: true,
+        },
+        {
+          key: 'Mod-Shift-v',
+          run: () => {
+            store.openShareDialog('pasteLink');
+            return true;
+          },
+          preventDefault: true,
+        },
+        {
           key: 'Mod-s',
           run: () => store.saveFile(),
           shift: () => store.saveFileAs(),

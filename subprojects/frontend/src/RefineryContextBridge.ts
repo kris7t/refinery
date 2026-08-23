@@ -16,7 +16,13 @@ export type ThemeSource = z.infer<typeof ThemeSource>;
 
 export type ThemeSourceChangeCallback = (themeSource: ThemeSource) => void;
 
-export const EditorCommand = z.enum(['openFile', 'saveFile', 'saveFileAs']);
+export const EditorCommand = z.enum([
+  'openFile',
+  'saveFile',
+  'saveFileAs',
+  'copyLink',
+  'pasteLink',
+]);
 
 export type EditorCommand = z.infer<typeof EditorCommand>;
 

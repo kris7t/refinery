@@ -122,6 +122,9 @@ export default class EditorStore {
 
   confirmationDialogs: ConfirmationDialogState[] = [];
 
+  shareDialogOpen: 'toolbarButton' | 'copyLink' | 'pasteLink' | undefined =
+    undefined;
+
   hexTypeHashes: string[] = [];
 
   concretize = false;
@@ -815,6 +818,16 @@ export default class EditorStore {
       this.state.sliceDoc(),
       this.graph.visibilityObject,
     );
+  }
+
+  openShareDialog(
+    reason: 'toolbarButton' | 'copyLink' | 'pasteLink' = 'toolbarButton',
+  ): void {
+    this.shareDialogOpen = reason;
+  }
+
+  closeShareDialog(): void {
+    this.shareDialogOpen = undefined;
   }
 
   openShare(fragment: string): void {

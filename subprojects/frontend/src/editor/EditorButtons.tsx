@@ -25,6 +25,7 @@ import ToggleButton from '@mui/material/ToggleButton';
 import ToggleButtonGroup from '@mui/material/ToggleButtonGroup';
 import MuiTooltip from '@mui/material/Tooltip';
 import { observer } from 'mobx-react-lite';
+import { useId } from 'react';
 
 import Tooltip from '../Tooltip';
 import isElectron from '../utils/isElectron';
@@ -32,6 +33,7 @@ import isElectron from '../utils/isElectron';
 import ConnectButton from './ConnectButton';
 import type EditorStore from './EditorStore';
 import ShareButton from './ShareButton';
+import ShareDialog from './ShareDialog';
 
 // Exhastive switch as proven by TypeScript.
 // eslint-disable-next-line consistent-return
@@ -53,6 +55,8 @@ export default observer(function EditorButtons({
 }: {
   editorStore: EditorStore | undefined;
 }): React.ReactElement {
+  const shareDialogID = useId();
+
   return (
     <Stack direction="row" sx={{ flexGrow: 1 }}>
       <Tooltip title="Open">
@@ -84,7 +88,8 @@ export default observer(function EditorButtons({
           </IconButton>
         </Tooltip>
       )}
-      <ShareButton editorStore={editorStore} />
+      <ShareButton editorStore={editorStore} dialogID={shareDialogID} />
+      <ShareDialog editorStore={editorStore} dialogID={shareDialogID} />
       <Tooltip title="Undo">
         <IconButton
           disabled={!editorStore?.canUndo}

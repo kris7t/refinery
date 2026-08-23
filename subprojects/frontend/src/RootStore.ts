@@ -148,6 +148,12 @@ export default class RootStore {
           case 'saveFileAs':
             editorStore.saveFileAs();
             break;
+          case 'copyLink':
+            editorStore.openShareDialog('copyLink');
+            break;
+          case 'pasteLink':
+            editorStore.openShareDialog('pasteLink');
+            break;
         }
       });
       refinery

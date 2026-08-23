@@ -11,6 +11,8 @@ import { isShareFragment } from '@tools.refinery/frontend/persistence/shareURI';
 import {
   app,
   BrowserWindow,
+  clipboard,
+  dialog,
   ipcMain,
   Menu,
   nativeTheme,
@@ -62,6 +64,28 @@ const Hash = z.string().refine(isShareFragment);
 
 const openRequests = new OpenRequestHandler();
 
+function openClipboardSharedLink(): void {
+  let request: OpenRequest | undefined;
+  try {
+    request = resolveOpenArgument(clipboard.readText(), process.cwd());
+  } catch (error) {
+    logger.error({ err: error }, 'Failed to read shared link from clipboard');
+  }
+  if (request === undefined || !('hash' in request)) {
+    void dialog
+      .showMessageBox({
+        type: 'error',
+        title: 'Failed to paste shared link',
+        message: 'The clipboard does not contain a valid shared link.',
+      })
+      .catch((error: unknown) => {
+        logger.error({ err: error }, 'Failed to show clipboard error');
+      });
+    return;
+  }
+  openRequests.open(request);
+}
+
 function sendEditorCommand(
   browserWindow: BaseWindow | undefined,
   command: EditorCommand,
@@ -81,6 +105,8 @@ function sendEditorCommand(
         .catch((error: unknown) => {
           logger.error({ err: error }, 'Failed to select file to open');
         });
+    } else if (command === 'pasteLink') {
+      openClipboardSharedLink();
     }
     return;
   }
@@ -112,6 +138,21 @@ function createApplicationMenu(): void {
           accelerator: 'CommandOrControl+Shift+S',
           click: (_menuItem, browserWindow) => {
             sendEditorCommand(browserWindow, 'saveFileAs');
+          },
+        },
+        { type: 'separator' },
+        {
+          label: 'Share…',
+          accelerator: 'CommandOrControl+Shift+X',
+          click: (_menuItem, browserWindow) => {
+            sendEditorCommand(browserWindow, 'copyLink');
+          },
+        },
+        {
+          label: 'Paste shared link',
+          accelerator: 'CommandOrControl+Shift+V',
+          click: (_menuItem, browserWindow) => {
+            sendEditorCommand(browserWindow, 'pasteLink');
           },
         },
       ],
