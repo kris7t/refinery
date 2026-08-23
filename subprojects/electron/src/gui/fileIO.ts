@@ -23,6 +23,7 @@ import z from 'zod/v4';
 
 import getLogger from '../logger/getLogger';
 
+import type { OpenRequest } from './OpenRequestHandler';
 import { openWindowsStore } from './OpenWindowsStore';
 
 const logger = getLogger('gui.fileIO');
@@ -132,6 +133,8 @@ async function readWindowFile(
 
 async function openFile(
   browserWindow: BrowserWindow,
+  openInNewWindow: boolean,
+  openWindow: (request: OpenRequest) => BrowserWindow,
 ): Promise<OpenFileResult | undefined> {
   const result = await dialog.showOpenDialog(browserWindow, {
     properties: ['openFile'],
@@ -142,7 +145,16 @@ async function openFile(
     return undefined;
   }
   const resolvedPath = path.resolve(filePath);
-  if (focusWindowForFile(resolvedPath, browserWindow) !== undefined) {
+  if (
+    focusWindowForFile(
+      resolvedPath,
+      openInNewWindow ? undefined : browserWindow,
+    ) !== undefined
+  ) {
+    return undefined;
+  }
+  if (openInNewWindow) {
+    openWindow({ filePath: resolvedPath });
     return undefined;
   }
   let text: string;
@@ -207,7 +219,9 @@ async function saveFile(
   };
 }
 
-export default function attachFileIOHandlers(): void {
+export default function attachFileIOHandlers(
+  openWindow: (request: OpenRequest) => BrowserWindow,
+): void {
   ipcMain.handle('refinery:readFile', async (event) => {
     let browserWindow: BrowserWindow | undefined;
     try {
@@ -218,11 +232,16 @@ export default function attachFileIOHandlers(): void {
       return getFileErrorResult(error, browserWindow);
     }
   });
-  ipcMain.handle('refinery:openFile', async (event) => {
+  ipcMain.handle('refinery:openFile', async (event, rawOpenInNewWindow) => {
     let browserWindow: BrowserWindow | undefined;
     try {
       browserWindow = getBrowserWindow(event);
-      return await openFile(browserWindow);
+      const openInNewWindow = z.boolean().optional().parse(rawOpenInNewWindow);
+      return await openFile(
+        browserWindow,
+        openInNewWindow ?? false,
+        openWindow,
+      );
     } catch (error) {
       logger.error({ err: error }, 'Failed to open file');
       return getFileErrorResult(error, browserWindow);

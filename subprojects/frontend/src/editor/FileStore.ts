@@ -26,6 +26,7 @@ export default abstract class FileStore {
       clearFile: false,
       reportError: false,
       openFile: false,
+      openFileInNewWindow: false,
       openFileFailed: false,
       openShare: false,
       saveFileFailed: false,
@@ -78,6 +79,10 @@ export default abstract class FileStore {
   }
 
   abstract openFile(): boolean;
+
+  openFileInNewWindow(): boolean {
+    return false;
+  }
 
   abstract clearFile(): void;
 

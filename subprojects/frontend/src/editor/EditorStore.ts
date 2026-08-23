@@ -600,6 +600,12 @@ export default class EditorStore {
   }
 
   openFile(): boolean {
+    if (
+      (this.unsavedChanges || this.fileName !== undefined) &&
+      this.fileStore.openFileInNewWindow()
+    ) {
+      return true;
+    }
     if (this.unsavedChanges) {
       if (this.hasOpenFileConfirmation) {
         return true;

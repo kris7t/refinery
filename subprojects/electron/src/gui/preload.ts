@@ -85,9 +85,10 @@ contextBridge.exposeInMainWorld('refinery', {
   async readFile() {
     return ipcRenderer.invoke('refinery:readFile') as Promise<ReadFileResult>;
   },
-  async openFile() {
+  async openFile(newWindow) {
     return ipcRenderer.invoke(
       'refinery:openFile',
+      newWindow,
     ) as Promise<OpenFileResultOrError>;
   },
   async clearFile() {

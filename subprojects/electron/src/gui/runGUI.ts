@@ -182,8 +182,18 @@ export default async function runGUI() {
     settings.readSettings(),
   ]);
 
+  const openWindow = (request: OpenRequest | undefined) => {
+    if (request !== undefined && 'filePath' in request) {
+      const existingWindow = focusWindowForFile(request.filePath);
+      if (existingWindow !== undefined) {
+        return existingWindow;
+      }
+    }
+    return createWindow(pageURL, allowedOrigins, request);
+  };
+
   // `startServer()` waits for `app.whenReady()` internally, so this is safe to do here.
-  attachFileIOHandlers();
+  attachFileIOHandlers(openWindow);
   attachNativeThemeHandler();
   const disposeWindowStateReaction = reaction(
     () => {
@@ -217,16 +227,6 @@ export default async function runGUI() {
     }
     return undefined;
   });
-
-  const openWindow = (request: OpenRequest | undefined) => {
-    if (request !== undefined && 'filePath' in request) {
-      const existingWindow = focusWindowForFile(request.filePath);
-      if (existingWindow !== undefined) {
-        return existingWindow;
-      }
-    }
-    return createWindow(pageURL, allowedOrigins, request);
-  };
 
   app.on('activate', () => {
     if (BrowserWindow.getAllWindows().length === 0) {

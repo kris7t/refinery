@@ -33,12 +33,14 @@ export default class ElectronFileStore extends FileStore {
       | 'fileOpened'
       | 'fileAlreadyOpen'
       | 'fileSaved'
+      | 'openFileWithOption'
       | 'openShareFailed'
       | 'setFile'
     >(this, {
       clearFile: action,
       clearFileFailed: false,
       openFile: action,
+      openFileInNewWindow: action,
       openShare: false,
       openShareFailed: false,
       fileOpened: action,
@@ -46,13 +48,22 @@ export default class ElectronFileStore extends FileStore {
       saveFile: action,
       saveFileAs: action,
       fileSaved: action,
+      openFileWithOption: false,
       setFile: action,
     });
   }
 
   openFile(): boolean {
+    return this.openFileWithOption(false);
+  }
+
+  override openFileInNewWindow(): boolean {
+    return this.openFileWithOption(true);
+  }
+
+  private openFileWithOption(newWindow: boolean): boolean {
     this.refinery
-      .openFile()
+      .openFile(newWindow)
       .then((result) => OpenFileResultOrError.parse(result))
       .then((result) => this.fileOpened(result))
       .catch((err: unknown) => {
