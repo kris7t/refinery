@@ -15,6 +15,8 @@ export default class WindowStore {
 
   modalDialogCount = 0;
 
+  unsavedChanges = false;
+
   filePath: string | undefined;
 
   hash: string | undefined;
@@ -39,6 +41,10 @@ export default class WindowStore {
 
   setModalDialogCount(modalDialogCount: number): void {
     this.modalDialogCount = modalDialogCount;
+  }
+
+  setUnsavedChanges(unsavedChanges: boolean): void {
+    this.unsavedChanges = unsavedChanges;
   }
 
   setFilePath(filePath: string | undefined): void {

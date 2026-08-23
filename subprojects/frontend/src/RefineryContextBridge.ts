@@ -70,6 +70,7 @@ export default interface RefineryContextBridge {
   setThemeSource(themeSource: ThemeSource): void;
   onThemeSourceChange(callback: ThemeSourceChangeCallback): void;
   onEditorCommand(callback: EditorCommandCallback): void;
+  setUnsavedChanges(unsavedChanges: boolean): void;
   readFile(): Promise<ReadFileResult>;
   openFile(newWindow?: boolean): Promise<OpenFileResultOrError>;
   clearFile(): Promise<FileErrorResult>;

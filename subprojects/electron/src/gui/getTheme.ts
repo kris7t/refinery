@@ -31,6 +31,8 @@ interface Theme {
 
 const ModalDialogCount = z.int().nonnegative();
 
+const UnsavedChanges = z.boolean();
+
 function blendModalOverlay(inputColor: string, depth: number, opacity = 1) {
   const colorCoords = color(inputColor)?.rgb();
   if (!colorCoords) {
@@ -157,4 +159,29 @@ export function attachNativeThemeHandler(): void {
       logger.error({ err: count.error }, 'Failed to parse ModalDialogCount');
     }
   });
+
+  ipcMain.on(
+    'refinery:setUnsavedChanges',
+    (event, rawUnsavedChanges: unknown) => {
+      const browserWindow = BrowserWindow.fromWebContents(event.sender);
+      if (browserWindow === null) {
+        logger.error(
+          { processId: event.processId },
+          'Invalid setUnsavedChanges from WebContents without a BrowserWindow',
+        );
+        return;
+      }
+      const unsavedChanges = UnsavedChanges.safeParse(rawUnsavedChanges);
+      if (unsavedChanges.success) {
+        openWindowsStore
+          .getWindowStore(browserWindow)
+          .setUnsavedChanges(unsavedChanges.data);
+      } else {
+        logger.error(
+          { err: unsavedChanges.error },
+          'Failed to parse UnsavedChanges',
+        );
+      }
+    },
+  );
 }

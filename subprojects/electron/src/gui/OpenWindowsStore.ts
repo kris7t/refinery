@@ -5,7 +5,7 @@
  */
 
 import type { BrowserWindow } from 'electron';
-import { makeAutoObservable, runInAction } from 'mobx';
+import { makeAutoObservable, observable, runInAction } from 'mobx';
 
 import type { WindowState } from '../settings';
 
@@ -22,7 +22,7 @@ export default class OpenWindowsStore {
     makeAutoObservable<OpenWindowsStore, 'lastActiveWindow' | 'windowStores'>(
       this,
       {
-        lastActiveWindow: false,
+        lastActiveWindow: observable.ref,
         windowStores: false,
       },
     );
@@ -51,7 +51,7 @@ export default class OpenWindowsStore {
       }
     };
     const activate = () => {
-      this.lastActiveWindow = browserWindow;
+      this.setLastActiveWindow(browserWindow);
       updateWindowState();
     };
     const { width, height } = browserWindow.getNormalBounds();
@@ -71,7 +71,7 @@ export default class OpenWindowsStore {
       browserWindow.off('maximize', updateWindowState);
       browserWindow.off('unmaximize', updateWindowState);
       if (this.lastActiveWindow === browserWindow) {
-        this.lastActiveWindow = undefined;
+        this.setLastActiveWindow(undefined);
       }
       if (this.windowStores.get(browserWindow) === windowStore) {
         this.windowStores.delete(browserWindow);
@@ -87,6 +87,16 @@ export default class OpenWindowsStore {
       throw new Error('No WindowStore found for BrowserWindow');
     }
     return windowStore;
+  }
+
+  get lastActiveWindowStore(): WindowStore | undefined {
+    return this.lastActiveWindow === undefined
+      ? undefined
+      : this.windowStores.get(this.lastActiveWindow);
+  }
+
+  private setLastActiveWindow(browserWindow: BrowserWindow | undefined): void {
+    this.lastActiveWindow = browserWindow;
   }
 
   findWindowByFilePath(filePath: string): BrowserWindow | undefined {

@@ -97,6 +97,9 @@ contextBridge.exposeInMainWorld('refinery', {
       editorCommandCallbacks.push(callback);
     }
   },
+  setUnsavedChanges(unsavedChanges) {
+    ipcRenderer.send('refinery:setUnsavedChanges', unsavedChanges);
+  },
   async readFile() {
     return ipcRenderer.invoke('refinery:readFile') as Promise<ReadFileResult>;
   },

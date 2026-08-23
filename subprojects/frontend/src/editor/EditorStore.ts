@@ -38,6 +38,7 @@ import {
 import { nanoid } from 'nanoid';
 
 import type PWAStore from '../PWAStore';
+import type RefineryContextBridge from '../RefineryContextBridge';
 import GraphStore, { type Visibility } from '../graph/GraphStore';
 import type ThemeStore from '../theme/ThemeStore';
 import getLogger from '../utils/getLogger';
@@ -118,6 +119,8 @@ export default class EditorStore {
 
   private readonly fileStore: FileStore;
 
+  private readonly refinery: RefineryContextBridge | undefined;
+
   unsavedChanges = false;
 
   confirmationDialogs: ConfirmationDialogState[] = [];
@@ -154,10 +157,12 @@ export default class EditorStore {
     private readonly onCloseWindow: () => void,
   ) {
     this.id = nanoid();
+    this.refinery = window.refinery;
+    this.setUnsavedChanges(false, true);
     this.state = createEditorState(initialValue, this, themeStore.darkMode);
     const onFileOpened = (text: string) => this.fileOpened(text);
     const onFileSaved = () => this.clearUnsavedChanges();
-    const { refinery } = window;
+    const { refinery } = this;
     this.fileStore = refinery
       ? new ElectronFileStore(
           refinery,
@@ -218,6 +223,7 @@ export default class EditorStore {
       | 'client'
       | 'compressForShare'
       | 'fileStore'
+      | 'refinery'
       | 'openShareInCurrentEditor'
       | 'onCloseWindow'
     >(this, {
@@ -226,6 +232,7 @@ export default class EditorStore {
       client: observable.ref,
       compressForShare: false,
       fileStore: false,
+      refinery: false,
       openShareInCurrentEditor: false,
       onCloseWindow: false,
       confirmationDialogs: observable.ref,
@@ -331,7 +338,7 @@ export default class EditorStore {
     this.state = tr.state;
     this.client?.onTransaction(tr);
     if (tr.docChanged) {
-      this.unsavedChanges = true;
+      this.setUnsavedChanges(true);
     }
   }
 
@@ -724,7 +731,15 @@ export default class EditorStore {
   }
 
   private clearUnsavedChanges(): void {
-    this.unsavedChanges = false;
+    this.setUnsavedChanges(false);
+  }
+
+  private setUnsavedChanges(unsavedChanges: boolean, force = false): void {
+    if (!force && this.unsavedChanges === unsavedChanges) {
+      return;
+    }
+    this.unsavedChanges = unsavedChanges;
+    this.refinery?.setUnsavedChanges(unsavedChanges);
   }
 
   private replaceContents(

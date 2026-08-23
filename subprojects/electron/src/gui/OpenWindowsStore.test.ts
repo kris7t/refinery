@@ -36,6 +36,7 @@ describe('OpenWindowsStore', () => {
     const windowStore = openWindowsStore.createWindowStore(browserWindow);
 
     expect(openWindowsStore.getWindowStore(browserWindow)).toBe(windowStore);
+    expect(isObservableProp(openWindowsStore, 'lastActiveWindow')).toBe(true);
     expect(isObservableProp(openWindowsStore, 'lastActiveWindowState')).toBe(
       true,
     );
