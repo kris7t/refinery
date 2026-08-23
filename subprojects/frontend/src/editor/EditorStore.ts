@@ -65,6 +65,26 @@ import {
 
 const log = getLogger('editor.EditorStore');
 
+export interface ConfirmationAction {
+  label: string;
+  color?: 'inherit' | 'error';
+  defaultAction?: boolean;
+  onClick: (dialogId: string) => void | Promise<void>;
+}
+
+export type ConfirmationDialogKind = 'openFile' | 'close';
+
+export interface ConfirmationDialogState {
+  title: string;
+  body: string;
+  kind: ConfirmationDialogKind;
+  dismissible: boolean;
+  actions: readonly ConfirmationAction[];
+  id: string;
+}
+
+export type ConfirmationDialogConfig = Omit<ConfirmationDialogState, 'id'>;
+
 export default class EditorStore {
   readonly id: string;
 
@@ -100,6 +120,8 @@ export default class EditorStore {
 
   unsavedChanges = false;
 
+  confirmationDialogs: ConfirmationDialogState[] = [];
+
   hexTypeHashes: string[] = [];
 
   concretize = false;
@@ -126,6 +148,7 @@ export default class EditorStore {
     ) => Promise<string>,
     private readonly openShareInCurrentEditor: (fragment: string) => void,
     onError: (title: string, body: string) => void,
+    private readonly onCloseWindow: () => void,
   ) {
     this.id = nanoid();
     this.state = createEditorState(initialValue, this, themeStore.darkMode);
@@ -189,7 +212,11 @@ export default class EditorStore {
     );
     makeAutoObservable<
       EditorStore,
-      'client' | 'compressForShare' | 'fileStore' | 'openShareInCurrentEditor'
+      | 'client'
+      | 'compressForShare'
+      | 'fileStore'
+      | 'openShareInCurrentEditor'
+      | 'onCloseWindow'
     >(this, {
       id: false,
       state: observable.ref,
@@ -197,6 +224,8 @@ export default class EditorStore {
       compressForShare: false,
       fileStore: false,
       openShareInCurrentEditor: false,
+      onCloseWindow: false,
+      confirmationDialogs: observable.ref,
       view: observable.ref,
       searchPanel: false,
       lintPanel: false,
@@ -571,7 +600,118 @@ export default class EditorStore {
   }
 
   openFile(): boolean {
+    if (this.unsavedChanges) {
+      if (this.hasOpenFileConfirmation) {
+        return true;
+      }
+      this.showConfirmation({
+        kind: 'openFile',
+        title: 'Open another file?',
+        body: 'You have unsaved changes. Open another file anyway?',
+        dismissible: true,
+        actions: [
+          {
+            label: 'Open anyway',
+            defaultAction: true,
+            onClick: (dialogId) => {
+              this.dismissConfirmation(dialogId);
+              this.openFileWithoutConfirmation();
+            },
+          },
+          {
+            label: 'Cancel',
+            color: 'inherit',
+            onClick: (dialogId) => this.dismissConfirmation(dialogId),
+          },
+        ],
+      });
+      return true;
+    }
+    return this.openFileWithoutConfirmation();
+  }
+
+  private openFileWithoutConfirmation(): boolean {
     return this.fileStore.openFile();
+  }
+
+  // Called after the platform's beforeunload hook has temporarily prevented closing.
+  closeRequested(): void {
+    if (!this.unsavedChanges) {
+      this.onCloseWindow();
+      return;
+    }
+    if (this.hasCloseConfirmation) {
+      return;
+    }
+    const fileDescription =
+      this.fileName === undefined ? 'this file' : `“${this.fileName}”`;
+    this.showConfirmation({
+      kind: 'close',
+      title: 'Unsaved changes',
+      body: `Save your changes to ${fileDescription} before closing?`,
+      dismissible: true,
+      actions: [
+        {
+          label: 'Save',
+          defaultAction: true,
+          onClick: (dialogId) => this.saveAndClose(dialogId),
+        },
+        {
+          label: 'Close anyway',
+          color: 'error',
+          onClick: (dialogId) => {
+            this.dismissConfirmation(dialogId);
+            this.onCloseWindow();
+          },
+        },
+      ],
+    });
+  }
+
+  get hasCloseConfirmation(): boolean {
+    return this.confirmationDialogs.some(({ kind }) => kind === 'close');
+  }
+
+  get hasOpenFileConfirmation(): boolean {
+    return this.confirmationDialogs.some(({ kind }) => kind === 'openFile');
+  }
+
+  showConfirmation(dialog: ConfirmationDialogConfig): void {
+    this.confirmationDialogs = [
+      ...this.confirmationDialogs,
+      { ...dialog, id: nanoid() },
+    ];
+  }
+
+  dismissConfirmation(dialogId: string): void {
+    this.confirmationDialogs = this.confirmationDialogs.filter(
+      ({ id }) => id !== dialogId,
+    );
+  }
+
+  private saveAndClose(dialogId: string): Promise<void> {
+    return new Promise((resolve) => {
+      let completed = false;
+      const complete = (saved: boolean) => {
+        if (completed) {
+          return;
+        }
+        completed = true;
+        if (saved) {
+          this.dismissConfirmation(dialogId);
+          this.onCloseWindow();
+        }
+        resolve();
+      };
+      try {
+        if (!this.fileStore.saveFile(this.state.sliceDoc(), complete)) {
+          complete(false);
+        }
+      } catch (error) {
+        log.error({ err: error }, 'Failed to save file before closing');
+        complete(false);
+      }
+    });
   }
 
   private clearUnsavedChanges(): void {

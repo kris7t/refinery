@@ -18,7 +18,7 @@ import {
 } from '../utils/fileIO';
 import getLogger from '../utils/getLogger';
 
-import FileStore from './FileStore';
+import FileStore, { type SaveCompletion } from './FileStore';
 
 const log = getLogger('editor.FileSystemAccessFileStore');
 
@@ -86,23 +86,27 @@ export default class FileSystemAccessFileStore extends FileStore {
     this.setFile(result);
   }
 
-  saveFile(text: string): boolean {
+  saveFile(text: string, onComplete?: SaveCompletion): boolean {
     if (this.fileHandle === undefined) {
-      return this.saveFileAs(text);
+      return this.saveFileAs(text, onComplete);
     }
     saveTextFile(this.fileHandle, text)
-      .then(() => this.onFileSaved())
+      .then(() => {
+        this.onFileSaved();
+        onComplete?.(true);
+      })
       .catch((err: unknown) => {
         log.error({ err }, 'Failed to save file');
         this.saveFileFailed(
           err instanceof FileIOError ? err.fileName : undefined,
           err,
         );
+        onComplete?.(false);
       });
     return true;
   }
 
-  saveFileAs(text: string): boolean {
+  saveFileAs(text: string, onComplete?: SaveCompletion): boolean {
     const blob = new Blob([text], {
       type: REFINERY_CONTENT_TYPE,
     });
@@ -111,21 +115,21 @@ export default class FileSystemAccessFileStore extends FileStore {
       this.fileName ?? `${this.simpleNameOrFallback}.problem`,
       FILE_PICKER_OPTIONS,
     )
-      .then((result) => this.fileSavedAs(result))
+      .then((result) => this.fileSavedAs(result, onComplete))
       .catch((err: unknown) => {
         log.error({ err }, 'Failed to save file as');
         this.saveFileFailed(
           err instanceof FileIOError ? err.fileName : undefined,
           err,
         );
+        onComplete?.(false);
       });
     return true;
   }
 
-  private fileSavedAs(result: OpenResult | undefined): void {
-    if (result !== undefined) {
-      this.setFile(result);
-    }
+  private fileSavedAs(result: OpenResult, onComplete?: SaveCompletion): void {
+    this.setFile(result);
     this.onFileSaved();
+    onComplete?.(true);
   }
 }

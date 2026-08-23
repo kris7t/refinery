@@ -95,7 +95,7 @@ export async function saveBlob(
   blob: Blob,
   name: string,
   options: FilePickerOptions,
-): Promise<OpenResult | undefined> {
+): Promise<OpenResult> {
   if ('showSaveFilePicker' in window) {
     const handle = await window.showSaveFilePicker({
       ...options,
@@ -125,7 +125,10 @@ export async function saveBlob(
   } finally {
     window.URL.revokeObjectURL(url);
   }
-  return undefined;
+  return {
+    name,
+    handle: undefined,
+  };
 }
 
 export async function copyBlob(blob: Blob, type?: string): Promise<void> {

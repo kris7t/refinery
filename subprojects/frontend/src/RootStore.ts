@@ -61,13 +61,38 @@ export default class RootStore {
 
   private titleReaction: IReactionDisposer | undefined;
 
+  private closeAllowed = false;
+
+  private readonly beforeUnloadHandler = (event: BeforeUnloadEvent): void => {
+    const { editorStore } = this;
+    if (
+      this.closeAllowed ||
+      !editorStore?.unsavedChanges ||
+      editorStore.hasCloseConfirmation
+    ) {
+      return;
+    }
+    event.preventDefault();
+    event.returnValue = true;
+    if (!isElectron) {
+      // Browsers cannot defer unload for an application-rendered dialog. Let
+      // the platform show its native unsaved-changes prompt instead.
+      return;
+    }
+    editorStore.closeRequested();
+  };
+
   constructor() {
     this.pwaStore = new PWAStore();
     this.themeStore = new ThemeStore();
     this.exportSettingsStore = new ExportSettingsStore();
     makeAutoObservable<
       RootStore,
-      'compressor' | 'editorStoreClass' | 'titleReaction'
+      | 'compressor'
+      | 'editorStoreClass'
+      | 'titleReaction'
+      | 'beforeUnloadHandler'
+      | 'closeAllowed'
     >(this, {
       compressor: false,
       editorStoreClass: false,
@@ -75,7 +100,10 @@ export default class RootStore {
       themeStore: false,
       exportSettingsStore: false,
       titleReaction: false,
+      beforeUnloadHandler: false,
+      closeAllowed: false,
     });
+    window.addEventListener('beforeunload', this.beforeUnloadHandler);
     (async () => {
       const [backendConfig, { default: EditorStore }] = await Promise.all([
         fetchBackendConfig(),
@@ -182,10 +210,20 @@ export default class RootStore {
 
   closeErrorDialog(): void {
     if (this.errorDialog?.fatal) {
-      window.close();
+      this.closeWindow();
       return;
     }
     this.errorDialog = undefined;
+  }
+
+  private closeWindow(): void {
+    this.closeAllowed = true;
+    window.close();
+    // Browsers ignore window.close() for tabs they did not open themselves.
+    // Reset the bypass so a subsequent close still asks about unsaved changes.
+    setTimeout(() => {
+      this.closeAllowed = false;
+    });
   }
 
   private setDecompressedValue(
@@ -233,6 +271,7 @@ export default class RootStore {
         this.compressor.getShareFragment.bind(this.compressor),
         this.compressor.decompress.bind(this.compressor),
         this.showError.bind(this),
+        this.closeWindow.bind(this),
       );
       this.editorStore = editorStore;
       this.titleReaction = autorun(() => {
@@ -261,6 +300,7 @@ export default class RootStore {
     this.titleReaction?.();
     this.editorStore?.dispose();
     this.compressor.dispose();
+    window.removeEventListener('beforeunload', this.beforeUnloadHandler);
     this.disposed = true;
   }
 }

@@ -14,7 +14,7 @@ import RefineryContextBridge, {
 } from '../RefineryContextBridge';
 import getLogger from '../utils/getLogger';
 
-import FileStore from './FileStore';
+import FileStore, { type SaveCompletion } from './FileStore';
 
 const log = getLogger('editor.ElectronFileStore');
 
@@ -124,44 +124,53 @@ export default class ElectronFileStore extends FileStore {
     this.setFile(result);
   }
 
-  saveFile(text: string): boolean {
+  saveFile(text: string, onComplete?: SaveCompletion): boolean {
     this.refinery
       .saveFile(text)
       .then((result) => FileResultOrError.parse(result))
-      .then((result) => this.fileSaved(result))
+      .then((result) => this.fileSaved(result, onComplete))
       .catch((err: unknown) => {
         log.error({ err }, 'Failed to save file');
         this.saveFileFailed(this.fileName, err);
+        onComplete?.(false);
       });
     return true;
   }
 
-  saveFileAs(text: string): boolean {
+  saveFileAs(text: string, onComplete?: SaveCompletion): boolean {
     this.refinery
       .saveFileAs(text)
       .then((result) => FileResultOrError.parse(result))
-      .then((result) => this.fileSaved(result))
+      .then((result) => this.fileSaved(result, onComplete))
       .catch((err: unknown) => {
         log.error({ err }, 'Failed to save file as');
         this.saveFileFailed(undefined, err);
+        onComplete?.(false);
       });
     return true;
   }
 
-  private fileSaved(result: FileResultOrError): void {
+  private fileSaved(
+    result: FileResultOrError,
+    onComplete?: SaveCompletion,
+  ): void {
     if (result === undefined) {
+      onComplete?.(false);
       return;
     }
     if ('error' in result) {
       if (result.reason === 'alreadyOpen') {
         this.fileAlreadyOpen(result.name);
+        onComplete?.(false);
         return;
       }
       this.saveFileFailed(result.name);
+      onComplete?.(false);
       return;
     }
     this.setFile(result);
     this.onFileSaved();
+    onComplete?.(true);
   }
 
   private setFile({ name }: FileResult): void {

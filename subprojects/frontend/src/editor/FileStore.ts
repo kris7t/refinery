@@ -6,6 +6,8 @@
 
 import { computed, makeObservable, observable } from 'mobx';
 
+export type SaveCompletion = (saved: boolean) => void;
+
 export default abstract class FileStore {
   fileName: string | undefined;
 
@@ -81,7 +83,7 @@ export default abstract class FileStore {
 
   abstract openShare(fragment: string): void;
 
-  abstract saveFile(text: string): boolean;
+  abstract saveFile(text: string, onComplete?: SaveCompletion): boolean;
 
-  abstract saveFileAs(text: string): boolean;
+  abstract saveFileAs(text: string, onComplete?: SaveCompletion): boolean;
 }
