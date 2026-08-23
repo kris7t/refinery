@@ -16,6 +16,12 @@ export type ThemeSource = z.infer<typeof ThemeSource>;
 
 export type ThemeSourceChangeCallback = (themeSource: ThemeSource) => void;
 
+export const EditorCommand = z.enum(['openFile', 'saveFile', 'saveFileAs']);
+
+export type EditorCommand = z.infer<typeof EditorCommand>;
+
+export type EditorCommandCallback = (command: EditorCommand) => void;
+
 export const FileResult = z.object({ name: z.string() });
 
 export type FileResult = z.infer<typeof FileResult>;
@@ -57,6 +63,7 @@ export default interface RefineryContextBridge {
   onServerStateChange(callback: ServerStateChangeCallback): void;
   setThemeSource(themeSource: ThemeSource): void;
   onThemeSourceChange(callback: ThemeSourceChangeCallback): void;
+  onEditorCommand(callback: EditorCommandCallback): void;
   readFile(): Promise<ReadFileResult>;
   openFile(newWindow?: boolean): Promise<OpenFileResultOrError>;
   clearFile(): Promise<FileErrorResult>;

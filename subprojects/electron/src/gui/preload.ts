@@ -10,6 +10,8 @@ import type {
   FileResultOrError,
   OpenFileResultOrError,
   ReadFileResult,
+  EditorCommand,
+  EditorCommandCallback,
   ServerStateChangeCallback,
   ThemeSource,
   ThemeSourceChangeCallback,
@@ -24,6 +26,8 @@ const logger = getLogger('gui.preload');
 const serverStateCallbacks: ServerStateChangeCallback[] = [];
 
 const themeSourceCallbacks: ThemeSourceChangeCallback[] = [];
+
+const editorCommandCallbacks: EditorCommandCallback[] = [];
 
 const openDialogs = new Set<string>();
 
@@ -44,6 +48,12 @@ ipcRenderer.on(
     }
   },
 );
+
+ipcRenderer.on('refinery:editorCommand', (_event, command: unknown) => {
+  for (const callback of editorCommandCallbacks) {
+    callback(command as EditorCommand);
+  }
+});
 
 function updateDialogCount() {
   ipcRenderer.send('refinery:setModalDialogCount', openDialogs.size);
@@ -81,6 +91,11 @@ contextBridge.exposeInMainWorld('refinery', {
       .catch((error) =>
         logger.error({ err: error }, 'Failed to get theme source'),
       );
+  },
+  onEditorCommand(callback) {
+    if (typeof callback === 'function') {
+      editorCommandCallbacks.push(callback);
+    }
   },
   async readFile() {
     return ipcRenderer.invoke('refinery:readFile') as Promise<ReadFileResult>;

@@ -788,7 +788,7 @@ export default class EditorStore {
   }
 
   saveFile(): boolean {
-    if (!this.unsavedChanges) {
+    if (this.fileName !== undefined && !this.unsavedChanges) {
       return false;
     }
     return this.fileStore.saveFile(this.state.sliceDoc());

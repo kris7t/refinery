@@ -14,7 +14,7 @@ import {
 } from 'mobx';
 
 import PWAStore from './PWAStore';
-import { ReadFileResult } from './RefineryContextBridge';
+import { EditorCommand, ReadFileResult } from './RefineryContextBridge';
 import type EditorStore from './editor/EditorStore';
 import ExportSettingsStore from './graph/export/ExportSettingsStore';
 import Compressor, {
@@ -128,6 +128,28 @@ export default class RootStore {
     });
     const { refinery } = window;
     if (refinery) {
+      refinery.onEditorCommand((rawCommand) => {
+        const result = EditorCommand.safeParse(rawCommand);
+        if (!result.success) {
+          log.error({ err: result.error }, 'Invalid editor command');
+          return;
+        }
+        const { editorStore } = this;
+        if (editorStore === undefined) {
+          return;
+        }
+        switch (result.data) {
+          case 'openFile':
+            editorStore.openFile();
+            break;
+          case 'saveFile':
+            editorStore.saveFile();
+            break;
+          case 'saveFileAs':
+            editorStore.saveFileAs();
+            break;
+        }
+      });
       refinery
         .readFile()
         .then((result) => ReadFileResult.parse(result))

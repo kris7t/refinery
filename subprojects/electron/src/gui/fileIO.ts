@@ -76,6 +76,22 @@ const filters = [
   },
 ];
 
+export async function selectFilePath(
+  browserWindow?: BrowserWindow,
+): Promise<string | undefined> {
+  const result =
+    browserWindow === undefined
+      ? await dialog.showOpenDialog({ properties: ['openFile'], filters })
+      : await dialog.showOpenDialog(browserWindow, {
+          properties: ['openFile'],
+          filters,
+        });
+  const filePath = result.filePaths[0];
+  return result.canceled || filePath === undefined
+    ? undefined
+    : path.resolve(filePath);
+}
+
 function getBrowserWindow(event: IpcMainInvokeEvent): BrowserWindow {
   const browserWindow = BrowserWindow.fromWebContents(event.sender);
   if (browserWindow === null) {
@@ -136,15 +152,10 @@ async function openFile(
   openInNewWindow: boolean,
   openWindow: (request: OpenRequest) => BrowserWindow,
 ): Promise<OpenFileResult | undefined> {
-  const result = await dialog.showOpenDialog(browserWindow, {
-    properties: ['openFile'],
-    filters,
-  });
-  const filePath = result.filePaths[0];
-  if (result.canceled || filePath === undefined) {
+  const resolvedPath = await selectFilePath(browserWindow);
+  if (resolvedPath === undefined) {
     return undefined;
   }
-  const resolvedPath = path.resolve(filePath);
   if (
     focusWindowForFile(
       resolvedPath,

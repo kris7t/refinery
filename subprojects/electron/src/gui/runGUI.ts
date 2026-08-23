@@ -6,8 +6,18 @@
 
 import path from 'node:path';
 
+import type { EditorCommand } from '@tools.refinery/frontend/RefineryContextBridge';
 import { isShareFragment } from '@tools.refinery/frontend/persistence/shareURI';
-import { app, BrowserWindow, ipcMain, nativeTheme, screen } from 'electron';
+import {
+  app,
+  BrowserWindow,
+  ipcMain,
+  Menu,
+  nativeTheme,
+  screen,
+  type BaseWindow,
+  type MenuItemConstructorOptions,
+} from 'electron';
 import { comparer, reaction } from 'mobx';
 import z from 'zod/v4';
 
@@ -21,7 +31,10 @@ import { isMac, isWindows } from '../utils/platform';
 
 import OpenRequestHandler, { type OpenRequest } from './OpenRequestHandler';
 import { openWindowsStore } from './OpenWindowsStore';
-import attachFileIOHandlers, { focusWindowForFile } from './fileIO';
+import attachFileIOHandlers, {
+  focusWindowForFile,
+  selectFilePath,
+} from './fileIO';
 import getTheme, {
   attachNativeThemeHandler,
   attachWindowThemeHandler,
@@ -48,6 +61,79 @@ const AdditionalData = z.object({
 const Hash = z.string().refine(isShareFragment);
 
 const openRequests = new OpenRequestHandler();
+
+function sendEditorCommand(
+  browserWindow: BaseWindow | undefined,
+  command: EditorCommand,
+): void {
+  const focusedWindow =
+    browserWindow instanceof BrowserWindow
+      ? browserWindow
+      : BrowserWindow.getFocusedWindow();
+  if (focusedWindow === null || focusedWindow === undefined) {
+    if (command === 'openFile') {
+      void selectFilePath()
+        .then((filePath) => {
+          if (filePath !== undefined) {
+            openRequests.open({ filePath });
+          }
+        })
+        .catch((error: unknown) => {
+          logger.error({ err: error }, 'Failed to select file to open');
+        });
+    }
+    return;
+  }
+  focusedWindow.webContents.send('refinery:editorCommand', command);
+}
+
+function createApplicationMenu(): void {
+  const template: MenuItemConstructorOptions[] = [
+    ...(isMac ? [{ role: 'appMenu' as const }] : []),
+    {
+      label: 'File',
+      submenu: [
+        {
+          label: 'Open…',
+          accelerator: 'CommandOrControl+O',
+          click: (_menuItem, browserWindow) => {
+            sendEditorCommand(browserWindow, 'openFile');
+          },
+        },
+        {
+          label: 'Save',
+          accelerator: 'CommandOrControl+S',
+          click: (_menuItem, browserWindow) => {
+            sendEditorCommand(browserWindow, 'saveFile');
+          },
+        },
+        {
+          label: 'Save As…',
+          accelerator: 'CommandOrControl+Shift+S',
+          click: (_menuItem, browserWindow) => {
+            sendEditorCommand(browserWindow, 'saveFileAs');
+          },
+        },
+      ],
+    },
+    { role: 'editMenu' },
+    {
+      label: 'View',
+      submenu: [
+        { role: 'resetZoom' },
+        { role: 'zoomIn' },
+        { role: 'zoomOut' },
+        { type: 'separator' },
+        { role: 'togglefullscreen' },
+        ...(process.isDev
+          ? ([{ type: 'separator' }, { role: 'toggleDevTools' }] as const)
+          : []),
+      ],
+    },
+    { role: 'windowMenu' },
+  ];
+  Menu.setApplicationMenu(Menu.buildFromTemplate(template));
+}
 
 function createWindow(
   pageURL: string,
@@ -193,6 +279,7 @@ export default async function runGUI() {
   };
 
   // `startServer()` waits for `app.whenReady()` internally, so this is safe to do here.
+  createApplicationMenu();
   attachFileIOHandlers(openWindow);
   attachNativeThemeHandler();
   const disposeWindowStateReaction = reaction(
