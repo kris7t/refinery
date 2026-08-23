@@ -23,7 +23,7 @@ import z from 'zod/v4';
 
 import getLogger from '../logger/getLogger';
 
-import { findWindowByFilePath, getWindowStore } from './WindowStore';
+import { openWindowsStore } from './OpenWindowsStore';
 
 const logger = getLogger('gui.fileIO');
 
@@ -54,7 +54,7 @@ function getFileErrorResult(error: unknown, browserWindow?: BrowserWindow) {
     filePath = error.filePath;
   } else if (browserWindow !== undefined) {
     try {
-      filePath = getWindowStore(browserWindow).filePath;
+      filePath = openWindowsStore.getWindowStore(browserWindow).filePath;
     } catch {
       // The original error is more useful and has already been logged.
     }
@@ -87,7 +87,7 @@ export function focusWindowForFile(
   filePath: string,
   excludedWindow?: BrowserWindow,
 ): BrowserWindow | undefined {
-  const existingWindow = findWindowByFilePath(filePath);
+  const existingWindow = openWindowsStore.findWindowByFilePath(filePath);
   if (existingWindow === undefined || existingWindow === excludedWindow) {
     return undefined;
   }
@@ -101,7 +101,7 @@ export function focusWindowForFile(
 async function readWindowFile(
   browserWindow: BrowserWindow,
 ): Promise<ReadFileResult> {
-  const { filePath, hash } = getWindowStore(browserWindow);
+  const { filePath, hash } = openWindowsStore.getWindowStore(browserWindow);
   if (hash !== undefined) {
     return { hash };
   }
@@ -154,7 +154,7 @@ async function openFile(
     }
     throw new FileOperationError(resolvedPath, error);
   }
-  getWindowStore(browserWindow).setFilePath(resolvedPath);
+  openWindowsStore.getWindowStore(browserWindow).setFilePath(resolvedPath);
   return {
     name: path.basename(resolvedPath),
     text,
@@ -165,7 +165,7 @@ async function saveFileAs(
   browserWindow: BrowserWindow,
   text: string,
 ): Promise<FileResultOrError> {
-  const windowStore = getWindowStore(browserWindow);
+  const windowStore = openWindowsStore.getWindowStore(browserWindow);
   const result = await dialog.showSaveDialog(browserWindow, {
     defaultPath: windowStore.filePath ?? 'graph.problem',
     filters,
@@ -174,7 +174,7 @@ async function saveFileAs(
     return undefined;
   }
   const resolvedPath = path.resolve(result.filePath);
-  const existingWindow = findWindowByFilePath(resolvedPath);
+  const existingWindow = openWindowsStore.findWindowByFilePath(resolvedPath);
   if (existingWindow !== undefined && existingWindow !== browserWindow) {
     return {
       error: true,
@@ -197,7 +197,7 @@ async function saveFile(
   browserWindow: BrowserWindow,
   text: string,
 ): Promise<FileResultOrError> {
-  const { filePath } = getWindowStore(browserWindow);
+  const { filePath } = openWindowsStore.getWindowStore(browserWindow);
   if (filePath === undefined) {
     return saveFileAs(browserWindow, text);
   }
@@ -230,7 +230,9 @@ export default function attachFileIOHandlers(): void {
   });
   ipcMain.handle('refinery:clearFile', (event) => {
     try {
-      getWindowStore(getBrowserWindow(event)).setFilePath(undefined);
+      openWindowsStore
+        .getWindowStore(getBrowserWindow(event))
+        .setFilePath(undefined);
     } catch (error) {
       logger.error({ err: error }, 'Failed to clear open file');
       return { error: true };

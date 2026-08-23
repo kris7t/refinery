@@ -4,33 +4,32 @@
  * SPDX-License-Identifier: EPL-2.0
  */
 
-import { EventEmitter } from 'node:events';
-
-import type { BrowserWindow } from 'electron';
 import { isObservableProp } from 'mobx';
 import { describe, expect, test, vi } from 'vitest';
 
-import {
-  createWindowStore,
-  findWindowByFilePath,
-  getWindowStore,
-} from './WindowStore';
+import WindowStore from './WindowStore';
 
-function createBrowserWindow(): BrowserWindow {
-  return new EventEmitter() as BrowserWindow;
-}
+describe('WindowStore', () => {
+  test('tracks observable per-window state', () => {
+    const windowStore = new WindowStore({
+      width: 1024,
+      height: 768,
+      maximized: false,
+    });
 
-describe('WindowStore registry', () => {
-  test('creates an observable store for a BrowserWindow', () => {
-    const browserWindow = createBrowserWindow();
-    const windowStore = createWindowStore(browserWindow);
-
-    expect(getWindowStore(browserWindow)).toBe(windowStore);
     expect(isObservableProp(windowStore, 'modalDialogCount')).toBe(true);
     expect(isObservableProp(windowStore, 'filePath')).toBe(true);
     expect(isObservableProp(windowStore, 'hash')).toBe(true);
+    expect(isObservableProp(windowStore, 'width')).toBe(true);
+    expect(isObservableProp(windowStore, 'height')).toBe(true);
+    expect(isObservableProp(windowStore, 'maximized')).toBe(true);
     expect(windowStore.filePath).toBeUndefined();
     expect(windowStore.hash).toBeUndefined();
+    expect(windowStore.windowState).toEqual({
+      width: 1024,
+      height: 768,
+      maximized: false,
+    });
 
     windowStore.setModalDialogCount(2);
     expect(windowStore.modalDialogCount).toBe(2);
@@ -42,56 +41,30 @@ describe('WindowStore registry', () => {
     windowStore.setFilePath('/example/saved.problem');
     expect(windowStore.filePath).toBe('/example/saved.problem');
     expect(windowStore.hash).toBeUndefined();
-
-    browserWindow.emit('closed');
+    windowStore.setWindowState({
+      width: 1200,
+      height: 900,
+      maximized: true,
+    });
+    expect(windowStore.windowState).toEqual({
+      width: 1200,
+      height: 900,
+      maximized: true,
+    });
   });
 
-  test('rejects duplicate stores', () => {
-    const browserWindow = createBrowserWindow();
-    createWindowStore(browserWindow);
-
-    expect(() => createWindowStore(browserWindow)).toThrow(
-      'WindowStore already exists for BrowserWindow',
-    );
-
-    browserWindow.emit('closed');
-  });
-
-  test('rejects unregistered windows', () => {
-    const browserWindow = createBrowserWindow();
-
-    expect(() => getWindowStore(browserWindow)).toThrow(
-      'No WindowStore found for BrowserWindow',
-    );
-  });
-
-  test('finds the window associated with a file path', () => {
-    const browserWindow = createBrowserWindow();
-    const windowStore = createWindowStore(browserWindow);
-    const filePath = '/example/model.problem';
-    windowStore.setFilePath(filePath);
-
-    expect(findWindowByFilePath(filePath)).toBe(browserWindow);
-    expect(findWindowByFilePath('/example/other.problem')).toBeUndefined();
-
-    browserWindow.emit('closed');
-    expect(findWindowByFilePath(filePath)).toBeUndefined();
-  });
-
-  test('removes and disposes the store when the window is closed', () => {
-    const browserWindow = createBrowserWindow();
-    const windowStore = createWindowStore(browserWindow);
+  test('disposes reactions once', () => {
+    const windowStore = new WindowStore({
+      width: 1024,
+      height: 768,
+      maximized: false,
+    });
     const disposer = vi.fn();
     windowStore.addReactionDisposer(disposer);
 
-    browserWindow.emit('closed');
-
-    expect(disposer).toHaveBeenCalledOnce();
-    expect(() => getWindowStore(browserWindow)).toThrow(
-      'No WindowStore found for BrowserWindow',
-    );
-
     windowStore.dispose();
+    windowStore.dispose();
+
     expect(disposer).toHaveBeenCalledOnce();
   });
 });

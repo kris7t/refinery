@@ -19,7 +19,7 @@ import getLogger from '../logger/getLogger';
 import settings from '../settings';
 import { isMac, isWindows } from '../utils/platform';
 
-import { getWindowStore } from './WindowStore';
+import { openWindowsStore } from './OpenWindowsStore';
 
 const logger = getLogger('gui.getTheme');
 
@@ -56,7 +56,7 @@ export default function getTheme(
 ): Theme {
   let depth = 0;
   if (browserWindow) {
-    depth = getWindowStore(browserWindow).modalDialogCount;
+    depth = openWindowsStore.getWindowStore(browserWindow).modalDialogCount;
   }
   if (shouldUseDarkColors) {
     const backgroundColor = '#21252b';
@@ -100,7 +100,7 @@ function updateWindow(window: BrowserWindow): void {
 }
 
 export function attachWindowThemeHandler(window: BrowserWindow): void {
-  const windowStore = getWindowStore(window);
+  const windowStore = openWindowsStore.getWindowStore(window);
   windowStore.addReactionDisposer(
     reaction(
       () => windowStore.modalDialogCount,
@@ -150,7 +150,9 @@ export function attachNativeThemeHandler(): void {
     }
     const count = ModalDialogCount.safeParse(rawCount);
     if (count.success) {
-      getWindowStore(browserWindow).setModalDialogCount(count.data);
+      openWindowsStore
+        .getWindowStore(browserWindow)
+        .setModalDialogCount(count.data);
     } else {
       logger.error({ err: count.error }, 'Failed to parse ModalDialogCount');
     }

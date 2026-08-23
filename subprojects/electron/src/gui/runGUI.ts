@@ -7,18 +7,20 @@
 import path from 'node:path';
 
 import { isShareFragment } from '@tools.refinery/frontend/persistence/shareURI';
-import { app, BrowserWindow, ipcMain, nativeTheme } from 'electron';
+import { app, BrowserWindow, ipcMain, nativeTheme, screen } from 'electron';
+import { comparer, reaction } from 'mobx';
 import z from 'zod/v4';
 
 import enableWebContentsLogger from '../logger/enableWebContentsLogger';
 import getLogger from '../logger/getLogger';
 import startServer from '../server/startServer';
 import settings from '../settings';
+import { onCleanup } from '../utils/cleanup';
 import hardenWebContents from '../utils/hardenWebContents';
 import { isMac, isWindows } from '../utils/platform';
 
 import OpenRequestHandler, { type OpenRequest } from './OpenRequestHandler';
-import { createWindowStore } from './WindowStore';
+import { openWindowsStore } from './OpenWindowsStore';
 import attachFileIOHandlers, { focusWindowForFile } from './fileIO';
 import getTheme, {
   attachNativeThemeHandler,
@@ -27,6 +29,10 @@ import getTheme, {
 import resolveOpenArguments, {
   resolveOpenArgument,
 } from './resolveOpenArguments';
+import getWindowSize, {
+  MIN_WINDOW_HEIGHT,
+  MIN_WINDOW_WIDTH,
+} from './windowSize';
 
 const logger = getLogger('gui.runGUI');
 
@@ -51,10 +57,19 @@ function createWindow(
   const { backgroundColor, accentColor, titleBarOverlay } = getTheme(
     nativeTheme.shouldUseDarkColors,
   );
+  const windowState =
+    openWindowsStore.lastActiveWindowState ?? settings.windowState;
+  const { width, height } = getWindowSize(
+    windowState,
+    screen.getAllDisplays().map(({ workAreaSize }) => workAreaSize),
+  );
+  const restoreMaximized = !isMac && windowState.maximized;
 
   const window = new BrowserWindow({
-    width: 1024,
-    height: 768,
+    width,
+    height,
+    minWidth: MIN_WINDOW_WIDTH,
+    minHeight: MIN_WINDOW_HEIGHT,
     webPreferences: {
       preload: path.join(__dirname, 'gui', 'preload.js'),
       devTools: process.isDev,
@@ -67,7 +82,7 @@ function createWindow(
     titleBarStyle: isMac ? 'hiddenInset' : 'hidden',
     ...(isMac ? {} : { titleBarOverlay }),
   });
-  const windowStore = createWindowStore(window);
+  const windowStore = openWindowsStore.createWindowStore(window);
   if (request !== undefined) {
     if ('filePath' in request) {
       windowStore.setFilePath(request.filePath);
@@ -78,6 +93,9 @@ function createWindow(
   attachWindowThemeHandler(window);
 
   window.once('ready-to-show', () => {
+    if (restoreMaximized) {
+      window.maximize();
+    }
     window.show();
     if (process.isDev) {
       window.webContents.openDevTools();
@@ -167,6 +185,24 @@ export default async function runGUI() {
   // `startServer()` waits for `app.whenReady()` internally, so this is safe to do here.
   attachFileIOHandlers();
   attachNativeThemeHandler();
+  const disposeWindowStateReaction = reaction(
+    () => {
+      const windowState = openWindowsStore.lastActiveWindowState;
+      return windowState === undefined
+        ? undefined
+        : {
+            ...windowState,
+            maximized: !isMac && windowState.maximized,
+          };
+    },
+    (windowState) => {
+      if (windowState !== undefined) {
+        settings.setWindowState(windowState);
+      }
+    },
+    { equals: comparer.structural },
+  );
+  onCleanup(disposeWindowStateReaction);
 
   ipcMain.handle('refinery:openHash', (_event, rawHash: unknown) => {
     try {

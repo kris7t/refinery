@@ -4,8 +4,9 @@
  * SPDX-License-Identifier: EPL-2.0
  */
 
-import type { BrowserWindow } from 'electron';
 import { makeAutoObservable } from 'mobx';
+
+import type { WindowState } from '../settings';
 
 export default class WindowStore {
   private readonly reactionDisposers = new Set<() => void>();
@@ -18,7 +19,16 @@ export default class WindowStore {
 
   hash: string | undefined;
 
-  constructor() {
+  width: number;
+
+  height: number;
+
+  maximized: boolean;
+
+  constructor({ width, height, maximized }: WindowState) {
+    this.width = width;
+    this.height = height;
+    this.maximized = maximized;
     makeAutoObservable<WindowStore, 'disposed' | 'reactionDisposers'>(this, {
       disposed: false,
       reactionDisposers: false,
@@ -41,6 +51,20 @@ export default class WindowStore {
     this.hash = hash;
   }
 
+  setWindowState({ width, height, maximized }: WindowState): void {
+    this.width = width;
+    this.height = height;
+    this.maximized = maximized;
+  }
+
+  get windowState(): WindowState {
+    return {
+      width: this.width,
+      height: this.height,
+      maximized: this.maximized,
+    };
+  }
+
   addReactionDisposer(disposer: () => void): void {
     if (this.disposed) {
       disposer();
@@ -59,40 +83,4 @@ export default class WindowStore {
     }
     this.reactionDisposers.clear();
   }
-}
-
-const windowStores = new Map<BrowserWindow, WindowStore>();
-
-export function createWindowStore(browserWindow: BrowserWindow): WindowStore {
-  if (windowStores.has(browserWindow)) {
-    throw new Error('WindowStore already exists for BrowserWindow');
-  }
-  const windowStore = new WindowStore();
-  windowStores.set(browserWindow, windowStore);
-  browserWindow.once('closed', () => {
-    if (windowStores.get(browserWindow) === windowStore) {
-      windowStores.delete(browserWindow);
-      windowStore.dispose();
-    }
-  });
-  return windowStore;
-}
-
-export function getWindowStore(browserWindow: BrowserWindow): WindowStore {
-  const windowStore = windowStores.get(browserWindow);
-  if (windowStore === undefined) {
-    throw new Error('No WindowStore found for BrowserWindow');
-  }
-  return windowStore;
-}
-
-export function findWindowByFilePath(
-  filePath: string,
-): BrowserWindow | undefined {
-  for (const [browserWindow, windowStore] of windowStores) {
-    if (windowStore.filePath === filePath) {
-      return browserWindow;
-    }
-  }
-  return undefined;
 }

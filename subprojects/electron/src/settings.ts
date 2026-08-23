@@ -33,8 +33,23 @@ import { onCleanup } from './utils/cleanup';
  * and we avoid having to use an asynchronous IPC round trip to populate them
  * from the main process.
  */
+const DEFAULT_WINDOW_STATE = {
+  width: 1024,
+  height: 768,
+  maximized: false,
+};
+
+const WindowStateSchema = z.object({
+  width: z.int().positive(),
+  height: z.int().positive(),
+  maximized: z.boolean(),
+});
+
+export type WindowState = z.infer<typeof WindowStateSchema>;
+
 const SettingsSchema = z.object({
   theme: ThemeSource,
+  windowState: WindowStateSchema.default(DEFAULT_WINDOW_STATE),
 });
 
 type SettingsSchema = z.infer<typeof SettingsSchema>;
@@ -45,6 +60,8 @@ const DEBOUNCE_TIME = ms('100ms');
 
 class Settings implements SettingsSchema {
   theme: ThemeSource = 'system';
+
+  windowState: WindowState = { ...DEFAULT_WINDOW_STATE };
 
   private settingsFile: string | undefined;
 
@@ -133,6 +150,10 @@ class Settings implements SettingsSchema {
 
   setTheme(theme: ThemeSource): void {
     this.theme = theme;
+  }
+
+  setWindowState(windowState: WindowState): void {
+    this.windowState = windowState;
   }
 
   async close(): Promise<void> {
