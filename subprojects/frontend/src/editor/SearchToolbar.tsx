@@ -16,7 +16,6 @@ import IconButton from '@mui/material/IconButton';
 import Stack from '@mui/material/Stack';
 import TextField from '@mui/material/TextField';
 import ToggleButton from '@mui/material/ToggleButton';
-import Toolbar from '@mui/material/Toolbar';
 import { styled } from '@mui/material/styles';
 import { observer } from 'mobx-react-lite';
 import { useCallback, useState } from 'react';
@@ -60,14 +59,22 @@ export default observer(function SearchToolbar({
   );
 
   return (
-    <Toolbar
-      variant="dense"
-      sx={{
-        // Match the height of the editor toolbar.
-        py: '5px',
+    <Stack
+      direction="row"
+      sx={(theme) => ({
         alignItems: 'center',
-        minHeight: 'auto',
-      }}
+        pl: 1.5,
+        pr: 1,
+        pt: `calc(${theme.spacing(0.5)} + 2px)`,
+        pb: 0.5,
+        overflowY: 'scroll',
+        scrollbarWidth: 'none',
+        '::-webkit-scrollbar': {
+          background: 'transparent',
+          width: 0,
+          height: 0,
+        },
+      })}
     >
       <Stack
         direction={split ? 'column' : 'row'}
@@ -290,7 +297,7 @@ export default observer(function SearchToolbar({
           ...(split ? { display: 'none' } : {}),
           alignSelf: 'stretch',
           alignItems: 'start',
-          mt: '1px',
+          mt: '-2px',
         }}
       >
         <IconButton
@@ -298,9 +305,9 @@ export default observer(function SearchToolbar({
           onClick={() => searchPanelStore.close()}
           color="inherit"
         >
-          <CloseIcon fontSize="small" />
+          <CloseIcon />
         </IconButton>
       </Stack>
-    </Toolbar>
+    </Stack>
   );
 });
