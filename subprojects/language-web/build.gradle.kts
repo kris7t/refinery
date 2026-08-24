@@ -68,6 +68,11 @@ tasks {
 		dependsOn(mainRuntimeClasspath)
 		classpath(mainRuntimeClasspath)
 		mainClass.set(application.mainClass)
+		providers.gradleProperty("tools.refinery.maxMemoryBytes").orNull
+			?.toLongOrNull()
+			?.let { maxMemoryBytes ->
+				jvmArgs("-Xmx${maxMemoryBytes / (1024 * 1024)}m")
+			}
 		standardInput = System.`in`
 		group = "run"
 		description = "Start a Jetty web server serving the Xtext API without assets."

@@ -12,7 +12,13 @@ import path from 'node:path';
 
 import { nanoid } from 'nanoid';
 
+import appName from '../appName';
 import getLogger from '../logger/getLogger';
+import {
+  DEFAULT_SERVER_SETTINGS,
+  getSettingsFilePath,
+  readServerSettingsFile,
+} from '../serverSettings';
 import cleanup, { onCleanup } from '../utils/cleanup';
 import { isWindows } from '../utils/platform';
 import spawnJava from '../utils/spawnJava';
@@ -48,6 +54,23 @@ async function runCLI(): Promise<number | null> {
 
   if (shouldLaunchGUI(args)) {
     return (await launchGUI(args)) ? 0 : 1;
+  }
+
+  let maxMemoryBytes = DEFAULT_SERVER_SETTINGS.maxMemoryBytes;
+  try {
+    const serverSettings = await readServerSettingsFile(
+      getSettingsFilePath(appName),
+    );
+    maxMemoryBytes = serverSettings.maxMemoryBytes;
+  } catch (error) {
+    if (
+      error === null ||
+      typeof error !== 'object' ||
+      !('code' in error) ||
+      error.code !== 'ENOENT'
+    ) {
+      log.error({ err: error }, 'Failed to read server settings');
+    }
   }
 
   const newEnv: NodeJS.ProcessEnv = {
@@ -87,7 +110,11 @@ async function runCLI(): Promise<number | null> {
     'refinery-generator-cli',
     'tools.refinery.generator.cli.RefineryCli',
     args,
-    { interactive: true, env: newEnv },
+    {
+      interactive: true,
+      maxMemoryBytes,
+      env: newEnv,
+    },
   );
 
   for (const signal of ['SIGINT', 'SIGQUIT', 'SIGTERM'] as const) {

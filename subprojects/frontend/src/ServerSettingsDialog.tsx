@@ -11,6 +11,7 @@ import CircularProgress from '@mui/material/CircularProgress';
 import MenuItem from '@mui/material/MenuItem';
 import Stack from '@mui/material/Stack';
 import Typography from '@mui/material/Typography';
+import { useTheme } from '@mui/material/styles';
 import { useEffect, useId, useState } from 'react';
 
 import Dialog from './Dialog';
@@ -19,10 +20,22 @@ import DialogTitleBar from './DialogTitleBar';
 import LogarithmicSlider from './LogarithmicSlider';
 import RefineryContextBridge, {
   RestartServerResult,
-  ServerSettings as ServerSettingsSchema,
+  ServerSettingsResponse as ServerSettingsResponseSchema,
   type ServerSettings,
 } from './RefineryContextBridge';
 import { useRootStore } from './RootStoreProvider';
+import {
+  MAX_SEMANTICS_TIMEOUT_MS,
+  MIN_MODEL_GENERATION_TIMEOUT_SEC,
+  MIN_SEMANTICS_TIMEOUT_MS,
+  UNLIMITED_MODEL_GENERATION_TIMEOUT_SEC,
+} from './serverLimits';
+import {
+  GIBIBYTE,
+  JVM_COMPRESSED_OOPS_THRESHOLD_BYTES,
+  MEBIBYTE,
+  MIN_MAX_MEMORY_BYTES,
+} from './serverMemory';
 import getLogger from './utils/getLogger';
 
 const log = getLogger('ServerSettingsDialog');
@@ -91,22 +104,120 @@ export function RestartServerMenuItem({
   );
 }
 
-const SEMANTICS_TIMEOUT_MIN_MS = 1_000;
-const SEMANTICS_TIMEOUT_MAX_MS = 60_000;
 const SEMANTICS_TIMEOUT_MARKS = [
-  { value: 1_000, label: '1 s' },
+  { value: MIN_SEMANTICS_TIMEOUT_MS, label: '1 s' },
   { value: 2_000, label: '2 s' },
   { value: 5_000, label: '5 s' },
   { value: 10_000, label: '10 s' },
   { value: 30_000, label: '30 s' },
-  { value: 60_000, label: '60 s' },
+  { value: MAX_SEMANTICS_TIMEOUT_MS, label: '60 s' },
 ] as const;
 
-const UNLIMITED_MODEL_GENERATION_TIMEOUT_SEC = 2_147_483_647;
-const MODEL_GENERATION_TIMEOUT_MIN_SEC = 60;
+const MEMORY_MARK_MIN_DISTANCE = 180;
+
+function formatMemory(valueBytes: number): string {
+  if (valueBytes < GIBIBYTE) {
+    return `${Math.round(valueBytes / MEBIBYTE)} MiB`;
+  }
+  const gibibytes = valueBytes / GIBIBYTE;
+  return `${Number(gibibytes.toFixed(1))} GiB`;
+}
+
+function getMemoryMarks(
+  maximum: number,
+  defaultMemory: number,
+): readonly {
+  value: number;
+  label: React.ReactNode;
+}[] {
+  const candidates = new Map<number, { label: string; priority: number }>();
+  const addCandidate = (value: number, label: string, priority: number) => {
+    if (value < MIN_MAX_MEMORY_BYTES || value > maximum) {
+      return;
+    }
+    const previous = candidates.get(value);
+    if (previous === undefined || priority > previous.priority) {
+      candidates.set(value, { label, priority });
+    }
+  };
+
+  addCandidate(MIN_MAX_MEMORY_BYTES, formatMemory(MIN_MAX_MEMORY_BYTES), 1200);
+  for (let value = 256 * MEBIBYTE; value < maximum; value *= 2) {
+    addCandidate(value, formatMemory(value), 100);
+  }
+  addCandidate(defaultMemory, formatMemory(defaultMemory), 950);
+  addCandidate(
+    JVM_COMPRESSED_OOPS_THRESHOLD_BYTES,
+    formatMemory(JVM_COMPRESSED_OOPS_THRESHOLD_BYTES),
+    900,
+  );
+  const seventyFivePercent = Math.round((maximum * 0.75) / MEBIBYTE) * MEBIBYTE;
+  addCandidate(seventyFivePercent, formatMemory(seventyFivePercent), 850);
+  addCandidate(maximum, formatMemory(maximum), 1100);
+
+  const position = (value: number) =>
+    Math.log(value / MIN_MAX_MEMORY_BYTES) /
+    Math.log(maximum / MIN_MAX_MEMORY_BYTES);
+  const labeledValues = new Set<number>();
+  for (const [value] of [...candidates.entries()].sort(
+    ([, left], [, right]) => right.priority - left.priority,
+  )) {
+    if (
+      [...labeledValues].every(
+        (other) =>
+          Math.abs(position(value) - position(other)) * 1_000 >=
+          MEMORY_MARK_MIN_DISTANCE,
+      )
+    ) {
+      labeledValues.add(value);
+    }
+  }
+  return [...candidates.entries()]
+    .sort(([left], [right]) => left - right)
+    .map(([value, { label }]) => ({
+      value,
+      label: labeledValues.has(value) ? label : undefined,
+    }));
+}
+
+function getMemoryStatus(
+  valueBytes: number,
+  systemMemoryBytes: number,
+): {
+  readonly color: 'warning' | 'error' | undefined;
+  readonly description: string;
+} {
+  if (valueBytes > systemMemoryBytes * 0.75) {
+    return {
+      color: 'error',
+      description: 'May reduce system performance by causing swapping.',
+    };
+  }
+  if (valueBytes > JVM_COMPRESSED_OOPS_THRESHOLD_BYTES) {
+    return {
+      color: 'warning',
+      description:
+        'May reduce solver performance because JVM references become wider.',
+    };
+  }
+  return {
+    color: undefined,
+    description: 'Within the recommended memory range.',
+  };
+}
+
+function describeMemoryValue(
+  valueBytes: number,
+  systemMemoryBytes: number,
+): string {
+  const value = formatMemory(valueBytes);
+  const { color, description } = getMemoryStatus(valueBytes, systemMemoryBytes);
+  return color === undefined ? value : `${value}, ${description}`;
+}
+
 const MODEL_GENERATION_TIMEOUT_MAX_SEC = 14_400;
 const MODEL_GENERATION_TIMEOUT_MARKS = [
-  { value: 60, label: '1 min' },
+  { value: MIN_MODEL_GENERATION_TIMEOUT_SEC, label: '1 min' },
   { value: 120, label: '2 min' },
   { value: 300, label: '5 min' },
   { value: 600, label: '10 min' },
@@ -153,7 +264,8 @@ function haveSettingsChanged(
     initialSettings !== undefined &&
     (draft.semanticsTimeoutMs !== initialSettings.semanticsTimeoutMs ||
       draft.modelGenerationTimeoutSec !==
-        initialSettings.modelGenerationTimeoutSec)
+        initialSettings.modelGenerationTimeoutSec ||
+      draft.maxMemoryBytes !== initialSettings.maxMemoryBytes)
   );
 }
 
@@ -165,10 +277,14 @@ export default function ServerSettingsDialog({
   onClose: () => void;
 }): React.ReactElement {
   const id = useId();
+  const theme = useTheme();
   const semanticsTimeoutLabelId = `${id}-semantics-timeout-label`;
   const generationTimeoutLabelId = `${id}-generation-timeout-label`;
+  const maxMemoryLabelId = `${id}-max-memory-label`;
   const [draft, setDraft] = useState<ServerSettings>();
   const [initialSettings, setInitialSettings] = useState<ServerSettings>();
+  const [systemMemoryBytes, setSystemMemoryBytes] = useState<number>();
+  const [defaultMaxMemoryBytes, setDefaultMaxMemoryBytes] = useState<number>();
   const [loading, setLoading] = useState(true);
   const [pending, setPending] = useState(false);
   const [error, setError] = useState<string>();
@@ -176,6 +292,8 @@ export default function ServerSettingsDialog({
   const reset = () => {
     setDraft(undefined);
     setInitialSettings(undefined);
+    setSystemMemoryBytes(undefined);
+    setDefaultMaxMemoryBytes(undefined);
     setError(undefined);
     setLoading(true);
   };
@@ -192,10 +310,16 @@ export default function ServerSettingsDialog({
     (async () => {
       try {
         const rawSettings = await refinery.getServerSettings();
-        const serverSettings = ServerSettingsSchema.parse(rawSettings);
+        const {
+          settings: serverSettings,
+          systemMemoryBytes: availableSystemMemoryBytes,
+          defaultMaxMemoryBytes: availableDefaultMaxMemoryBytes,
+        } = ServerSettingsResponseSchema.parse(rawSettings);
         if (!disposed) {
           setDraft(serverSettings);
           setInitialSettings(serverSettings);
+          setSystemMemoryBytes(availableSystemMemoryBytes);
+          setDefaultMaxMemoryBytes(availableDefaultMaxMemoryBytes);
         }
       } finally {
         if (!disposed) {
@@ -277,8 +401,35 @@ export default function ServerSettingsDialog({
     });
   };
 
+  const updateMaxMemory = (maxMemoryBytes: number) => {
+    if (draft === undefined) {
+      return;
+    }
+    setDraft({
+      ...draft,
+      maxMemoryBytes,
+    });
+  };
+
   const dismiss = pending ? undefined : close;
   const settingsChanged = haveSettingsChanged(draft, initialSettings);
+  const maximumMemory =
+    systemMemoryBytes === undefined
+      ? undefined
+      : Math.max(
+          Math.floor(systemMemoryBytes / MEBIBYTE) * MEBIBYTE,
+          MIN_MAX_MEMORY_BYTES,
+        );
+  const memoryStatus =
+    draft === undefined || systemMemoryBytes === undefined
+      ? undefined
+      : getMemoryStatus(draft.maxMemoryBytes, systemMemoryBytes);
+  const memoryCaptionColor =
+    memoryStatus?.color === undefined
+      ? theme.palette.text.secondary
+      : theme.palette[memoryStatus.color][
+          theme.palette.mode === 'dark' ? 'main' : 'dark'
+        ];
 
   return (
     <Dialog
@@ -310,18 +461,54 @@ export default function ServerSettingsDialog({
             <span>Loading solver options</span>
           </Stack>
         ) : (
-          draft !== undefined && (
+          draft !== undefined &&
+          systemMemoryBytes !== undefined &&
+          defaultMaxMemoryBytes !== undefined &&
+          maximumMemory !== undefined &&
+          memoryStatus !== undefined && (
             <Stack spacing={2}>
+              <Box>
+                <Typography id={maxMemoryLabelId} gutterBottom>
+                  Maximum memory: {formatMemory(draft.maxMemoryBytes)}
+                </Typography>
+                <Box sx={{ mx: 3 }}>
+                  <LogarithmicSlider
+                    ariaLabelledby={maxMemoryLabelId}
+                    minimum={MIN_MAX_MEMORY_BYTES}
+                    maximum={maximumMemory}
+                    step={MEBIBYTE}
+                    marks={getMemoryMarks(maximumMemory, defaultMaxMemoryBytes)}
+                    value={draft.maxMemoryBytes}
+                    formatValue={formatMemory}
+                    describeValue={(value) =>
+                      describeMemoryValue(value, systemMemoryBytes)
+                    }
+                    onChange={updateMaxMemory}
+                    color={memoryStatus.color}
+                    disabled={pending}
+                  />
+                  <Typography
+                    variant="caption"
+                    sx={{
+                      color: memoryCaptionColor,
+                      display: 'block',
+                      mt: 0.5,
+                    }}
+                  >
+                    {memoryStatus.description}
+                  </Typography>
+                </Box>
+              </Box>
               <Box>
                 <Typography id={semanticsTimeoutLabelId} gutterBottom>
                   Analysis timeout:{' '}
                   {formatSemanticsTimeout(draft.semanticsTimeoutMs)}
                 </Typography>
-                <Box sx={{ mx: 2 }}>
+                <Box sx={{ mx: 3 }}>
                   <LogarithmicSlider
                     ariaLabelledby={semanticsTimeoutLabelId}
-                    minimum={SEMANTICS_TIMEOUT_MIN_MS}
-                    maximum={SEMANTICS_TIMEOUT_MAX_MS}
+                    minimum={MIN_SEMANTICS_TIMEOUT_MS}
+                    maximum={MAX_SEMANTICS_TIMEOUT_MS}
                     step={1_000}
                     marks={SEMANTICS_TIMEOUT_MARKS}
                     value={draft.semanticsTimeoutMs}
@@ -336,10 +523,10 @@ export default function ServerSettingsDialog({
                   Generation timeout:{' '}
                   {formatGenerationTimeout(draft.modelGenerationTimeoutSec)}
                 </Typography>
-                <Box sx={{ mx: 2 }}>
+                <Box sx={{ mx: 3 }}>
                   <LogarithmicSlider
                     ariaLabelledby={generationTimeoutLabelId}
-                    minimum={MODEL_GENERATION_TIMEOUT_MIN_SEC}
+                    minimum={MIN_MODEL_GENERATION_TIMEOUT_SEC}
                     maximum={MODEL_GENERATION_TIMEOUT_MAX_SEC}
                     step={60}
                     unlimitedValue={UNLIMITED_MODEL_GENERATION_TIMEOUT_SEC}

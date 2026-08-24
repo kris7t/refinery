@@ -13,7 +13,7 @@ import type {
   EditorCommand,
   EditorCommandCallback,
   RestartServerResult,
-  ServerSettings,
+  ServerSettingsResponse,
   ServerStateChangeCallback,
   ThemeSource,
   ThemeSourceChangeCallback,
@@ -71,7 +71,7 @@ contextBridge.exposeInMainWorld('refinery', {
   async getServerSettings() {
     return ipcRenderer.invoke(
       'refinery:getServerSettings',
-    ) as Promise<ServerSettings>;
+    ) as Promise<ServerSettingsResponse>;
   },
   async restartServer(serverSettings) {
     return (

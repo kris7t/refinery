@@ -17,9 +17,18 @@ export type ThemeSource = z.infer<typeof ThemeSource>;
 export const ServerSettings = z.object({
   semanticsTimeoutMs: z.int().positive(),
   modelGenerationTimeoutSec: z.int().positive(),
+  maxMemoryBytes: z.int().positive(),
 });
 
 export type ServerSettings = z.infer<typeof ServerSettings>;
+
+export const ServerSettingsResponse = z.object({
+  settings: ServerSettings,
+  systemMemoryBytes: z.int().positive(),
+  defaultMaxMemoryBytes: z.int().positive(),
+});
+
+export type ServerSettingsResponse = z.infer<typeof ServerSettingsResponse>;
 
 export const RestartServerResult = z.boolean();
 
@@ -77,7 +86,7 @@ export default interface RefineryContextBridge {
   logLevel: string;
   log(obj: object): void;
   getBackendConfig(): Promise<BackendConfig>;
-  getServerSettings(): Promise<ServerSettings>;
+  getServerSettings(): Promise<ServerSettingsResponse>;
   restartServer(settings?: ServerSettings): Promise<RestartServerResult>;
   onServerStateChange(callback: ServerStateChangeCallback): void;
   setThemeSource(themeSource: ThemeSource): void;

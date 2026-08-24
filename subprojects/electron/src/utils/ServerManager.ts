@@ -111,7 +111,9 @@ interface ServerManagerEvents {
   'health-changed': [healthy: boolean];
 }
 
-export default abstract class ServerManager extends EventEmitter<ServerManagerEvents> {
+export default abstract class ServerManager<
+  SpawnOptions = undefined,
+> extends EventEmitter<ServerManagerEvents> {
   private internalState: State = { name: 'stopped' };
 
   /** Resolvers for pending {@link stop} calls, flushed once `stopped` is reached. */
@@ -149,16 +151,18 @@ export default abstract class ServerManager extends EventEmitter<ServerManagerEv
    * Spawns the server and resolves once it reports healthy. Rejects if the
    * process fails to come up. Must only be called from the `stopped` state.
    */
-  start(): Promise<void> {
+  start(options?: SpawnOptions): Promise<void> {
     if (this.state.name !== 'stopped') {
       return Promise.reject(new Error('Server is already running'));
     }
     return new Promise<void>((resolve, reject) => {
-      this.spawn({ resolve, reject });
+      this.spawn({ resolve, reject }, options);
     });
   }
 
-  protected abstract spawnChild(): Awaitable<ChildProcess>;
+  protected abstract spawnChild(
+    options?: SpawnOptions,
+  ): Awaitable<ChildProcess>;
 
   /**
    * Requests a graceful shutdown (`SIGTERM`, escalating to `SIGKILL`) and
@@ -237,7 +241,7 @@ export default abstract class ServerManager extends EventEmitter<ServerManagerEv
    * user-initiated {@link start}; when absent this is an automatic restart whose
    * failures schedule another attempt instead of rejecting a caller.
    */
-  private spawn(resolvers?: StartResolvers): void {
+  private spawn(resolvers?: StartResolvers, options?: SpawnOptions): void {
     // Enter `spawning` synchronously so that a concurrent `stop` (or a repeated
     // `start`) is observed by the asynchronous {@link spawnChild} below via the
     // captured state object.
@@ -247,7 +251,7 @@ export default abstract class ServerManager extends EventEmitter<ServerManagerEv
     (async () => {
       let spawned: ChildProcess;
       try {
-        spawned = await this.spawnChild();
+        spawned = await this.spawnChild(options);
       } catch (error) {
         if (this.state !== spawning) {
           // A `stop` aborted the spawn while `spawnChild` was in flight.

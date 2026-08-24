@@ -8,12 +8,14 @@ import Slider from '@mui/material/Slider';
 
 export interface LogarithmicSliderMark {
   readonly value: number;
-  readonly label: React.ReactNode;
+  readonly label: React.ReactNode | undefined;
 }
 
 interface LogarithmicSliderProps {
   ariaLabelledby: string;
+  color?: 'warning' | 'error' | undefined;
   disabled?: boolean;
+  describeValue?(this: void, value: number): string;
   formatValue(this: void, value: number): string;
   marks: readonly LogarithmicSliderMark[];
   maximum: number;
@@ -51,6 +53,8 @@ function snapToNearestMark(value: number, marks: readonly number[]): number {
 
 export default function LogarithmicSlider({
   ariaLabelledby,
+  color,
+  describeValue,
   disabled,
   formatValue,
   marks,
@@ -109,7 +113,7 @@ export default function LogarithmicSlider({
       value={valueToSliderValue(value)}
       valueLabelDisplay="off"
       getAriaValueText={(sliderValue) =>
-        formatValue(sliderValueToValue(sliderValue))
+        (describeValue ?? formatValue)(sliderValueToValue(sliderValue))
       }
       onChange={(_event, sliderValue) => {
         const value = getSliderValue(sliderValue);
@@ -121,6 +125,7 @@ export default function LogarithmicSlider({
         );
       }}
       disabled={disabled}
+      color={color}
     />
   );
 }

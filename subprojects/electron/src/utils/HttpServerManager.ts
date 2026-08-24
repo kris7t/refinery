@@ -11,7 +11,9 @@ import ServerManager from './ServerManager';
 /** Timeout applied to a single health-check request. */
 const HEALTH_FETCH_TIMEOUT = ms('1s');
 
-export default abstract class HttpServerManager extends ServerManager {
+export default abstract class HttpServerManager<
+  SpawnOptions = undefined,
+> extends ServerManager<SpawnOptions> {
   static readonly hostname = '127.0.0.1';
 
   constructor(

@@ -8,7 +8,6 @@ import { readFile, rename, writeFile } from 'node:fs/promises';
 import path from 'node:path';
 
 import {
-  ServerSettings as ServerSettingsSchema,
   ThemeSource,
   type ServerSettings,
 } from '@tools.refinery/frontend/RefineryContextBridge';
@@ -26,6 +25,10 @@ import { nanoid } from 'nanoid';
 import z from 'zod/v4';
 
 import getLogger from './logger/getLogger';
+import {
+  DEFAULT_SERVER_SETTINGS,
+  ServerSettingsFromFile,
+} from './serverSettings';
 import { onCleanup } from './utils/cleanup';
 
 /**
@@ -51,15 +54,10 @@ const WindowStateSchema = z.object({
 
 export type WindowState = z.infer<typeof WindowStateSchema>;
 
-const DEFAULT_SERVER_SETTINGS: ServerSettings = {
-  semanticsTimeoutMs: 10_000,
-  modelGenerationTimeoutSec: 600,
-};
-
 const SettingsSchema = z.object({
   theme: ThemeSource,
   windowState: WindowStateSchema.default(DEFAULT_WINDOW_STATE),
-  serverSettings: ServerSettingsSchema.default(DEFAULT_SERVER_SETTINGS),
+  serverSettings: ServerSettingsFromFile,
 });
 
 type SettingsSchema = z.infer<typeof SettingsSchema>;

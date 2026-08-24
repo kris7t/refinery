@@ -15,14 +15,22 @@ import pipeToLogger from '../logger/pipeToLogger';
 
 import { isWindows } from './platform';
 
+export function formatMaxMemory(maxMemoryBytes: number): string {
+  return `-Xmx${Math.max(1, Math.floor(maxMemoryBytes / (1024 * 1024)))}m`;
+}
+
 export default function spawnJava(
   packageName: string,
   mainClass: string,
   args: string[],
   {
     interactive = false,
+    maxMemoryBytes,
     ...options
-  }: SpawnOptionsWithoutStdio & { interactive?: boolean },
+  }: SpawnOptionsWithoutStdio & {
+    interactive?: boolean;
+    maxMemoryBytes?: number;
+  },
 ): ChildProcess {
   // Sometimes we spawn the stock `electron` binary instead of our own
   // packaged executable (e.g. to run the packaged app under Playwright,
@@ -71,6 +79,9 @@ export default function spawnJava(
     [
       '--enable-native-access=ALL-UNNAMED',
       '--sun-misc-unsafe-memory-access=allow',
+      ...(maxMemoryBytes === undefined
+        ? []
+        : [formatMaxMemory(maxMemoryBytes)]),
       `-Djava.library.path=${nativesDir}`,
       mainClass,
       ...args,

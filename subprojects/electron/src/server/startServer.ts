@@ -6,12 +6,17 @@
 
 import { pathToFileURL } from 'node:url';
 
-import { ServerSettings as ServerSettingsSchema } from '@tools.refinery/frontend/RefineryContextBridge';
+import type { ServerSettings } from '@tools.refinery/frontend/RefineryContextBridge';
 import { app, BrowserWindow, ipcMain, net, protocol } from 'electron';
 import { toJS } from 'mobx';
 
 import getLogger from '../logger/getLogger';
 import getPathToServe from '../server/getPathToServe';
+import {
+  getDefaultMaxMemoryBytes,
+  getSystemMemoryBytes,
+  ServerSettingsSchemaWithLimits,
+} from '../serverSettings';
 import settings from '../settings';
 import { onCleanup } from '../utils/cleanup';
 
@@ -66,9 +71,14 @@ export default async function startServer(withBackend = true): Promise<{
       }
     });
     ipcMain.handle('refinery:getBackendConfig', () => backend?.backendConfig);
-    ipcMain.handle('refinery:getServerSettings', () =>
-      toJS(settings.serverSettings),
-    );
+    ipcMain.handle('refinery:getServerSettings', () => {
+      const systemMemoryBytes = getSystemMemoryBytes();
+      return {
+        settings: toJS(settings.serverSettings),
+        systemMemoryBytes,
+        defaultMaxMemoryBytes: getDefaultMaxMemoryBytes(systemMemoryBytes),
+      };
+    });
     ipcMain.handle(
       'refinery:restartServer',
       async (_event, rawServerSettings: unknown) => {
@@ -76,20 +86,24 @@ export default async function startServer(withBackend = true): Promise<{
         if (backendManager === undefined) {
           return false;
         }
+        let serverSettings: ServerSettings | undefined;
         if (rawServerSettings !== undefined) {
-          const serverSettings =
-            ServerSettingsSchema.safeParse(rawServerSettings);
-          if (!serverSettings.success) {
+          const parsedServerSettings =
+            ServerSettingsSchemaWithLimits.safeParse(rawServerSettings);
+          if (!parsedServerSettings.success) {
             logger.error(
-              { err: serverSettings.error },
+              { err: parsedServerSettings.error },
               'Failed to parse server settings',
             );
             return false;
           }
-          settings.setServerSettings(serverSettings.data);
+          serverSettings = parsedServerSettings.data;
         }
         try {
-          await backendManager.restart();
+          await backendManager.restart(serverSettings);
+          if (serverSettings !== undefined) {
+            settings.setServerSettings(serverSettings);
+          }
           return true;
         } catch (error) {
           logger.error({ err: error }, 'Failed to restart backend server');

@@ -5,15 +5,13 @@
  */
 import { app, protocol } from 'electron';
 
+import appName from './appName';
 import runGUI from './gui/runGUI';
 import runHeadless from './headless/runHeadless';
 import logger from './logger';
 import cleanup from './utils/cleanup';
 import { isLinux, isWindows } from './utils/platform';
 
-const appName = process.isDev
-  ? 'tools.refinery.RefineryDev'
-  : 'tools.refinery.Refinery';
 app.setName(appName);
 if (isLinux) {
   app.setDesktopName(appName);
