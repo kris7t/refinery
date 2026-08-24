@@ -10,6 +10,7 @@ import LightModeIcon from '@mui/icons-material/LightMode';
 import MoreVertIcon from '@mui/icons-material/MoreVert';
 import IconButton from '@mui/material/IconButton';
 import Menu from '@mui/material/Menu';
+import MenuItem from '@mui/material/MenuItem';
 import ToggleButton from '@mui/material/ToggleButton';
 import ToggleButtonGroup from '@mui/material/ToggleButtonGroup';
 import Tooltip from '@mui/material/Tooltip';
@@ -17,6 +18,9 @@ import { observer } from 'mobx-react-lite';
 import { useId, useState } from 'react';
 
 import { useRootStore } from './RootStoreProvider';
+import ServerSettingsDialog, {
+  RestartServerMenuItem,
+} from './ServerSettingsDialog';
 import { runThemeChange } from './ToggleDarkModeButton';
 import type { ThemePreference } from './theme/ThemeStore';
 
@@ -24,6 +28,7 @@ export default observer(function SettingsMenuButton(): React.ReactElement {
   const { themeStore } = useRootStore();
   const id = useId();
   const [anchorEl, setAnchorEl] = useState<HTMLElement | undefined>();
+  const [serverSettingsOpen, setServerSettingsOpen] = useState(false);
   const open = anchorEl !== undefined;
   const handleClose = () => setAnchorEl(undefined);
   const title = 'Settings';
@@ -87,7 +92,20 @@ export default observer(function SettingsMenuButton(): React.ReactElement {
             <ContrastIcon fontSize="small" /> auto
           </ToggleButton>
         </ToggleButtonGroup>
+        <MenuItem
+          onClick={() => {
+            handleClose();
+            setServerSettingsOpen(true);
+          }}
+        >
+          Solver options
+        </MenuItem>
+        <RestartServerMenuItem onClose={handleClose} />
       </Menu>
+      <ServerSettingsDialog
+        open={serverSettingsOpen}
+        onClose={() => setServerSettingsOpen(false)}
+      />
     </>
   );
 });

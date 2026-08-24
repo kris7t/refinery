@@ -25,7 +25,7 @@ export const KILL_TIMEOUT = ms('1s');
  */
 export const STARTUP_TIMEOUT = ms('5m');
 /**
- * Upper bound on how long {@link ServerManager.stop}'s returned promise waits
+ * Upper bound on how long {@link ServerManager['stop']}'s returned promise waits
  * for the child to actually exit before giving up on it, well past the
  * `SIGTERM`-to-`SIGKILL` escalation via {@link KILL_TIMEOUT}. Without this, a
  * child that somehow never reports `exit` (the promise has no way to reject)
@@ -433,8 +433,16 @@ export default abstract class ServerManager extends EventEmitter<ServerManagerEv
       () => this.sendSignal(child, 'SIGKILL'),
       KILL_TIMEOUT,
     );
-    this.state = { name: 'stopping', child, killTimer };
-    this.sendSignal(child, 'SIGTERM');
+    const stopping: State = { name: 'stopping', child, killTimer };
+    this.state = stopping;
+    // Queue SIGTERM after the unhealthy event has been emitted. IPC delivery
+    // remains asynchronous, but this gives Electron a best-effort chance to
+    // notify renderers before the child is killed.
+    setImmediate(() => {
+      if (this.state === stopping) {
+        this.sendSignal(child, 'SIGTERM');
+      }
+    });
   }
 
   /** Best-effort tree kill that tolerates an already-dead process. */

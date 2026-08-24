@@ -255,10 +255,15 @@ describe('stop()', () => {
   test('sends SIGTERM and settles once the child exits', async () => {
     const manager = new TestServerManager();
     const child = await startServer(manager);
+    const healthChanged = vi.fn();
+    manager.on('health-changed', healthChanged);
 
     const onStopped = vi.fn();
     void manager.stop().then(onStopped);
     expect(manager.status).toBe('stopping');
+    expect(healthChanged).toHaveBeenCalledExactlyOnceWith(false);
+    expect(mockedTreeKillSync).not.toHaveBeenCalled();
+    await flush();
     expect(mockedTreeKillSync).toHaveBeenCalledExactlyOnceWith(
       asChildProcess(child),
       'SIGTERM',
@@ -315,6 +320,7 @@ describe('stop()', () => {
     void manager.stop();
     void manager.stop();
 
+    await flush();
     expect(mockedTreeKillSync).toHaveBeenCalledExactlyOnceWith(
       asChildProcess(child),
       'SIGTERM',
@@ -350,6 +356,7 @@ describe('stop()', () => {
 
     await expect(startPromise).rejects.toThrow('Server startup aborted');
     expect(manager.status).toBe('stopping');
+    await flush();
     expect(mockedTreeKillSync).toHaveBeenCalledExactlyOnceWith(
       asChildProcess(child),
       'SIGTERM',
@@ -395,6 +402,7 @@ describe('treeKill flag', () => {
 
     void manager.stop();
 
+    await flush();
     expect(mockedTreeKillSync).toHaveBeenCalledExactlyOnceWith(
       asChildProcess(child),
       'SIGTERM',
@@ -408,6 +416,7 @@ describe('treeKill flag', () => {
 
     void manager.stop();
 
+    await flush();
     expect(child.kill).toHaveBeenCalledExactlyOnceWith('SIGTERM');
     expect(mockedTreeKillSync).not.toHaveBeenCalled();
   });

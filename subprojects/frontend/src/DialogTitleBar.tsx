@@ -16,6 +16,7 @@ const DialogTitleBarRoot = styled('div', {
   borderBottom: `1px solid ${theme.palette.divider}`,
   display: 'flex',
   appRegion: 'drag',
+  minHeight: '57px',
   padding: theme.spacing(1),
   paddingLeft: theme.spacing(2),
   '.MuiDialogTitle-root': {
@@ -31,9 +32,11 @@ const DialogTitleBarRoot = styled('div', {
 
 export default function DialogTitleBar({
   close,
+  closeDisabled = false,
   title,
 }: {
   close?: (() => void) | undefined;
+  closeDisabled?: boolean;
   title: string;
 }): React.ReactElement {
   return (
@@ -42,6 +45,7 @@ export default function DialogTitleBar({
       {close !== undefined && (
         <IconButton
           aria-label="Close"
+          disabled={closeDisabled}
           onClick={close}
           sx={{ appRegion: 'no-drag' }}
         >

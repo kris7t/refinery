@@ -6,10 +6,13 @@
 
 import { pathToFileURL } from 'node:url';
 
+import { ServerSettings as ServerSettingsSchema } from '@tools.refinery/frontend/RefineryContextBridge';
 import { app, BrowserWindow, ipcMain, net, protocol } from 'electron';
+import { toJS } from 'mobx';
 
 import getLogger from '../logger/getLogger';
 import getPathToServe from '../server/getPathToServe';
+import settings from '../settings';
 import { onCleanup } from '../utils/cleanup';
 
 import BackendManager from './BackendManager';
@@ -63,6 +66,37 @@ export default async function startServer(withBackend = true): Promise<{
       }
     });
     ipcMain.handle('refinery:getBackendConfig', () => backend?.backendConfig);
+    ipcMain.handle('refinery:getServerSettings', () =>
+      toJS(settings.serverSettings),
+    );
+    ipcMain.handle(
+      'refinery:restartServer',
+      async (_event, rawServerSettings: unknown) => {
+        const backendManager = backend;
+        if (backendManager === undefined) {
+          return false;
+        }
+        if (rawServerSettings !== undefined) {
+          const serverSettings =
+            ServerSettingsSchema.safeParse(rawServerSettings);
+          if (!serverSettings.success) {
+            logger.error(
+              { err: serverSettings.error },
+              'Failed to parse server settings',
+            );
+            return false;
+          }
+          settings.setServerSettings(serverSettings.data);
+        }
+        try {
+          await backendManager.restart();
+          return true;
+        } catch (error) {
+          logger.error({ err: error }, 'Failed to restart backend server');
+          return false;
+        }
+      },
+    );
     ipcMain.handle(
       'refinery:getServerState',
       (): boolean => backend?.healthy ?? false,

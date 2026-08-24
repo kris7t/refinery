@@ -12,6 +12,8 @@ import type {
   ReadFileResult,
   EditorCommand,
   EditorCommandCallback,
+  RestartServerResult,
+  ServerSettings,
   ServerStateChangeCallback,
   ThemeSource,
   ThemeSourceChangeCallback,
@@ -65,6 +67,18 @@ contextBridge.exposeInMainWorld('refinery', {
     return ipcRenderer.invoke(
       'refinery:getBackendConfig',
     ) as Promise<BackendConfig>;
+  },
+  async getServerSettings() {
+    return ipcRenderer.invoke(
+      'refinery:getServerSettings',
+    ) as Promise<ServerSettings>;
+  },
+  async restartServer(serverSettings) {
+    return (
+      serverSettings === undefined
+        ? ipcRenderer.invoke('refinery:restartServer')
+        : ipcRenderer.invoke('refinery:restartServer', serverSettings)
+    ) as Promise<RestartServerResult>;
   },
   onServerStateChange(callback) {
     if (typeof callback !== 'function') {

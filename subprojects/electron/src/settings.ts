@@ -7,7 +7,11 @@
 import { readFile, rename, writeFile } from 'node:fs/promises';
 import path from 'node:path';
 
-import { ThemeSource } from '@tools.refinery/frontend/RefineryContextBridge';
+import {
+  ServerSettings as ServerSettingsSchema,
+  ThemeSource,
+  type ServerSettings,
+} from '@tools.refinery/frontend/RefineryContextBridge';
 import { app } from 'electron';
 import { merge } from 'lodash-es';
 import {
@@ -47,9 +51,15 @@ const WindowStateSchema = z.object({
 
 export type WindowState = z.infer<typeof WindowStateSchema>;
 
+const DEFAULT_SERVER_SETTINGS: ServerSettings = {
+  semanticsTimeoutMs: 10_000,
+  modelGenerationTimeoutSec: 600,
+};
+
 const SettingsSchema = z.object({
   theme: ThemeSource,
   windowState: WindowStateSchema.default(DEFAULT_WINDOW_STATE),
+  serverSettings: ServerSettingsSchema.default(DEFAULT_SERVER_SETTINGS),
 });
 
 type SettingsSchema = z.infer<typeof SettingsSchema>;
@@ -62,6 +72,8 @@ class Settings implements SettingsSchema {
   theme: ThemeSource = 'system';
 
   windowState: WindowState = { ...DEFAULT_WINDOW_STATE };
+
+  serverSettings: ServerSettings = { ...DEFAULT_SERVER_SETTINGS };
 
   private settingsFile: string | undefined;
 
@@ -154,6 +166,10 @@ class Settings implements SettingsSchema {
 
   setWindowState(windowState: WindowState): void {
     this.windowState = windowState;
+  }
+
+  setServerSettings(serverSettings: ServerSettings): void {
+    this.serverSettings = serverSettings;
   }
 
   async close(): Promise<void> {

@@ -14,6 +14,17 @@ export const ThemeSource = z.enum(['system', 'light', 'dark'] as const);
 
 export type ThemeSource = z.infer<typeof ThemeSource>;
 
+export const ServerSettings = z.object({
+  semanticsTimeoutMs: z.int().positive(),
+  modelGenerationTimeoutSec: z.int().positive(),
+});
+
+export type ServerSettings = z.infer<typeof ServerSettings>;
+
+export const RestartServerResult = z.boolean();
+
+export type RestartServerResult = z.infer<typeof RestartServerResult>;
+
 export type ThemeSourceChangeCallback = (themeSource: ThemeSource) => void;
 
 export const EditorCommand = z.enum([
@@ -66,6 +77,8 @@ export default interface RefineryContextBridge {
   logLevel: string;
   log(obj: object): void;
   getBackendConfig(): Promise<BackendConfig>;
+  getServerSettings(): Promise<ServerSettings>;
+  restartServer(settings?: ServerSettings): Promise<RestartServerResult>;
   onServerStateChange(callback: ServerStateChangeCallback): void;
   setThemeSource(themeSource: ThemeSource): void;
   onThemeSourceChange(callback: ThemeSourceChangeCallback): void;
