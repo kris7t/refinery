@@ -46,6 +46,7 @@ const DEFAULT_SERVER_SETTINGS: ServerSettings = {
   modelGenerationTimeoutSec: 600,
   maxMemoryBytes: getDefaultMaxMemoryBytes(getSystemMemoryBytes()),
   libraryPaths: [],
+  classpathJars: [],
 };
 
 export { DEFAULT_SERVER_SETTINGS };
@@ -79,12 +80,18 @@ const LibraryPathSchema = z
   .string()
   .min(1)
   .refine((libraryPath) => !libraryPath.includes(path.delimiter));
+const ClasspathJarSchema = z
+  .string()
+  .min(1)
+  .refine((jarPath) => jarPath.toLowerCase().endsWith('.jar'))
+  .refine((jarPath) => !jarPath.includes(path.delimiter));
 
 export const ServerSettingsSchemaWithLimits = ServerSettingsSchema.extend({
   semanticsTimeoutMs: SemanticsTimeoutSchema,
   modelGenerationTimeoutSec: ModelGenerationTimeoutSchema,
   maxMemoryBytes: MaxMemorySchema,
   libraryPaths: z.array(LibraryPathSchema),
+  classpathJars: z.array(ClasspathJarSchema),
 });
 
 /**
@@ -105,6 +112,10 @@ export const ServerSettingsFromFile = ServerSettingsSchema.extend({
     .array(LibraryPathSchema)
     .default(DEFAULT_SERVER_SETTINGS.libraryPaths)
     .catch(DEFAULT_SERVER_SETTINGS.libraryPaths),
+  classpathJars: z
+    .array(ClasspathJarSchema)
+    .default(DEFAULT_SERVER_SETTINGS.classpathJars)
+    .catch(DEFAULT_SERVER_SETTINGS.classpathJars),
 }).default(DEFAULT_SERVER_SETTINGS);
 
 const SettingsFileSchema = z.object({

@@ -26,10 +26,12 @@ export default function spawnJava(
   {
     interactive = false,
     maxMemoryBytes,
+    classpathJars = [],
     ...options
   }: SpawnOptionsWithoutStdio & {
     interactive?: boolean;
     maxMemoryBytes?: number;
+    classpathJars?: readonly string[];
   },
 ): ChildProcess {
   // Sometimes we spawn the stock `electron` binary instead of our own
@@ -62,7 +64,7 @@ export default function spawnJava(
     REFINERY_LOG_LEVEL: logLevel,
     PATH: newPathEnv,
     JAVA_HOME: javaDir,
-    CLASSPATH: pathingJar,
+    CLASSPATH: [pathingJar, ...classpathJars].join(path.delimiter),
     // For Linux: dynamic linking for native libraries.
     LD_LIBRARY_PATH: nativesDir,
     // For macOS: dynamic linking for native libraries.

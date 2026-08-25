@@ -75,6 +75,13 @@ export default class BackendManager extends HttpServerManager<ServerSettings> {
       envVars['REFINERY_LIBRARY_PATH'] = libraryPathEnv;
     }
     if (process.isDev) {
+      if (serverSettings.classpathJars.length === 0) {
+        delete envVars['CLASSPATH'];
+      } else {
+        envVars['CLASSPATH'] = serverSettings.classpathJars.join(
+          path.delimiter,
+        );
+      }
       const gradlewCommand = `.${path.sep}gradlew`;
       return spawnScript(
         gradlewCommand,
@@ -97,6 +104,7 @@ export default class BackendManager extends HttpServerManager<ServerSettings> {
         [],
         {
           maxMemoryBytes: serverSettings.maxMemoryBytes,
+          classpathJars: serverSettings.classpathJars,
           env: envVars,
         },
       );

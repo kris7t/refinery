@@ -12,7 +12,7 @@ import type {
   ReadFileResult,
   EditorCommand,
   EditorCommandCallback,
-  LibraryDirectoryResult,
+  PathSelectionResult,
   RestartServerResult,
   ServerSettingsResponse,
   ServerStateChangeCallback,
@@ -80,7 +80,12 @@ contextBridge.exposeInMainWorld('refinery', {
   async selectLibraryDirectory() {
     return ipcRenderer.invoke(
       'refinery:selectLibraryDirectory',
-    ) as Promise<LibraryDirectoryResult>;
+    ) as Promise<PathSelectionResult>;
+  },
+  async selectClasspathJar() {
+    return ipcRenderer.invoke(
+      'refinery:selectClasspathJar',
+    ) as Promise<PathSelectionResult>;
   },
   async restartServer(serverSettings) {
     return (

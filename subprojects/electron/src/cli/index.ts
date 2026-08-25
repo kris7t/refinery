@@ -117,6 +117,7 @@ async function runCLI(): Promise<number | null> {
     {
       interactive: true,
       maxMemoryBytes: serverSettings.maxMemoryBytes,
+      classpathJars: serverSettings.classpathJars,
       env: newEnv,
     },
   );

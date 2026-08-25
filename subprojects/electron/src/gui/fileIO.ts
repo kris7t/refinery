@@ -76,6 +76,13 @@ const filters = [
   },
 ];
 
+const classpathJarFilters = [
+  {
+    name: 'Java archives',
+    extensions: ['jar'],
+  },
+];
+
 export async function selectFilePath(
   browserWindow?: BrowserWindow,
 ): Promise<string | undefined> {
@@ -105,6 +112,25 @@ export async function selectDirectoryPath(
   return result.canceled || directoryPath === undefined
     ? undefined
     : path.resolve(directoryPath);
+}
+
+export async function selectClasspathJarPath(
+  browserWindow?: BrowserWindow,
+): Promise<string | undefined> {
+  const result =
+    browserWindow === undefined
+      ? await dialog.showOpenDialog({
+          properties: ['openFile'],
+          filters: classpathJarFilters,
+        })
+      : await dialog.showOpenDialog(browserWindow, {
+          properties: ['openFile'],
+          filters: classpathJarFilters,
+        });
+  const jarPath = result.filePaths[0];
+  return result.canceled || jarPath === undefined
+    ? undefined
+    : path.resolve(jarPath);
 }
 
 function getBrowserWindow(event: IpcMainInvokeEvent): BrowserWindow {
@@ -253,6 +279,14 @@ export default function attachFileIOHandlers(
       return await selectDirectoryPath(getBrowserWindow(event));
     } catch (error) {
       logger.error({ err: error }, 'Failed to select library directory');
+      return { error: true };
+    }
+  });
+  ipcMain.handle('refinery:selectClasspathJar', async (event) => {
+    try {
+      return await selectClasspathJarPath(getBrowserWindow(event));
+    } catch (error) {
+      logger.error({ err: error }, 'Failed to select classpath JAR');
       return { error: true };
     }
   });

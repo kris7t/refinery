@@ -4,6 +4,8 @@
  * SPDX-License-Identifier: EPL-2.0
  */
 
+import java.io.File
+
 plugins {
 	id("tools.refinery.gradle.java-application")
 	id("tools.refinery.gradle.xtext-generated")
@@ -67,6 +69,11 @@ tasks {
 		val mainRuntimeClasspath = sourceSets.main.map { it.runtimeClasspath }
 		dependsOn(mainRuntimeClasspath)
 		classpath(mainRuntimeClasspath)
+		System.getenv("CLASSPATH")
+			?.split(File.pathSeparator)
+			?.filter(String::isNotBlank)
+			?.map(::file)
+			?.let { classpath(it) }
 		mainClass.set(application.mainClass)
 		providers.gradleProperty("tools.refinery.maxMemoryBytes").orNull
 			?.toLongOrNull()
