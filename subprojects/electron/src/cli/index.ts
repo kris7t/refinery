@@ -16,6 +16,7 @@ import appName from '../appName';
 import getLogger from '../logger/getLogger';
 import {
   DEFAULT_SERVER_SETTINGS,
+  getLibraryPathEnv,
   getSettingsFilePath,
   readServerSettingsFile,
 } from '../serverSettings';
@@ -56,12 +57,9 @@ async function runCLI(): Promise<number | null> {
     return (await launchGUI(args)) ? 0 : 1;
   }
 
-  let maxMemoryBytes = DEFAULT_SERVER_SETTINGS.maxMemoryBytes;
+  let serverSettings = DEFAULT_SERVER_SETTINGS;
   try {
-    const serverSettings = await readServerSettingsFile(
-      getSettingsFilePath(appName),
-    );
-    maxMemoryBytes = serverSettings.maxMemoryBytes;
+    serverSettings = await readServerSettingsFile(getSettingsFilePath(appName));
   } catch (error) {
     if (
       error === null ||
@@ -73,10 +71,16 @@ async function runCLI(): Promise<number | null> {
     }
   }
 
+  const libraryPathEnv = getLibraryPathEnv(serverSettings.libraryPaths);
   const newEnv: NodeJS.ProcessEnv = {
     ...process.env,
     REFINERY_SHOW_GRAPHICAL_OUTPUT: '1',
   };
+  if (libraryPathEnv === undefined) {
+    delete newEnv['REFINERY_LIBRARY_PATH'];
+  } else {
+    newEnv['REFINERY_LIBRARY_PATH'] = libraryPathEnv;
+  }
 
   let headless: HeadlessServerManager | undefined;
   if (await isHeadlessNeeded(args)) {
@@ -112,7 +116,7 @@ async function runCLI(): Promise<number | null> {
     args,
     {
       interactive: true,
-      maxMemoryBytes,
+      maxMemoryBytes: serverSettings.maxMemoryBytes,
       env: newEnv,
     },
   );

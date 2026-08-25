@@ -92,6 +92,21 @@ export async function selectFilePath(
     : path.resolve(filePath);
 }
 
+export async function selectDirectoryPath(
+  browserWindow?: BrowserWindow,
+): Promise<string | undefined> {
+  const result =
+    browserWindow === undefined
+      ? await dialog.showOpenDialog({ properties: ['openDirectory'] })
+      : await dialog.showOpenDialog(browserWindow, {
+          properties: ['openDirectory'],
+        });
+  const directoryPath = result.filePaths[0];
+  return result.canceled || directoryPath === undefined
+    ? undefined
+    : path.resolve(directoryPath);
+}
+
 function getBrowserWindow(event: IpcMainInvokeEvent): BrowserWindow {
   const browserWindow = BrowserWindow.fromWebContents(event.sender);
   if (browserWindow === null) {
@@ -233,6 +248,14 @@ async function saveFile(
 export default function attachFileIOHandlers(
   openWindow: (request: OpenRequest) => BrowserWindow,
 ): void {
+  ipcMain.handle('refinery:selectLibraryDirectory', async (event) => {
+    try {
+      return await selectDirectoryPath(getBrowserWindow(event));
+    } catch (error) {
+      logger.error({ err: error }, 'Failed to select library directory');
+      return { error: true };
+    }
+  });
   ipcMain.handle('refinery:readFile', async (event) => {
     let browserWindow: BrowserWindow | undefined;
     try {

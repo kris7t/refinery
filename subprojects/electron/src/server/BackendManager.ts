@@ -11,6 +11,7 @@ import path from 'node:path';
 import type { ServerSettings } from '@tools.refinery/frontend/RefineryContextBridge';
 import type BackendConfig from '@tools.refinery/frontend/xtext/BackendConfig';
 
+import { getLibraryPathEnv } from '../serverSettings';
 import settings from '../settings';
 import HttpServerManager from '../utils/HttpServerManager';
 import spawnJava from '../utils/spawnJava';
@@ -52,7 +53,8 @@ export default class BackendManager extends HttpServerManager<ServerSettings> {
     serverSettings = settings.serverSettings,
   ): ChildProcess {
     const threadCount = Math.min(os.cpus().length, 4);
-    const envVars = {
+    const libraryPathEnv = getLibraryPathEnv(serverSettings.libraryPaths);
+    const envVars: NodeJS.ProcessEnv = {
       ...process.env,
       REFINERY_LISTEN_HOST: BackendManager.hostname,
       REFINERY_LISTEN_PORT: String(this.port),
@@ -67,6 +69,11 @@ export default class BackendManager extends HttpServerManager<ServerSettings> {
             REFINERY_ALLOWED_ORIGINS: this.allowedOrigins.join(','),
           }),
     };
+    if (libraryPathEnv === undefined) {
+      delete envVars['REFINERY_LIBRARY_PATH'];
+    } else {
+      envVars['REFINERY_LIBRARY_PATH'] = libraryPathEnv;
+    }
     if (process.isDev) {
       const gradlewCommand = `.${path.sep}gradlew`;
       return spawnScript(

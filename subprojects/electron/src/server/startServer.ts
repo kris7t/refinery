@@ -4,6 +4,7 @@
  * SPDX-License-Identifier: EPL-2.0
  */
 
+import path from 'node:path';
 import { pathToFileURL } from 'node:url';
 
 import type { ServerSettings } from '@tools.refinery/frontend/RefineryContextBridge';
@@ -77,6 +78,7 @@ export default async function startServer(withBackend = true): Promise<{
         settings: toJS(settings.serverSettings),
         systemMemoryBytes,
         defaultMaxMemoryBytes: getDefaultMaxMemoryBytes(systemMemoryBytes),
+        pathDelimiter: path.delimiter,
       };
     });
     ipcMain.handle(

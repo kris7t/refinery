@@ -20,6 +20,7 @@ import { useId, useState } from 'react';
 import { useRootStore } from './RootStoreProvider';
 import ServerSettingsDialog, {
   RestartServerMenuItem,
+  type ServerSettingsTab,
 } from './ServerSettingsDialog';
 import { runThemeChange } from './ToggleDarkModeButton';
 import type { ThemePreference } from './theme/ThemeStore';
@@ -29,6 +30,8 @@ export default observer(function SettingsMenuButton(): React.ReactElement {
   const id = useId();
   const [anchorEl, setAnchorEl] = useState<HTMLElement | undefined>();
   const [serverSettingsOpen, setServerSettingsOpen] = useState(false);
+  const [serverSettingsTab, setServerSettingsTab] =
+    useState<ServerSettingsTab>('solver');
   const open = anchorEl !== undefined;
   const handleClose = () => setAnchorEl(undefined);
   const title = 'Settings';
@@ -95,16 +98,28 @@ export default observer(function SettingsMenuButton(): React.ReactElement {
         <MenuItem
           onClick={() => {
             handleClose();
+            setServerSettingsTab('solver');
             setServerSettingsOpen(true);
           }}
         >
           Solver options
+        </MenuItem>
+        <MenuItem
+          onClick={() => {
+            handleClose();
+            setServerSettingsTab('libraries');
+            setServerSettingsOpen(true);
+          }}
+        >
+          Libraries
         </MenuItem>
         <RestartServerMenuItem onClose={handleClose} />
       </Menu>
       <ServerSettingsDialog
         open={serverSettingsOpen}
         onClose={() => setServerSettingsOpen(false)}
+        onTabChange={setServerSettingsTab}
+        tab={serverSettingsTab}
       />
     </>
   );

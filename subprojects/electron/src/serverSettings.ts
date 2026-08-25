@@ -45,9 +45,18 @@ const DEFAULT_SERVER_SETTINGS: ServerSettings = {
   semanticsTimeoutMs: 10_000,
   modelGenerationTimeoutSec: 600,
   maxMemoryBytes: getDefaultMaxMemoryBytes(getSystemMemoryBytes()),
+  libraryPaths: [],
 };
 
 export { DEFAULT_SERVER_SETTINGS };
+
+export function getLibraryPathEnv(
+  libraryPaths: readonly string[],
+): string | undefined {
+  return libraryPaths.length === 0
+    ? undefined
+    : libraryPaths.join(path.delimiter);
+}
 
 const MAX_MAX_MEMORY_BYTES = Math.max(
   getSystemMemoryBytes(),
@@ -66,11 +75,16 @@ const MaxMemorySchema = z
   .int()
   .min(MIN_MAX_MEMORY_BYTES)
   .max(MAX_MAX_MEMORY_BYTES);
+const LibraryPathSchema = z
+  .string()
+  .min(1)
+  .refine((libraryPath) => !libraryPath.includes(path.delimiter));
 
 export const ServerSettingsSchemaWithLimits = ServerSettingsSchema.extend({
   semanticsTimeoutMs: SemanticsTimeoutSchema,
   modelGenerationTimeoutSec: ModelGenerationTimeoutSchema,
   maxMemoryBytes: MaxMemorySchema,
+  libraryPaths: z.array(LibraryPathSchema),
 });
 
 /**
@@ -87,6 +101,10 @@ export const ServerSettingsFromFile = ServerSettingsSchema.extend({
   maxMemoryBytes: MaxMemorySchema.default(
     DEFAULT_SERVER_SETTINGS.maxMemoryBytes,
   ).catch(DEFAULT_SERVER_SETTINGS.maxMemoryBytes),
+  libraryPaths: z
+    .array(LibraryPathSchema)
+    .default(DEFAULT_SERVER_SETTINGS.libraryPaths)
+    .catch(DEFAULT_SERVER_SETTINGS.libraryPaths),
 }).default(DEFAULT_SERVER_SETTINGS);
 
 const SettingsFileSchema = z.object({

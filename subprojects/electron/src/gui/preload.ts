@@ -12,6 +12,7 @@ import type {
   ReadFileResult,
   EditorCommand,
   EditorCommandCallback,
+  LibraryDirectoryResult,
   RestartServerResult,
   ServerSettingsResponse,
   ServerStateChangeCallback,
@@ -19,7 +20,7 @@ import type {
   ThemeSourceChangeCallback,
 } from '@tools.refinery/frontend/RefineryContextBridge';
 import type BackendConfig from '@tools.refinery/frontend/xtext/BackendConfig';
-import { contextBridge, ipcRenderer } from 'electron';
+import { contextBridge, ipcRenderer, webUtils } from 'electron';
 
 import { loggerContextBridge, getLogger } from '../logger/preloadLogger';
 
@@ -72,6 +73,14 @@ contextBridge.exposeInMainWorld('refinery', {
     return ipcRenderer.invoke(
       'refinery:getServerSettings',
     ) as Promise<ServerSettingsResponse>;
+  },
+  getPathForFile(file) {
+    return webUtils.getPathForFile(file as File);
+  },
+  async selectLibraryDirectory() {
+    return ipcRenderer.invoke(
+      'refinery:selectLibraryDirectory',
+    ) as Promise<LibraryDirectoryResult>;
   },
   async restartServer(serverSettings) {
     return (

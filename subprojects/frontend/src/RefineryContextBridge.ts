@@ -18,6 +18,7 @@ export const ServerSettings = z.object({
   semanticsTimeoutMs: z.int().positive(),
   modelGenerationTimeoutSec: z.int().positive(),
   maxMemoryBytes: z.int().positive(),
+  libraryPaths: z.array(z.string().min(1)),
 });
 
 export type ServerSettings = z.infer<typeof ServerSettings>;
@@ -26,6 +27,7 @@ export const ServerSettingsResponse = z.object({
   settings: ServerSettings,
   systemMemoryBytes: z.int().positive(),
   defaultMaxMemoryBytes: z.int().positive(),
+  pathDelimiter: z.string().min(1),
 });
 
 export type ServerSettingsResponse = z.infer<typeof ServerSettingsResponse>;
@@ -33,6 +35,12 @@ export type ServerSettingsResponse = z.infer<typeof ServerSettingsResponse>;
 export const RestartServerResult = z.boolean();
 
 export type RestartServerResult = z.infer<typeof RestartServerResult>;
+
+export const LibraryDirectoryResult = z
+  .union([z.string().min(1), z.object({ error: z.literal(true) })])
+  .optional();
+
+export type LibraryDirectoryResult = z.infer<typeof LibraryDirectoryResult>;
 
 export type ThemeSourceChangeCallback = (themeSource: ThemeSource) => void;
 
@@ -87,6 +95,8 @@ export default interface RefineryContextBridge {
   log(obj: object): void;
   getBackendConfig(): Promise<BackendConfig>;
   getServerSettings(): Promise<ServerSettingsResponse>;
+  getPathForFile(file: unknown): string;
+  selectLibraryDirectory(): Promise<LibraryDirectoryResult>;
   restartServer(settings?: ServerSettings): Promise<RestartServerResult>;
   onServerStateChange(callback: ServerStateChangeCallback): void;
   setThemeSource(themeSource: ThemeSource): void;
