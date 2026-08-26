@@ -9,6 +9,7 @@ import CodeIcon from '@mui/icons-material/Code';
 import ContentCopyIcon from '@mui/icons-material/ContentCopy';
 import ContrastIcon from '@mui/icons-material/Contrast';
 import DarkModeIcon from '@mui/icons-material/DarkMode';
+import DataObjectIcon from '@mui/icons-material/DataObject';
 import EditIcon from '@mui/icons-material/Edit';
 import ImageIcon from '@mui/icons-material/Image';
 import InsertDriveFileOutlinedIcon from '@mui/icons-material/InsertDriveFileOutlined';
@@ -116,10 +117,10 @@ function ExportPanel({
     [dialog],
   );
 
-  const { canCopy, format, plainText } = exportSettingsStore;
+  const { canCopy, canEdit, format, plainText } = exportSettingsStore;
   const emptyGraph = graph.semantics.nodes.length === 0;
-  const disabled = emptyGraph || (plainText && !graph.hasSource);
-  const shouldEdit = plainText && shiftDown && !disabled;
+  const disabled = emptyGraph || (canEdit && !graph.hasSource);
+  const shouldEdit = canEdit && shiftDown && !disabled;
   const buttons = useCallback(
     (close: () => void) => (
       <>
@@ -137,7 +138,7 @@ function ExportPanel({
         >
           Download
         </Button>
-        {('write' in navigator.clipboard || plainText) && canCopy && (
+        {(plainText || 'write' in navigator.clipboard) && canCopy && (
           <Button
             color="inherit"
             startIcon={shouldEdit ? <EditIcon /> : <ContentCopyIcon />}
@@ -222,6 +223,9 @@ function ExportPanel({
           </MenuItem>
           <MenuItem value="refinery">
             <CodeIcon fontSize="small" /> Refinery
+          </MenuItem>
+          <MenuItem value="json">
+            <DataObjectIcon fontSize="small" /> JSON
           </MenuItem>
         </RoundedSelect>
         {exportSettingsStore.canSetTheme && (

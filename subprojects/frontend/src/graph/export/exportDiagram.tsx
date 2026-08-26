@@ -32,6 +32,7 @@ import type ExportSettingsStore from './ExportSettingsStore';
 const PROLOG = '<?xml version="1.0" encoding="UTF-8" standalone="no"?>';
 const PNG_CONTENT_TYPE = 'image/png';
 const SVG_CONTENT_TYPE = 'image/svg+xml';
+const JSON_CONTENT_TYPE = 'application/json';
 const EXPORT_ID = 'export-image';
 
 function fixIDs(id: string, svgDocument: XMLDocument) {
@@ -416,13 +417,41 @@ async function exportRefinery(
   }
 }
 
+async function exportJSON(
+  graphStore: GraphStore,
+  mode: 'download' | 'copy' | 'edit',
+): Promise<void> {
+  const semantics = { ...graphStore.semantics };
+  delete semantics.source;
+  const text = JSON.stringify(semantics);
+  if (mode === 'copy') {
+    await navigator.clipboard.writeText(text);
+    return;
+  }
+  if (mode === 'edit') {
+    throw new Error("Can't open JSON output in the code editor");
+  }
+  const blob = new Blob([text], { type: JSON_CONTENT_TYPE });
+  await saveBlob(blob, `${graphStore.name}.json`, {
+    id: EXPORT_ID,
+    types: [
+      {
+        description: 'JSON files',
+        accept: {
+          [JSON_CONTENT_TYPE]: ['.json'],
+        },
+      },
+    ],
+  });
+}
+
 export async function exportBlob(
   svgContainer: HTMLElement | undefined,
   graph: GraphStore,
   settings: ExportSettingsStore,
 ): Promise<Blob | undefined> {
-  if (settings.format === 'refinery') {
-    throw new Error("Can't export refinery code as binary");
+  if (settings.format === 'refinery' || settings.format === 'json') {
+    throw new Error("Can't export text as binary");
   }
 
   const svg = svgContainer?.querySelector('svg');
@@ -516,6 +545,9 @@ export default async function exportDiagram(
 ): Promise<void> {
   if (settings.format === 'refinery') {
     return exportRefinery(graph, mode);
+  }
+  if (settings.format === 'json') {
+    return exportJSON(graph, mode);
   }
 
   const blob = await exportBlob(svgContainer, graph, settings);
