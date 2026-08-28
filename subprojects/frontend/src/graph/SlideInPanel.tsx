@@ -47,9 +47,6 @@ export default function SlideInPanel({
   iconLabel,
   buttons,
   children,
-  onKeyDown,
-  onKeyUp,
-  onMouseMove,
 }: {
   anchor: 'left' | 'right';
   dialog: boolean;
@@ -57,9 +54,6 @@ export default function SlideInPanel({
   icon: (show: boolean) => React.ReactNode;
   iconLabel: string;
   buttons: React.ReactNode | ((close: () => void) => React.ReactNode);
-  onKeyDown?: (e: React.KeyboardEvent<HTMLDivElement>) => void;
-  onKeyUp?: (e: React.KeyboardEvent<HTMLDivElement>) => void;
-  onMouseMove?: (e: React.MouseEvent<HTMLDivElement>) => void;
   children?: React.ReactNode;
 }): React.ReactElement {
   const id = useId();
@@ -67,12 +61,7 @@ export default function SlideInPanel({
   const close = useCallback(() => setShow(false), []);
 
   return (
-    <SlideInPanelRoot
-      anchor={anchor}
-      onKeyDown={onKeyDown}
-      onKeyUp={onKeyUp}
-      onMouseMove={onMouseMove}
-    >
+    <SlideInPanelRoot anchor={anchor}>
       <Tooltip
         title={iconLabel}
         placement={anchor === 'left' ? 'right' : 'left'}

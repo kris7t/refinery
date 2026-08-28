@@ -27,10 +27,11 @@ import Switch from '@mui/material/Switch';
 import Typography from '@mui/material/Typography';
 import { styled } from '@mui/material/styles';
 import { observer } from 'mobx-react-lite';
-import { useCallback, useState } from 'react';
+import { useCallback } from 'react';
 
 import { useRootStore } from '../../RootStoreProvider';
 import getLogger from '../../utils/getLogger';
+import useShiftKey from '../../utils/useShiftKey';
 import type GraphStore from '../GraphStore';
 import SlideInPanel from '../SlideInPanel';
 
@@ -109,7 +110,7 @@ function ExportPanel({
   dialog: boolean;
 }): React.ReactElement {
   const { exportSettingsStore } = useRootStore();
-  const [shiftDown, setShiftDown] = useState(false);
+  const shiftDown = useShiftKey();
 
   const icon = useCallback(
     (show: boolean) =>
@@ -180,21 +181,6 @@ function ExportPanel({
       icon={icon}
       iconLabel="Export"
       buttons={buttons}
-      onKeyDown={({ key }) => {
-        if (key === 'Shift') {
-          setShiftDown(true);
-        }
-      }}
-      onKeyUp={({ key }) => {
-        if (key === 'Shift') {
-          setShiftDown(false);
-        }
-      }}
-      onMouseMove={({ shiftKey }) => {
-        if (shiftKey !== shiftDown) {
-          setShiftDown(shiftKey);
-        }
-      }}
     >
       <Stack
         direction="row"

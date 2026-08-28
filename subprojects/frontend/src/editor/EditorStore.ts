@@ -568,6 +568,18 @@ export default class EditorStore {
     this.generatedModels.delete(uuid);
   }
 
+  deleteAllGeneratedModels(): void {
+    let generating = false;
+    this.generatedModels.forEach((generatedModel) => {
+      generating = generating || generatedModel.running;
+    });
+    if (generating) {
+      this.cancelModelGeneration();
+    }
+    this.generatedModels.clear();
+    this.selectedGeneratedModel = undefined;
+  }
+
   get selectedGeneratedModelStore(): GeneratedModelStore | undefined {
     if (this.selectedGeneratedModel === undefined) {
       return undefined;
