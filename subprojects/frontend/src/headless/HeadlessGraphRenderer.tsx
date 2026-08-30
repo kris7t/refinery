@@ -99,7 +99,6 @@ function HeadlessGraphRenderer({ request }: { request: Request }) {
       ref={setElement}
       colorNodes={graph.colorNodes}
       hexTypeHashes={graph.hexTypeHashes}
-      concretize={graph.concretize}
     />
   );
 }

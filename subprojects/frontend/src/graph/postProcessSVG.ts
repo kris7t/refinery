@@ -155,7 +155,7 @@ function hrefToClass(node: SVGGElement) {
 export function addSVGIcons(
   renderer: Graphviz<BaseType, unknown, null, undefined>,
 ) {
-  ['true', 'unknown', 'error'].forEach((icon) => {
+  ['true', 'unknown', 'error', 'error-concretize'].forEach((icon) => {
     renderer.addImage(`#${icon}`, 16, 16);
     renderer.addImage(`#attribute-${icon}`, 16, 16);
     renderer.addImage(`#string-${icon}`, 16, 16);
@@ -184,7 +184,7 @@ function replaceImages(node: SVGGElement) {
     use.setAttribute('height', sizeString);
     let iconName = `icon-${href.replace('#', '')}`;
     const iconClass = iconName.replace('attribute-', '');
-    if (iconName.endsWith('-error')) {
+    if (iconName.endsWith('-error') || iconName.endsWith('-error-concretize')) {
       iconName = 'icon-error';
     }
     use.setAttribute('href', `#refinery-${iconName}`);

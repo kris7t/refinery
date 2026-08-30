@@ -160,7 +160,6 @@ function DotGraphVisualizer({
       ref={setElement}
       colorNodes={graph.colorNodes}
       hexTypeHashes={graph.hexTypeHashes}
-      concretize={graph.concretize}
     />
   );
 }
