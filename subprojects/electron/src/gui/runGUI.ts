@@ -22,6 +22,7 @@ import { isMac, isWindows } from '../utils/platform';
 import OpenRequestHandler, { type OpenRequest } from './OpenRequestHandler';
 import { openWindowsStore } from './OpenWindowsStore';
 import attachApplicationMenu from './applicationMenu';
+import attachCLISymlinkHandlers from './cliSymlink';
 import attachFileIOHandlers, { focusWindowForFile } from './fileIO';
 import getTheme, {
   attachNativeThemeHandler,
@@ -198,6 +199,7 @@ export default async function runGUI() {
   // Register the quit guard before any cleanup handlers can run from `will-quit`.
   attachQuitHandler();
   attachApplicationMenu(openRequests);
+  attachCLISymlinkHandlers();
   attachFileIOHandlers(openWindow);
   attachNativeThemeHandler();
   const disposeWindowStateReaction = reaction(

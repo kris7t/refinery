@@ -8,7 +8,7 @@ import { spawn } from 'node:child_process';
 
 import { getArchSuffix, resolvePackagedPath } from './packagedPaths';
 
-export interface CliResult {
+export interface CLIResult {
   readonly exitCode: number | null;
   readonly stdout: string;
   readonly stderr: string;
@@ -46,7 +46,7 @@ export default function runCLI(
   cliPath: string,
   args: string[],
   signal?: AbortSignal,
-): Promise<CliResult> {
+): Promise<CLIResult> {
   return new Promise((resolve, reject) => {
     const child = spawn(cliPath, args, { stdio: ['ignore', 'pipe', 'pipe'] });
     let stdout = '';

@@ -21,6 +21,7 @@ import { useRootStore } from '../RootStoreProvider';
 import { runThemeChange } from '../ToggleDarkModeButton';
 import type { ThemePreference } from '../theme/ThemeStore';
 
+import CLISymlinkMenuItem from './CLISymlinkMenuItem';
 import ServerSettingsDialog, {
   RestartServerMenuItem,
   type ServerSettingsTab,
@@ -114,6 +115,7 @@ export default observer(function SettingsMenuButton(): React.ReactElement {
         >
           Libraries
         </MenuItem>
+        <CLISymlinkMenuItem onClose={handleClose} />
         <RestartServerMenuItem onClose={handleClose} />
       </Menu>
       <ServerSettingsDialog

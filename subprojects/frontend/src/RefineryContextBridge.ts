@@ -37,6 +37,42 @@ export const RestartServerResult = z.boolean();
 
 export type RestartServerResult = z.infer<typeof RestartServerResult>;
 
+export const CLISymlinkStatus = z.enum([
+  'unsupported',
+  'notConfigured',
+  'disabled',
+  'missing',
+  'incorrect',
+  'correct',
+] as const);
+
+export type CLISymlinkStatus = z.infer<typeof CLISymlinkStatus>;
+
+export const CLISymlinkState = z.object({
+  status: CLISymlinkStatus,
+  actionInFlight: z.boolean(),
+});
+
+export type CLISymlinkState = z.infer<typeof CLISymlinkState>;
+
+export type CLISymlinkStatusChangeCallback = (state: CLISymlinkState) => void;
+
+export const CLISymlinkResult = z.union([
+  z.literal(true),
+  z.object({
+    error: z.literal(true),
+    reason: z.enum(['failed', 'occupied', 'busy'] as const),
+  }),
+]);
+
+export type CLISymlinkResult = z.infer<typeof CLISymlinkResult>;
+
+export const CLISymlinkPromptClaimResult = z.boolean();
+
+export type CLISymlinkPromptClaimResult = z.infer<
+  typeof CLISymlinkPromptClaimResult
+>;
+
 export const PathSelectionResult = z
   .union([z.string().min(1), z.object({ error: z.literal(true) })])
   .optional();
@@ -96,6 +132,10 @@ export default interface RefineryContextBridge {
   log(obj: object): void;
   getBackendConfig(): Promise<BackendConfig>;
   getServerSettings(): Promise<ServerSettingsResponse>;
+  onCLISymlinkStatusChange(callback: CLISymlinkStatusChangeCallback): void;
+  claimCLISymlinkPrompt(): Promise<CLISymlinkPromptClaimResult>;
+  setCLISymlink(enabled: boolean): Promise<CLISymlinkResult>;
+  setCLISymlinkPreference(enabled: boolean): Promise<CLISymlinkResult>;
   getPathForFile(file: unknown): string;
   selectLibraryDirectory(): Promise<PathSelectionResult>;
   selectClasspathJar(): Promise<PathSelectionResult>;

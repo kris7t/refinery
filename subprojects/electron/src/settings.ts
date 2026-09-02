@@ -58,6 +58,7 @@ const SettingsSchema = z.object({
   theme: ThemeSource,
   windowState: WindowStateSchema.default(DEFAULT_WINDOW_STATE),
   serverSettings: ServerSettingsFromFile,
+  createCLISymlink: z.boolean().optional().catch(undefined),
 });
 
 type SettingsSchema = z.infer<typeof SettingsSchema>;
@@ -72,6 +73,8 @@ class Settings implements SettingsSchema {
   windowState: WindowState = { ...DEFAULT_WINDOW_STATE };
 
   serverSettings: ServerSettings = { ...DEFAULT_SERVER_SETTINGS };
+
+  createCLISymlink: boolean | undefined = undefined;
 
   private settingsFile: string | undefined;
 
@@ -168,6 +171,10 @@ class Settings implements SettingsSchema {
 
   setServerSettings(serverSettings: ServerSettings): void {
     this.serverSettings = serverSettings;
+  }
+
+  setCreateCLISymlink(createCLISymlink: boolean): void {
+    this.createCLISymlink = createCLISymlink;
   }
 
   async close(): Promise<void> {

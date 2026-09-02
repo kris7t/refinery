@@ -12,6 +12,10 @@ import type {
   ReadFileResult,
   EditorCommand,
   EditorCommandCallback,
+  CLISymlinkResult,
+  CLISymlinkPromptClaimResult,
+  CLISymlinkState,
+  CLISymlinkStatusChangeCallback,
   PathSelectionResult,
   RestartServerResult,
   ServerSettingsResponse,
@@ -29,6 +33,8 @@ const logger = getLogger('gui.preload');
 const serverStateCallbacks: ServerStateChangeCallback[] = [];
 
 const themeSourceCallbacks: ThemeSourceChangeCallback[] = [];
+
+const cliSymlinkStatusCallbacks: CLISymlinkStatusChangeCallback[] = [];
 
 const editorCommandCallbacks: EditorCommandCallback[] = [];
 
@@ -48,6 +54,15 @@ ipcRenderer.on(
   (_event, themeSource: ThemeSource) => {
     for (const callback of themeSourceCallbacks) {
       callback(themeSource);
+    }
+  },
+);
+
+ipcRenderer.on(
+  'refinery:cliSymlinkStatusChanged',
+  (_event, state: CLISymlinkState) => {
+    for (const callback of cliSymlinkStatusCallbacks) {
+      callback(state);
     }
   },
 );
@@ -73,6 +88,38 @@ contextBridge.exposeInMainWorld('refinery', {
     return ipcRenderer.invoke(
       'refinery:getServerSettings',
     ) as Promise<ServerSettingsResponse>;
+  },
+  onCLISymlinkStatusChange(callback) {
+    if (typeof callback !== 'function') {
+      return;
+    }
+    cliSymlinkStatusCallbacks.push(callback);
+    (
+      ipcRenderer.invoke(
+        'refinery:getCLISymlinkStatus',
+      ) as Promise<CLISymlinkState>
+    )
+      .then(callback)
+      .catch((error) =>
+        logger.error({ err: error }, 'Failed to get CLI symlink status'),
+      );
+  },
+  async claimCLISymlinkPrompt() {
+    return ipcRenderer.invoke(
+      'refinery:claimCLISymlinkPrompt',
+    ) as Promise<CLISymlinkPromptClaimResult>;
+  },
+  async setCLISymlink(enabled) {
+    return ipcRenderer.invoke(
+      'refinery:setCLISymlink',
+      enabled,
+    ) as Promise<CLISymlinkResult>;
+  },
+  async setCLISymlinkPreference(enabled) {
+    return ipcRenderer.invoke(
+      'refinery:setCLISymlinkPreference',
+      enabled,
+    ) as Promise<CLISymlinkResult>;
   },
   getPathForFile(file) {
     return webUtils.getPathForFile(file as File);

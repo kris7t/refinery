@@ -11,28 +11,29 @@ import { observer } from 'mobx-react-lite';
 import { useState } from 'react';
 
 import { useRootStore } from '../RootStoreProvider';
-import type EditorStore from '../editor/EditorStore';
-import type { ConfirmationDialogState } from '../editor/EditorStore';
 import getLogger from '../utils/getLogger';
 
 import Dialog from './Dialog';
 import DialogActionBar from './DialogActionBar';
+import type DialogStore from './DialogStore';
+import type { ConfirmationDialogState } from './DialogStore';
 import DialogTitleBar from './DialogTitleBar';
 
 const log = getLogger('ConfirmationDialog');
 
 function ConfirmationDialogView({
-  editorStore,
+  dialogStore,
   dialog,
 }: {
-  editorStore: EditorStore;
+  dialogStore: DialogStore;
   dialog: ConfirmationDialogState;
 }): React.ReactElement {
   const [pending, setPending] = useState(false);
 
   const dismiss = () => {
     if (!pending) {
-      editorStore.dismissConfirmation(dialog.id);
+      dialogStore.dismissConfirmation(dialog.id);
+      dialog.onDismiss?.();
     }
   };
 
@@ -104,16 +105,13 @@ function ConfirmationDialogView({
 }
 
 export default observer(function ConfirmationDialog(): React.ReactElement {
-  const { editorStore } = useRootStore();
-  if (editorStore === undefined) {
-    return <></>;
-  }
+  const { dialogStore } = useRootStore();
   return (
     <>
-      {editorStore.confirmationDialogs.map((dialog) => (
+      {dialogStore.confirmationDialogs.map((dialog) => (
         <ConfirmationDialogView
           key={dialog.id}
-          editorStore={editorStore}
+          dialogStore={dialogStore}
           dialog={dialog}
         />
       ))}

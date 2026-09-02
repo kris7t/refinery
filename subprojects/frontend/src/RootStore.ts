@@ -15,6 +15,7 @@ import {
 
 import PWAStore from './PWAStore';
 import { EditorCommand, ReadFileResult } from './RefineryContextBridge';
+import DialogStore from './dialog/DialogStore';
 import type EditorStore from './editor/EditorStore';
 import ExportSettingsStore from './graph/export/ExportSettingsStore';
 import Compressor, {
@@ -22,6 +23,7 @@ import Compressor, {
   type DecompressSource,
 } from './persistence/Compressor';
 import defaultInitialValue from './persistence/initialValue';
+import CLISymlinkStore from './settings/CLISymlinkStore';
 import ThemeStore from './theme/ThemeStore';
 import isElectron from './utils/isElectron';
 import fetchBackendConfig, {
@@ -48,10 +50,11 @@ export default class RootStore {
 
   editorStore: EditorStore | undefined;
 
-  errorDialog: { title: string; body: string; fatal: boolean } | undefined =
-    undefined;
-
   readonly pwaStore: PWAStore;
+
+  readonly dialogStore: DialogStore;
+
+  readonly cliSymlinkStore: CLISymlinkStore;
 
   readonly themeStore: ThemeStore;
 
@@ -68,7 +71,7 @@ export default class RootStore {
     if (
       this.closeAllowed ||
       !editorStore?.unsavedChanges ||
-      editorStore.hasCloseConfirmation
+      this.dialogStore.hasConfirmation('close')
     ) {
       return;
     }
@@ -84,17 +87,26 @@ export default class RootStore {
 
   constructor() {
     this.pwaStore = new PWAStore();
+    this.dialogStore = new DialogStore();
+    this.cliSymlinkStore = new CLISymlinkStore(
+      this.dialogStore,
+      window.refinery,
+    );
     this.themeStore = new ThemeStore();
     this.exportSettingsStore = new ExportSettingsStore();
     makeAutoObservable<
       RootStore,
       | 'compressor'
+      | 'dialogStore'
+      | 'cliSymlinkStore'
       | 'editorStoreClass'
       | 'titleReaction'
       | 'beforeUnloadHandler'
       | 'closeAllowed'
     >(this, {
       compressor: false,
+      dialogStore: false,
+      cliSymlinkStore: false,
       editorStoreClass: false,
       pwaStore: false,
       themeStore: false,
@@ -228,20 +240,19 @@ export default class RootStore {
   }
 
   showError(title: string, body: string, fatal = false): void {
-    // Once initialization has failed, later recoverable errors must not expose
-    // an application that was never initialized successfully.
-    if (this.errorDialog?.fatal) {
-      return;
-    }
-    this.errorDialog = { title, body, fatal };
+    this.dialogStore.showError(title, body, fatal);
   }
 
   closeErrorDialog(): void {
-    if (this.errorDialog?.fatal) {
+    if (this.dialogStore.errorDialog?.fatal) {
       this.closeWindow();
       return;
     }
-    this.errorDialog = undefined;
+    this.dialogStore.dismissError();
+  }
+
+  get errorDialog() {
+    return this.dialogStore.errorDialog;
   }
 
   private closeWindow(): void {
@@ -293,6 +304,7 @@ export default class RootStore {
         this.initialFileName,
         this.initialVisibility,
         this.pwaStore,
+        this.dialogStore,
         this.themeStore,
         this.backendConfig,
         this.compressor.compress.bind(this.compressor),
@@ -302,6 +314,7 @@ export default class RootStore {
         this.closeWindow.bind(this),
       );
       this.editorStore = editorStore;
+      this.cliSymlinkStore.editorInitialized();
       this.titleReaction = autorun(() => {
         const { simpleName, unsavedChanges } = editorStore;
         if (simpleName === undefined) {

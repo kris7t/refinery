@@ -39,6 +39,7 @@ import { nanoid } from 'nanoid';
 
 import type PWAStore from '../PWAStore';
 import type RefineryContextBridge from '../RefineryContextBridge';
+import type DialogStore from '../dialog/DialogStore';
 import GraphStore, { type Visibility } from '../graph/GraphStore';
 import type ThemeStore from '../theme/ThemeStore';
 import getLogger from '../utils/getLogger';
@@ -65,26 +66,6 @@ import {
 } from './semanticHighlighting';
 
 const log = getLogger('editor.EditorStore');
-
-export interface ConfirmationAction {
-  label: string;
-  color?: 'inherit' | 'error';
-  defaultAction?: boolean;
-  onClick: (dialogId: string) => void | Promise<void>;
-}
-
-export type ConfirmationDialogKind = 'openFile' | 'close';
-
-export interface ConfirmationDialogState {
-  title: string;
-  body: string;
-  kind: ConfirmationDialogKind;
-  dismissible: boolean;
-  actions: readonly ConfirmationAction[];
-  id: string;
-}
-
-export type ConfirmationDialogConfig = Omit<ConfirmationDialogState, 'id'>;
 
 export default class EditorStore {
   readonly id: string;
@@ -123,8 +104,6 @@ export default class EditorStore {
 
   unsavedChanges = false;
 
-  confirmationDialogs: ConfirmationDialogState[] = [];
-
   shareDialogOpen: 'toolbarButton' | 'copyLink' | 'pasteLink' | undefined =
     undefined;
 
@@ -145,6 +124,7 @@ export default class EditorStore {
     initialFileName: string | undefined,
     initialVisibility: Record<string, Visibility> | undefined,
     pwaStore: PWAStore,
+    private readonly dialogStore: DialogStore,
     private readonly themeStore: ThemeStore,
     public readonly backendConfig: BackendConfigWithDefaults,
     onUpdate: (text: string, visibility: Record<string, Visibility>) => void,
@@ -222,6 +202,7 @@ export default class EditorStore {
       EditorStore,
       | 'client'
       | 'compressForShare'
+      | 'dialogStore'
       | 'fileStore'
       | 'refinery'
       | 'openShareInCurrentEditor'
@@ -231,11 +212,11 @@ export default class EditorStore {
       state: observable.ref,
       client: observable.ref,
       compressForShare: false,
+      dialogStore: false,
       fileStore: false,
       refinery: false,
       openShareInCurrentEditor: false,
       onCloseWindow: false,
-      confirmationDialogs: observable.ref,
       view: observable.ref,
       searchPanel: false,
       lintPanel: false,
@@ -629,10 +610,10 @@ export default class EditorStore {
       return true;
     }
     if (this.unsavedChanges) {
-      if (this.hasOpenFileConfirmation) {
+      if (this.dialogStore.hasConfirmation('openFile')) {
         return true;
       }
-      this.showConfirmation({
+      this.dialogStore.showConfirmation({
         kind: 'openFile',
         title: 'Open another file?',
         body: 'You have unsaved changes. Open another file anyway?',
@@ -642,14 +623,15 @@ export default class EditorStore {
             label: 'Open anyway',
             defaultAction: true,
             onClick: (dialogId) => {
-              this.dismissConfirmation(dialogId);
+              this.dialogStore.dismissConfirmation(dialogId);
               this.openFileWithoutConfirmation();
             },
           },
           {
             label: 'Cancel',
             color: 'inherit',
-            onClick: (dialogId) => this.dismissConfirmation(dialogId),
+            onClick: (dialogId) =>
+              this.dialogStore.dismissConfirmation(dialogId),
           },
         ],
       });
@@ -668,12 +650,12 @@ export default class EditorStore {
       this.onCloseWindow();
       return;
     }
-    if (this.hasCloseConfirmation) {
+    if (this.dialogStore.hasConfirmation('close')) {
       return;
     }
     const fileDescription =
       this.fileName === undefined ? 'this file' : `“${this.fileName}”`;
-    this.showConfirmation({
+    this.dialogStore.showConfirmation({
       kind: 'close',
       title: 'Unsaved changes',
       body: `Save your changes to ${fileDescription} before closing?`,
@@ -688,33 +670,12 @@ export default class EditorStore {
           label: 'Close anyway',
           color: 'error',
           onClick: (dialogId) => {
-            this.dismissConfirmation(dialogId);
+            this.dialogStore.dismissConfirmation(dialogId);
             this.onCloseWindow();
           },
         },
       ],
     });
-  }
-
-  get hasCloseConfirmation(): boolean {
-    return this.confirmationDialogs.some(({ kind }) => kind === 'close');
-  }
-
-  get hasOpenFileConfirmation(): boolean {
-    return this.confirmationDialogs.some(({ kind }) => kind === 'openFile');
-  }
-
-  showConfirmation(dialog: ConfirmationDialogConfig): void {
-    this.confirmationDialogs = [
-      ...this.confirmationDialogs,
-      { ...dialog, id: nanoid() },
-    ];
-  }
-
-  dismissConfirmation(dialogId: string): void {
-    this.confirmationDialogs = this.confirmationDialogs.filter(
-      ({ id }) => id !== dialogId,
-    );
   }
 
   private saveAndClose(dialogId: string): Promise<void> {
@@ -726,7 +687,7 @@ export default class EditorStore {
         }
         completed = true;
         if (saved) {
-          this.dismissConfirmation(dialogId);
+          this.dialogStore.dismissConfirmation(dialogId);
           this.onCloseWindow();
         }
         resolve();
