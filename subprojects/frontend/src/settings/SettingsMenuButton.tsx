@@ -17,13 +17,14 @@ import Tooltip from '@mui/material/Tooltip';
 import { observer } from 'mobx-react-lite';
 import { useId, useState } from 'react';
 
-import { useRootStore } from './RootStoreProvider';
+import { useRootStore } from '../RootStoreProvider';
+import { runThemeChange } from '../ToggleDarkModeButton';
+import type { ThemePreference } from '../theme/ThemeStore';
+
 import ServerSettingsDialog, {
   RestartServerMenuItem,
   type ServerSettingsTab,
 } from './ServerSettingsDialog';
-import { runThemeChange } from './ToggleDarkModeButton';
-import type { ThemePreference } from './theme/ThemeStore';
 
 export default observer(function SettingsMenuButton(): React.ReactElement {
   const { themeStore } = useRootStore();

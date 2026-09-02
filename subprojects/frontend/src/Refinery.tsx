@@ -8,11 +8,11 @@ import Grow from '@mui/material/Grow';
 import Stack from '@mui/material/Stack';
 import { SnackbarProvider } from 'notistack';
 
-import ConfirmationDialog from './ConfirmationDialog';
-import ErrorDialog from './ErrorDialog';
 import TopBar from './TopBar';
 import UpdateNotification from './UpdateNotification';
 import WorkArea from './WorkArea';
+import ConfirmationDialog from './dialog/ConfirmationDialog';
+import ErrorDialog from './dialog/ErrorDialog';
 
 export default function Refinery(): React.ReactElement {
   return (

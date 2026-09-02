@@ -9,8 +9,7 @@ import IconButton from '@mui/material/IconButton';
 import { observer } from 'mobx-react-lite';
 
 import Tooltip from '../Tooltip';
-
-import type EditorStore from './EditorStore';
+import type EditorStore from '../editor/EditorStore';
 
 const ShareButton = observer(function ShareButton({
   editorStore,

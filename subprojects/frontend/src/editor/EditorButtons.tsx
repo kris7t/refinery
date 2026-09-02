@@ -28,12 +28,12 @@ import { observer } from 'mobx-react-lite';
 import { useId } from 'react';
 
 import Tooltip from '../Tooltip';
+import ShareButton from '../persistence/ShareButton';
+import ShareDialog from '../persistence/ShareDialog';
 import isElectron from '../utils/isElectron';
 
 import ConnectButton from './ConnectButton';
 import type EditorStore from './EditorStore';
-import ShareButton from './ShareButton';
-import ShareDialog from './ShareDialog';
 
 // Exhastive switch as proven by TypeScript.
 // eslint-disable-next-line consistent-return

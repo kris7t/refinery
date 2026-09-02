@@ -30,10 +30,10 @@ import { observer } from 'mobx-react-lite';
 import { useCallback } from 'react';
 
 import { useRootStore } from '../../RootStoreProvider';
+import SlideInPanel from '../../dialog/SlideInPanel';
 import getLogger from '../../utils/getLogger';
 import useShiftKey from '../../utils/useShiftKey';
 import type GraphStore from '../GraphStore';
-import SlideInPanel from '../SlideInPanel';
 
 import exportDiagram from './exportDiagram';
 

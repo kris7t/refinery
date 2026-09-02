@@ -10,13 +10,14 @@ import Typography from '@mui/material/Typography';
 import { observer } from 'mobx-react-lite';
 import { useState } from 'react';
 
+import { useRootStore } from '../RootStoreProvider';
+import type EditorStore from '../editor/EditorStore';
+import type { ConfirmationDialogState } from '../editor/EditorStore';
+import getLogger from '../utils/getLogger';
+
 import Dialog from './Dialog';
 import DialogActionBar from './DialogActionBar';
 import DialogTitleBar from './DialogTitleBar';
-import { useRootStore } from './RootStoreProvider';
-import type EditorStore from './editor/EditorStore';
-import type { ConfirmationDialogState } from './editor/EditorStore';
-import getLogger from './utils/getLogger';
 
 const log = getLogger('ConfirmationDialog');
 

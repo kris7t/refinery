@@ -11,8 +11,7 @@ import Tooltip from '@mui/material/Tooltip';
 import { styled } from '@mui/material/styles';
 import React, { useCallback, useId, useState } from 'react';
 
-import Dialog from '../Dialog';
-
+import Dialog from './Dialog';
 import SlideInDialog from './SlideInDialog';
 
 const SlideInPanelRoot = styled('div', {

@@ -20,10 +20,10 @@ import { useResizeDetector } from 'react-resize-detector';
 
 import PaneButtons from './PaneButtons';
 import { useRootStore } from './RootStoreProvider';
-import SettingsMenuButton from './SettingsMenuButton';
 import ToggleDarkModeButton from './ToggleDarkModeButton';
 import ConcretizeButton from './editor/ConcretizeButton';
 import GenerateButton from './editor/GenerateButton';
+import SettingsMenuButton from './settings/SettingsMenuButton';
 import isElectron from './utils/isElectron';
 
 const TITLEBAR_LEFT_PADDING = 16;

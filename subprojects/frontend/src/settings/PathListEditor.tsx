@@ -22,8 +22,8 @@ import { type DragEvent, useRef, useState } from 'react';
 import {
   PathSelectionResult as PathSelectionResultSchema,
   type PathSelectionResult,
-} from './RefineryContextBridge';
-import getLogger from './utils/getLogger';
+} from '../RefineryContextBridge';
+import getLogger from '../utils/getLogger';
 
 const log = getLogger('PathListEditor');
 

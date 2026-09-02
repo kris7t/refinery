@@ -8,8 +8,8 @@ import Button from '@mui/material/Button';
 import { styled } from '@mui/material/styles';
 import React from 'react';
 
-import DialogActionBar from '../DialogActionBar';
-import DialogTitleBar from '../DialogTitleBar';
+import DialogActionBar from './DialogActionBar';
+import DialogTitleBar from './DialogTitleBar';
 
 const SlideInDialogRoot = styled('div', {
   name: 'SlideInDialog-Root',

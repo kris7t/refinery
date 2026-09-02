@@ -9,10 +9,11 @@ import Button from '@mui/material/Button';
 import Typography from '@mui/material/Typography';
 import { observer } from 'mobx-react-lite';
 
+import { useRootStore } from '../RootStoreProvider';
+
 import Dialog from './Dialog';
 import DialogActionBar from './DialogActionBar';
 import DialogTitleBar from './DialogTitleBar';
-import { useRootStore } from './RootStoreProvider';
 
 export default observer(function ErrorDialog(): React.ReactElement {
   const rootStore = useRootStore();

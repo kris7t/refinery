@@ -28,16 +28,16 @@ import {
   useState,
 } from 'react';
 
-import Dialog from '../Dialog';
-import DialogActionBar from '../DialogActionBar';
-import DialogTitleBar from '../DialogTitleBar';
-import { parseShareURI } from '../persistence/shareURI';
+import Dialog from '../dialog/Dialog';
+import DialogActionBar from '../dialog/DialogActionBar';
+import DialogTitleBar from '../dialog/DialogTitleBar';
+import type EditorStore from '../editor/EditorStore';
 import getLogger from '../utils/getLogger';
 import isElectron from '../utils/isElectron';
 
-import type EditorStore from './EditorStore';
+import { parseShareURI } from './shareURI';
 
-const log = getLogger('editor.ShareDialog');
+const log = getLogger('persistence.ShareDialog');
 
 const ELECTRON_SHARE_BASE_URL = 'https://refinery.services';
 

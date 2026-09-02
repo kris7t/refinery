@@ -17,11 +17,11 @@ import {
   MIN_MODEL_GENERATION_TIMEOUT_SEC,
   MIN_SEMANTICS_TIMEOUT_MS,
   UNLIMITED_MODEL_GENERATION_TIMEOUT_SEC,
-} from '@tools.refinery/frontend/serverLimits';
+} from '@tools.refinery/frontend/settings/serverLimits';
 import {
   getDefaultMaxMemoryBytes,
   MIN_MAX_MEMORY_BYTES,
-} from '@tools.refinery/frontend/serverMemory';
+} from '@tools.refinery/frontend/settings/serverMemory';
 import z from 'zod/v4';
 
 import { isMac, isWindows } from './utils/platform';
@@ -35,7 +35,7 @@ export {
   JVM_COMPRESSED_OOPS_THRESHOLD_BYTES,
   MEBIBYTE,
   MIN_MAX_MEMORY_BYTES,
-} from '@tools.refinery/frontend/serverMemory';
+} from '@tools.refinery/frontend/settings/serverMemory';
 
 export function getSystemMemoryBytes(): number {
   return os.totalmem();

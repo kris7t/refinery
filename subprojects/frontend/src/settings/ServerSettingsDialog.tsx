@@ -19,16 +19,18 @@ import { styled, useTheme } from '@mui/material/styles';
 import { isEqual } from 'lodash-es';
 import { useEffect, useId, useState } from 'react';
 
-import Dialog from './Dialog';
-import DialogActionBar from './DialogActionBar';
-import LogarithmicSlider from './LogarithmicSlider';
-import PathListEditor from './PathListEditor';
 import RefineryContextBridge, {
   RestartServerResult,
   ServerSettingsResponse as ServerSettingsResponseSchema,
   type ServerSettings,
-} from './RefineryContextBridge';
-import { useRootStore } from './RootStoreProvider';
+} from '../RefineryContextBridge';
+import { useRootStore } from '../RootStoreProvider';
+import Dialog from '../dialog/Dialog';
+import DialogActionBar from '../dialog/DialogActionBar';
+import getLogger from '../utils/getLogger';
+
+import LogarithmicSlider from './LogarithmicSlider';
+import PathListEditor from './PathListEditor';
 import {
   MAX_SEMANTICS_TIMEOUT_MS,
   MIN_MODEL_GENERATION_TIMEOUT_SEC,
@@ -41,9 +43,8 @@ import {
   MEBIBYTE,
   MIN_MAX_MEMORY_BYTES,
 } from './serverMemory';
-import getLogger from './utils/getLogger';
 
-const log = getLogger('ServerSettingsDialog');
+const log = getLogger('settings.ServerSettingsDialog');
 
 // A newer restart supersedes older results, so a late menu failure cannot
 // cover a settings dialog that is already restarting the server.
