@@ -12,6 +12,9 @@ const logLevel = typeof rawLogLevel === 'string' ? rawLogLevel : 'debug';
 
 const logger = pino({
   level: logLevel,
+  serializers: {
+    err: pino.stdSerializers.err,
+  },
   browser: {
     asObject: true,
     serialize: true,

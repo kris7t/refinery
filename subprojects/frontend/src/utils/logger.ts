@@ -25,6 +25,9 @@ function getElectronLogger(refinery: {
 }): Logger {
   return pino({
     level: refinery.logLevel,
+    serializers: {
+      err: pino.stdSerializers.err,
+    },
     browser: {
       asObject: true,
       serialize: true,
