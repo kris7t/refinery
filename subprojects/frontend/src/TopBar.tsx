@@ -162,27 +162,20 @@ const ButtonStack = styled(Stack)({
   // Concretize is wrapped by the shared Tooltip component when it is
   // icon-only. Keep that wrapper from turning the split button into two
   // independently rounded pills.
-  '& > .RefineryTooltip-Container:first-child .rounded': {
+  '& > .RefineryTooltip-Container:first-of-type .rounded': {
     borderTopLeftRadius: '50em !important',
     borderBottomLeftRadius: '50em !important',
     borderTopRightRadius: '0 !important',
     borderBottomRightRadius: '0 !important',
     clipPath: 'inset(0 2px 0 0)',
   },
-  '& > .RefineryTooltip-Container:first-child:last-child .rounded': {
-    borderRadius: '50em !important',
-    clipPath: 'none',
-  },
-  '& > .rounded:last-child:not(:only-child)': {
+  ['& > .RefineryTooltip-Container + .rounded:last-of-type, ' +
+  '& > .rounded + .rounded:last-of-type']: {
     borderTopLeftRadius: '0 !important',
     borderBottomLeftRadius: '0 !important',
     borderTopRightRadius: '50em !important',
     borderBottomRightRadius: '50em !important',
     clipPath: 'inset(0 0 0 2px)',
-  },
-  '& > .rounded:only-child': {
-    borderRadius: '50em !important',
-    clipPath: 'none',
   },
 });
 
